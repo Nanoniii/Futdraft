@@ -1,0 +1,1053 @@
+// ═══════════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════════
+let state = {
+  currentTeam: null,
+  rerollsLeft: 3,
+  formation: null,   // escolhida na landing
+  squad: [],
+  phase: "landing",
+  pickCount: 0,
+  mode: "champions",  // "champions" (Champions League, times europeus) ou "brasil" (Copa do Brasil, times históricos do Brasil)
+};
+
+// IDs dos times brasileiros que participam do modo Libertadores (conforme lista oficial)
+const LIBERTADORES_BR_IDS = new Set([
+  "br_santos_1962",
+  "br_cruzeiro_lib_1976",
+  "br_flamengo_1981",
+  "br_gremio_lib_1983",
+  "br_saopaulo_lib_1974",
+  "br_saopaulo_lib_1992",
+  "br_saopaulo_lib_2004",
+  "br_palmeiras_lib_1999",
+  "br_vasco_lib_2000",
+  "br_internacional_lib_2006",
+  "br_internacional_lib_2010",
+  "br_corinthians_2012",
+  "br_atletico_lib_2013",
+  "br_gremio_lib_2017",
+  "br_gremio_lib_1995",
+  "br_flamengo_lib_2019",
+  "br_flamengo_lib_2022",
+  "br_palmeiras_lib_2020",
+  "br_saocaetano_lib_2002",
+  "br_athletico_lib_2005",
+  "br_athletico_lib_2022",
+  "br_fluminense_lib_2008",
+  "br_fluminense_lib_2023",
+  "br_gremio_lib_2007",
+  "br_atletico_2021",
+  "br_cruzeiro_lib_2009",
+  "br_botafogo_2024",
+  "br_santos_lib_2011",
+  "br_cruzeiro_lib_1997",
+  "br_internacional_lib_1980",
+]);
+
+// Retorna o pool de times do modo atualmente selecionado
+function getTeamPool() {
+  if (state.mode === "brasil") return BRAZIL_TEAMS;
+  if (state.mode === "libertadores") {
+    const brFiltered = BRAZIL_TEAMS.filter(t => LIBERTADORES_BR_IDS.has(t.id));
+    return LIBERTADORES_TEAMS.concat(brFiltered);
+  }
+  return TEAMS;
+}
+
+// Posições reais no data.js: GK RB LB CB CM AM RM LM RW LW ST CF RWB LWB
+// Mapeadas via POS_LABELS para: GOL LD LE ZAG MC MEI MD ME PD PE CA CA LD LE
+// Formações usam APENAS posições que existem no mapeamento
+
+// Cada formação guarda as linhas (defesa -> ataque, goleiro por último por
+// convenção de renderização) e algumas tags estéticas/de estilo de jogo.
+// IMPORTANTE: a orientação é a do próprio time olhando de trás do goleiro
+// para o ataque (perspectiva padrão de jogos de futebol). Isso significa que
+// a ESQUERDA do array (= esquerda da tela, já que .pitch-row é flex normal,
+// sem row-reverse) deve conter as posições "E" (esquerda) e a DIREITA do
+// array deve conter as posições "D" (direita). Ex: ["LE", "ZAG", "ZAG", "LD"]
+// e nunca o contrário.
+const FORMATIONS = {
+  "4-3-3": {
+    rows: [["PE", "CA", "PD"], ["MC", "MC", "MC"], ["LE", "ZAG", "ZAG", "LD"], ["GOL"]],
+    tags: ["Ofensivo", "3 pontas"],
+  },
+  "4-4-2": {
+    rows: [["CA", "CA"], ["PE", "MC", "MC", "PD"], ["LE", "ZAG", "ZAG", "LD"], ["GOL"]],
+    tags: ["Clássico", "2 atacantes"],
+  },
+  "4-2-3-1": {
+    rows: [["CA"], ["PE", "MEI", "PD"], ["MC", "MC"], ["LE", "ZAG", "ZAG", "LD"], ["GOL"]],
+    tags: ["Moderno", "Meia-enganche"],
+  },
+  "3-5-2": {
+    rows: [["CA", "CA"], ["PE", "MC", "MC", "MC", "PD"], ["ZAG", "ZAG", "ZAG"], ["GOL"]],
+    tags: ["Domínio do meio", "3 zagueiros"],
+  },
+  "4-1-4-1": {
+    rows: [["CA"], ["ME", "MC", "MC", "MD"], ["MC"], ["LE", "ZAG", "ZAG", "LD"], ["GOL"]],
+    tags: ["Defensivo", "Equilíbrio"],
+  },
+  "3-4-3": {
+    rows: [["PE", "CA", "PD"], ["LE", "MC", "MC", "LD"], ["ZAG", "ZAG", "ZAG"], ["GOL"]],
+    tags: ["Ultra-ofensivo", "Pressão alta"],
+  },
+  "4-3-1-2": {
+    rows: [["CA", "CA"], ["MEI"], ["MC", "MC", "MC"], ["LE", "ZAG", "ZAG", "LD"], ["GOL"]],
+    tags: ["Criativo", "Losango"],
+  },
+  "5-3-2": {
+    rows: [["CA", "CA"], ["MC", "MC", "MC"], ["LE", "ZAG", "ZAG", "ZAG", "LD"], ["GOL"]],
+    tags: ["Catenaccio", "Solidez"],
+  },
+  "4-1-2-1-2": {
+    rows: [["CA", "CA"], ["MEI"], ["ME", "MD"], ["MC"], ["LE", "ZAG", "ZAG", "LD"], ["GOL"]],
+    tags: ["Italiano clássico", "Losango"],
+  },
+  "4-2-4": {
+    rows: [["PE", "CA", "CA", "PD"], ["MC", "MC"], ["LE", "ZAG", "ZAG", "LD"], ["GOL"]],
+    tags: ["Retrô", "All-out attack"],
+  },
+};
+
+// Grupo (role) de cada posição mapeada, usado para cor e para o cálculo de balanço visual
+const POS_ROLE = {
+  GOL: "gk",
+  ZAG: "def", LD: "def", LE: "def",
+  MC: "mid", MEI: "mid", MD: "mid", ME: "mid",
+  PD: "atk", PE: "atk", CA: "atk",
+};
+
+// ─── Pesos por posição REAL (raw, como vem em data.js) para cálculo de
+// ataque/defesa do time. Quanto maior o peso, mais aquele jogador pesa
+// naquele quesito. Isso vale tanto para o seu elenco quanto para os
+// adversários sorteados.
+const ATTACK_WEIGHTS = {
+  ST: 1.6, CF: 1.6, RW: 1.25, LW: 1.25, AM: 1.15,
+  RM: 0.85, LM: 0.85, CM: 0.35,
+  RWB: 0.2, LWB: 0.2, RB: 0.15, LB: 0.15, CB: 0.05, GK: 0.02,
+};
+const DEFENSE_WEIGHTS = {
+  GK: 1.7, CB: 1.45, RWB: 1.15, LWB: 1.15, RB: 1.05, LB: 1.05,
+  CM: 0.55, AM: 0.15, RM: 0.25, LM: 0.25,
+  RW: 0.05, LW: 0.05, ST: 0.02, CF: 0.02,
+};
+// Peso "geral" usado para a nota geral do time: soma da relevância
+// ofensiva + defensiva de cada posição (jogadores decisivos nas duas
+// pontas da bola pesam mais na nota final, como GK e atacantes de área).
+const OVERALL_WEIGHTS = {};
+for (const k of new Set([...Object.keys(ATTACK_WEIGHTS), ...Object.keys(DEFENSE_WEIGHTS)])) {
+  OVERALL_WEIGHTS[k] = (ATTACK_WEIGHTS[k] || 0) + (DEFENSE_WEIGHTS[k] || 0) + 0.25;
+}
+
+// ═══════════════════════════════════════════
+// LANDING — escolher formação antes de tudo
+// ═══════════════════════════════════════════
+function startGame() {
+  showPage("pageModeSelect");
+}
+
+function selectMode(mode) {
+  state.mode = mode;
+  // Reset the formation grid so it rebuilds when re-entering
+  const grid = document.getElementById("fpGrid");
+  if (grid) { grid.innerHTML = ""; delete grid.dataset.built; }
+  renderFormationGrid();
+  showPage("pageFormation");
+}
+
+function renderFormationGrid() {
+  const grid = document.getElementById("fpGrid");
+  if (!grid || grid.dataset.built) return; // monta uma única vez
+  grid.dataset.built = "1";
+  grid.innerHTML = Object.entries(FORMATIONS).map(([name, fm]) => {
+    const counts = { def: 0, mid: 0, atk: 0 };
+    fm.rows.forEach(row => row.forEach(pos => {
+      const role = POS_ROLE[pos];
+      if (role === "def") counts.def++;
+      else if (role === "mid") counts.mid++;
+      else if (role === "atk") counts.atk++;
+    }));
+    const total = counts.def + counts.mid + counts.atk;
+    const rowsHtml = fm.rows.map(row => `
+      <div class="fpm-row">${row.map(pos => {
+        const role = POS_ROLE[pos] || "mid";
+        return `<div class="fpm-dot role-${role}">${pos}</div>`;
+      }).join("")}</div>`).join("");
+    return `<div class="fp-card" onclick="chooseFormation('${name}')">
+      <div class="fp-name">${name}</div>
+      <div class="fp-pitch-mini">${rowsHtml}</div>
+      <div class="fp-balance">
+        <span class="b-def" style="flex:${counts.def}"></span>
+        <span class="b-mid" style="flex:${counts.mid}"></span>
+        <span class="b-atk" style="flex:${counts.atk}"></span>
+      </div>
+      <div class="fp-tags">${fm.tags.map(t => `<span>${t}</span>`).join("")}</div>
+    </div>`;
+  }).join("");
+}
+
+function chooseFormation(fm) {
+  state.formation = fm;
+  state.squad = [];
+  state.pickCount = 0;
+  state.rerollsLeft = 3;
+  state.currentTeam = null;
+  state.phase = "roll";
+  showPage("pageGame");
+  buildScoreList();
+  renderPitch();
+  showRollStep();
+}
+
+function showPage(id) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function showPanel(id) {
+  document.querySelectorAll(".panel-section").forEach(s => {
+    s.style.display = "none";
+    s.classList.remove("active");
+  });
+  const el = document.getElementById(id);
+  if (el) { el.style.display = "block"; el.classList.add("active"); }
+}
+
+// ═══════════════════════════════════════════
+// ROLL
+// ═══════════════════════════════════════════
+function showRollStep() {
+  showPanel("stepRoll");
+  const turn = state.pickCount + 1;
+  const rollDesc = document.getElementById("rollDesc");
+  if (rollDesc) rollDesc.textContent = turn === 1
+    ? "Role para sortear seu primeiro time histórico"
+    : `Jogador ${turn}/11 — role para sortear um novo time`;
+  document.getElementById("rollCta").style.display = "flex";
+  document.getElementById("rolledTeamDisplay").style.display = "none";
+  const reel = document.getElementById("rollReel");
+  if (reel) reel.style.display = "none";
+  // rerollsLeft NÃO é resetado aqui — são 3 tentativas pra PARTIDA INTEIRA,
+  // não por jogador. O valor é setado uma única vez em chooseFormation().
+  document.getElementById("rerollCount").textContent = state.rerollsLeft;
+  document.getElementById("btnReroll").disabled = state.rerollsLeft === 0;
+}
+
+// Sorteia um time que tenha pelo menos um jogador elegível pra algum slot
+// vazio da formação (não usado, com vaga livre na posição). Se o time sorteado
+// não tiver ninguém aproveitável, sorteia outro automaticamente até achar um
+// que sirva — assim o jogador nunca cai numa tela sem ninguém pra escolher.
+function pickEligibleTeam() {
+  const slots = getFormationSlots(state.formation);
+  const usedNames = new Set(state.squad.map(s => s.name));
+  const slotsRemaining = {};
+  slots.forEach(s => { slotsRemaining[s.pos] = (slotsRemaining[s.pos]||0) + 1; });
+  state.squad.forEach(s => { if (slotsRemaining[s.pos] != null) slotsRemaining[s.pos]--; });
+
+  const hasEligiblePlayer = (team) => team.players.some(p => {
+    const pos = POS_LABELS[p.pos] || p.pos;
+    return !usedNames.has(p.name) && (slotsRemaining[pos] || 0) > 0;
+  });
+
+  const teamPool = getTeamPool();
+  const candidates = teamPool.filter(hasEligiblePlayer);
+  const pool = candidates.length ? candidates : teamPool; // fallback de segurança
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function rollDice() {
+  const team = pickEligibleTeam();
+  state.currentTeam = team;
+  playRollAnimation(team);
+}
+
+function rerollTeam() {
+  if (state.rerollsLeft <= 0) return;
+  state.rerollsLeft--;
+  document.getElementById("rerollCount").textContent = state.rerollsLeft;
+  document.getElementById("btnReroll").disabled = state.rerollsLeft === 0;
+  rollDice();
+}
+
+// Animação de sorteio: mostra uma sequência rápida de times passando (efeito
+// caça-níquel) antes de revelar o time realmente sorteado. Desabilita os
+// botões durante a animação pra evitar cliques duplicados.
+function playRollAnimation(finalTeam) {
+  const cta = document.getElementById("rollCta");
+  const display = document.getElementById("rolledTeamDisplay");
+  cta.style.display = "none";
+  display.style.display = "none";
+
+  let reel = document.getElementById("rollReel");
+  if (!reel) {
+    reel = document.createElement("div");
+    reel.id = "rollReel";
+    reel.className = "roll-reel";
+    cta.parentNode.insertBefore(reel, display);
+  }
+  reel.style.display = "flex";
+  reel.innerHTML = `
+    <div class="roll-reel-label">SORTEANDO...</div>
+    <div class="roll-reel-card" id="rollReelCard">
+      <span class="rrc-flag" id="rrcFlag">⚽</span>
+      <span class="rrc-name" id="rrcName">—</span>
+      <span class="rrc-season" id="rrcSeason">—</span>
+    </div>`;
+
+  const flagEl = document.getElementById("rrcFlag");
+  const nameEl = document.getElementById("rrcName");
+  const seasonEl = document.getElementById("rrcSeason");
+  const cardEl = document.getElementById("rollReelCard");
+
+  // Sequência de times aleatórios "passando" antes de parar no sorteado de
+  // verdade. Desacelera progressivamente, como uma roleta perdendo embalo.
+  const spins = 14;
+  const delays = [];
+  let total = 0;
+  for (let i = 0; i < spins; i++) {
+    const t = 55 + Math.pow(i / spins, 2.2) * 230; // acelera->desacelera
+    total += t;
+    delays.push(total);
+  }
+
+  for (let i = 0; i < spins; i++) {
+    setTimeout(() => {
+      const t = i === spins - 1 ? finalTeam : (() => { const p = getTeamPool(); return p[Math.floor(Math.random() * p.length)]; })();
+      flagEl.textContent = t.flag;
+      nameEl.textContent = t.name;
+      seasonEl.textContent = t.season;
+      cardEl.classList.remove("rrc-tick");
+      void cardEl.offsetWidth;
+      cardEl.classList.add("rrc-tick");
+      if (i === spins - 1) {
+        cardEl.classList.add("rrc-stop");
+        setTimeout(() => {
+          reel.style.display = "none";
+          cardEl.classList.remove("rrc-stop");
+          displayRolledTeam(finalTeam);
+        }, 360);
+      }
+    }, delays[i]);
+  }
+}
+
+function displayRolledTeam(team) {
+  document.getElementById("rollCta").style.display = "none";
+  document.getElementById("rolledTeamDisplay").style.display = "block";
+  document.getElementById("rolledFlag").textContent = team.flag;
+  document.getElementById("rolledName").textContent = team.name;
+  document.getElementById("rolledSeason").textContent = state.mode === "champions" ? "Copa " + team.season : team.season;
+  document.getElementById("rerollCount").textContent = state.rerollsLeft;
+  document.getElementById("btnReroll").disabled = state.rerollsLeft === 0;
+  renderPlayerList(team);
+}
+
+function renderPlayerList(team) {
+  const list = document.getElementById("playerList");
+  const usedNames = new Set(state.squad.map(s => s.name));
+  const slots = getFormationSlots(state.formation);
+  const sorted = [...team.players].sort((a, b) => b.overall - a.overall);
+
+  list.innerHTML = sorted.map((p) => {
+    const pos = POS_LABELS[p.pos] || p.pos;
+    const elite = p.overall >= 90 ? "elite" : "";
+    const used = usedNames.has(p.name);
+    const slotsForPos = slots.filter(s => s.pos === pos).length;
+    const takenForPos = state.squad.filter(s => s.pos === pos).length;
+    const slotFull = takenForPos >= slotsForPos;
+    const noSlot = slotsForPos === 0; // posição não existe nessa formação
+    const blocked = used || slotFull || noSlot;
+    const tag = noSlot ? "sem slot" : slotFull ? "slot cheio" : used ? "já no time" : "";
+    const originalIdx = team.players.indexOf(p);
+
+    return `<div class="player-row${blocked ? " blocked" : ""}"
+      ${blocked ? "" : `onclick="pickPlayer(${originalIdx})"`}>
+      <span class="pr-pos">${pos}</span>
+      <span class="pr-name">${p.name}</span>
+      <span class="pr-ovr ${elite}">${p.overall}</span>
+      ${tag ? `<span class="pr-tag">${tag}</span>` : ""}
+    </div>`;
+  }).join("");
+}
+
+function pickPlayer(idx) {
+  const p = state.currentTeam.players[idx];
+  const pos = POS_LABELS[p.pos] || p.pos;
+  const slots = getFormationSlots(state.formation);
+  const takenSlots = new Set(state.squad.map(s => s.slotId));
+
+  let slotId = null;
+  for (const slot of slots) {
+    if (slot.pos === pos && !takenSlots.has(slot.id)) { slotId = slot.id; break; }
+  }
+  if (slotId === null) return;
+
+  state.squad.push({
+    ...p,
+    pos,                 // label mapeado (ex: "CA") usado no slot/exibição
+    rawPos: p.pos,        // posição real original (ex: "ST") usada nos cálculos
+    slotId,
+    team: state.currentTeam.name,
+    season: state.currentTeam.season,
+    isHighlight: state.pickCount === 0,
+  });
+  state.pickCount++;
+
+  // flash
+  const rows = document.querySelectorAll(".player-row");
+  const si = [...state.currentTeam.players].sort((a,b)=>b.overall-a.overall).findIndex(sp=>sp.name===p.name);
+  rows.forEach((r,i) => r.classList.toggle("selected", i===si));
+
+  buildScoreList();
+  renderPitch();
+  updateFillCount();
+
+  setTimeout(() => {
+    if (state.pickCount >= 11) showCompletePanel();
+    else showRollStep();
+  }, 500);
+}
+
+// ═══════════════════════════════════════════
+// ELENCO COMPLETO
+// ═══════════════════════════════════════════
+function showCompletePanel() {
+  showPanel("stepFill");
+  const panel = document.getElementById("stepFill");
+  const atk = calcAtk(), def = calcDef();
+  const ovr = calcOverall();
+  panel.innerHTML = `
+    <div class="fill-squad-label">ESCALAÇÃO COMPLETA<br>
+      <span class="fill-count">11/11</span>
+    </div>
+    <div class="overall-inline">
+      <span class="oi-score">${ovr}</span>
+      <span class="oi-detail">${atk} atq · ${def} def</span>
+    </div>
+    <button class="btn-primary simulate-btn" onclick="startSimulation()">
+      SIMULAR ${state.mode === "brasil" ? "A COPA DO BRASIL" : state.mode === "libertadores" ? "A LIBERTADORES" : "A CHAMPIONS"} →
+    </button>
+  `;
+  document.getElementById("overallBadge").style.display = "none";
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function getFormationSlots(fm) {
+  const def = FORMATIONS[fm] || FORMATIONS["4-3-3"];
+  let slots = [], id = 0;
+  for (const row of def.rows) for (const pos of row) slots.push({ id: id++, pos });
+  return slots;
+}
+
+function updateFillCount() {
+  const n = state.squad.length;
+  const sc = document.getElementById("scoreCount");
+  if (sc) sc.textContent = `${n}/11`;
+}
+
+// ═══════════════════════════════════════════
+// MÉDIAS DO TIME — ataque, defesa e overall
+// ═══════════════════════════════════════════
+// Calcula uma média ponderada por posição: cada jogador pesa de acordo com
+// sua relevância real pra aquele quesito (ex: atacante pesa muito no ataque
+// e quase nada na defesa, goleiro é o inverso, etc). Funciona tanto pro seu
+// elenco (campo rawPos) quanto pros times adversários (campo pos).
+function weightedAvg(players, weightMap, posField, fallback) {
+  if (!players || !players.length) return fallback;
+  let totalW = 0, totalS = 0;
+  for (const p of players) {
+    const w = weightMap[p[posField]] != null ? weightMap[p[posField]] : 0.3;
+    totalW += w;
+    totalS += w * p.overall;
+  }
+  return totalW ? totalS / totalW : fallback;
+}
+
+function calcAtk() {
+  return Math.round(weightedAvg(state.squad, ATTACK_WEIGHTS, "rawPos", 70));
+}
+function calcDef() {
+  return Math.round(weightedAvg(state.squad, DEFENSE_WEIGHTS, "rawPos", 70));
+}
+function calcOverall() {
+  if (!state.squad.length) return 75;
+  return Math.round(weightedAvg(state.squad, OVERALL_WEIGHTS, "rawPos", 75));
+}
+
+// Mesmas contas, mas pra qualquer time (usado pros adversários sorteados,
+// cujos jogadores guardam a posição real direto em `pos`)
+function teamAtk(players) { return weightedAvg(players, ATTACK_WEIGHTS, "pos", 75); }
+function teamDef(players) { return weightedAvg(players, DEFENSE_WEIGHTS, "pos", 75); }
+function teamOverall(players) { return weightedAvg(players, OVERALL_WEIGHTS, "pos", 75); }
+
+// ═══════════════════════════════════════════
+// PITCH
+// ═══════════════════════════════════════════
+function renderPitch() {
+  const pitch = document.getElementById("pitch");
+  const rows = (FORMATIONS[state.formation] || FORMATIONS["4-3-3"]).rows;
+  pitch.innerHTML = "";
+  let slotId = 0;
+  for (const row of rows) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "pitch-row";
+    for (const pos of row) {
+      const role = POS_ROLE[pos] || "mid";
+      const inSquad = state.squad.find(s => s.slotId === slotId);
+      const dot = document.createElement("div");
+      dot.className = "player-dot";
+      const circle = document.createElement("div");
+      const nameEl = document.createElement("div");
+      nameEl.className = "pd-name";
+      if (inSquad) {
+        circle.className = `pd-circle filled role-${role}${inSquad.isHighlight ? " highlight" : ""}`;
+        circle.textContent = inSquad.overall;
+        nameEl.textContent = inSquad.name.split(" ").pop();
+      } else {
+        circle.className = `pd-circle empty role-${role}`;
+        circle.textContent = pos;
+        nameEl.textContent = "—";
+      }
+      dot.appendChild(circle);
+      dot.appendChild(nameEl);
+      rowEl.appendChild(dot);
+      slotId++;
+    }
+    pitch.appendChild(rowEl);
+  }
+}
+
+function buildScoreList() {
+  const list = document.getElementById("scoreList");
+  const slots = getFormationSlots(state.formation || "4-3-3");
+  list.innerHTML = slots.map(slot => {
+    const p = state.squad.find(s => s.slotId === slot.id);
+    const cls = p ? (p.overall >= 90 ? "elite" : "filled") : "";
+    const role = POS_ROLE[slot.pos] || "mid";
+    return `<div class="score-row">
+      <span class="sr-pos role-${role}">${slot.pos}</span>
+      <span class="sr-name${p ? "" : " empty"}">${p ? p.name : "—"}</span>
+      <span class="sr-ovr${cls ? " "+cls : ""}">${p ? p.overall : "—"}</span>
+    </div>`;
+  }).join("");
+  updateOverallBadge();
+}
+
+function updateOverallBadge() {
+  const badge = document.getElementById("overallBadge");
+  if (!badge) return;
+  if (!state.squad.length) { badge.style.display = "none"; return; }
+  const atk = calcAtk(), def = calcDef(), ovr = calcOverall();
+  badge.style.display = "block";
+  document.getElementById("obScore").textContent = ovr;
+  document.getElementById("obBreakdown").textContent = `OVERALL · ${state.squad.length}/11 escalados`;
+  let extra = badge.querySelector(".ob-extra");
+  if (!extra) {
+    extra = document.createElement("div");
+    extra.className = "ob-extra";
+    badge.appendChild(extra);
+  }
+  const maxBar = Math.max(atk, def, 1);
+  extra.innerHTML = `
+    <div class="ob-stats-row">
+      <div class="ob-stat"><div class="ob-stat-num atk">${atk}</div><div class="ob-stat-label">Ataque</div></div>
+      <div class="ob-stat"><div class="ob-stat-num def">${def}</div><div class="ob-stat-label">Defesa</div></div>
+    </div>
+    <div class="ob-bar-track"><div class="ob-bar-fill atk" style="width:${(atk/maxBar*100)}%;height:6px"></div></div>
+    <div class="ob-bar-track" style="margin-top:4px"><div class="ob-bar-fill def" style="width:${(def/maxBar*100)}%;height:6px"></div></div>
+  `;
+}
+
+// ═══════════════════════════════════════════
+// SIMULATION
+// ═══════════════════════════════════════════
+function startSimulation() {
+  showPage("pageSimulation");
+  runSimulation();
+}
+
+// Amostra de uma distribuição de Poisson — é assim que se modela gols em
+// futebol de verdade (eventos raros e independentes ao longo de 90 min)
+function poissonSample(lambda) {
+  const L = Math.exp(-lambda);
+  let k = 0, p = 1;
+  do { k++; p *= Math.random(); } while (p > L);
+  return k - 1;
+}
+
+const BASE_XG = 1.3;     // média de gols de um time "normal" contra outro "normal"
+const QUALITY_EXP = 2.0; // o quanto a diferença de nível pesa no resultado
+const PROTAGONIST_BONUS = 1.08; // pequena vantagem de ser o "seu" time
+
+// Gols esperados (xG) de um time, dado o próprio ataque e a defesa adversária
+function expectedGoals(atk, def, isPlayer) {
+  const ratio = atk / Math.max(def, 1);
+  let xg = BASE_XG * Math.pow(ratio, QUALITY_EXP);
+  if (isPlayer) xg *= PROTAGONIST_BONUS;
+  return Math.max(0.18, Math.min(xg, 4.5));
+}
+
+function simulateMatch(myAtk, myDef, oppAtk, oppDef) {
+  const myXG = expectedGoals(myAtk, oppDef, true);
+  const oppXG = expectedGoals(oppAtk, myDef, false);
+  const myG = poissonSample(myXG);
+  const thG = poissonSample(oppXG);
+  return { myGoals: myG, theirGoals: thG, outcome: myG > thG ? "win" : myG < thG ? "lose" : "draw" };
+}
+
+function pickScorers(players, count) {
+  if (!count) return [];
+  // Peso por overall — melhores jogadores marcam mais
+  const atk = players.filter(p => ["CA","PD","PE","ME","MD","MEI","AM","ST","RW","LW","CF"].includes(POS_LABELS[p.pos]||p.pos||p.pos));
+  const pool = atk.length ? atk : players;
+  // Sorteio ponderado por overall
+  const totalW = pool.reduce((s,p)=>s+(p.overall||75),0);
+  return Array.from({length:count}, () => {
+    let r = Math.random() * totalW, cum = 0;
+    for (const p of pool) { cum += p.overall||75; if (r<=cum) return p.name; }
+    return pool[0].name;
+  });
+}
+
+function distributeMinutes(count) {
+  const used = new Set();
+  return Array.from({length:count}, () => {
+    let m, t=0;
+    do { m = 1+Math.floor(Math.random()*93); t++; } while(used.has(m) && t<60);
+    // Mais gols nos finais de tempo (70-90') e acréscimos
+    if (Math.random() < 0.25) m = 70 + Math.floor(Math.random()*23);
+    used.add(m); return Math.min(m, 90);
+  }).sort((a,b)=>a-b);
+}
+
+function runSimulation() {
+  const myAtk = calcAtk(), myDef = calcDef();
+  const overall = calcOverall();
+  const isBrasil = state.mode === "brasil";
+  const isLibertadores = state.mode === "libertadores";
+  const hasGroups = !isBrasil; // Champions e Libertadores têm fase de grupos
+  const allOpponents = [...getTeamPool()].sort(()=>Math.random()-0.5);
+
+  let groupOpponents = [];
+  let knockoutOpponents;
+  if (isBrasil) {
+    // Copa do Brasil: sem fase de grupos, direto pro mata-mata (4 adversários)
+    knockoutOpponents = allOpponents.slice(0, 4)
+      .sort((a, b) => teamOverall(a.players) - teamOverall(b.players));
+  } else {
+    // Champions / Libertadores: 3 adversários de grupo + 4 do mata-mata
+    groupOpponents = allOpponents.slice(0, 3);
+    knockoutOpponents = allOpponents.slice(3, 7)
+      .sort((a, b) => teamOverall(a.players) - teamOverall(b.players));
+  }
+  const stages = ["OITAVAS","QUARTAS","SEMI","FINAL"];
+  const results = [];
+  let wins=0, draws=0, losses=0, goalsFor=0, goalsAgainst=0, eliminated=false;
+  let groupTable = null, myGroupPos = -1;
+
+  // ===== FASE DE GRUPOS (todos contra todos, ida e volta, 4 times) =====
+  // Existe no modo Champions e Libertadores. Copa do Brasil é só mata-mata.
+  if (hasGroups) {
+    const groupTeams = [
+      { id:"me", name:"Seu Time", flag:"⭐", isMe:true, pts:0, gf:0, ga:0, w:0, d:0, l:0 },
+      ...groupOpponents.map(t => ({ id:t.id, name:t.name, flag:t.flag, season:t.season, isMe:false, pts:0, gf:0, ga:0, w:0, d:0, l:0 }))
+    ];
+
+    function getAtkDef(team) {
+      if (team.isMe) return { atk: myAtk, def: myDef };
+      const t = groupOpponents.find(g => g.id === team.id) || knockoutOpponents.find(g=>g.id===team.id);
+      return { atk: teamAtk(t.players), def: teamDef(t.players) };
+    }
+
+    function applyResult(teamA, teamB, gA, gB) {
+      teamA.gf += gA; teamA.ga += gB;
+      teamB.gf += gB; teamB.ga += gA;
+      if (gA > gB) { teamA.pts += 3; teamA.w++; teamB.l++; }
+      else if (gA < gB) { teamB.pts += 3; teamB.w++; teamA.l++; }
+      else { teamA.pts += 1; teamB.pts += 1; teamA.d++; teamB.d++; }
+    }
+
+    // Gera todos os confrontos do grupo em turno E returno (ida e volta),
+    // cada time joga 2x contra cada um dos outros 3 do grupo (6 jogos no total).
+    const groupMatches = [];
+    for (let i = 0; i < groupTeams.length; i++) {
+      for (let j = i+1; j < groupTeams.length; j++) {
+        groupMatches.push([groupTeams[i], groupTeams[j]]); // ida
+        groupMatches.push([groupTeams[j], groupTeams[i]]); // volta (mando de campo invertido)
+      }
+    }
+    groupMatches.sort(() => Math.random() - 0.5);
+
+    for (const [teamA, teamB] of groupMatches) {
+      const aInfo = getAtkDef(teamA), bInfo = getAtkDef(teamB);
+      const { myGoals: gA, theirGoals: gB, outcome } = simulateMatch(aInfo.atk, aInfo.def, bInfo.atk, bInfo.def);
+      applyResult(teamA, teamB, gA, gB);
+
+      // Se o jogador estiver envolvido, registra como partida exibivel no timelapse
+      if (teamA.isMe || teamB.isMe) {
+        const meIsA = teamA.isMe;
+        const myG = meIsA ? gA : gB;
+        const oppG = meIsA ? gB : gA;
+        const oppTeamRef = meIsA
+          ? (groupOpponents.find(t=>t.id===teamB.id))
+          : (groupOpponents.find(t=>t.id===teamA.id));
+        const myOutcome = myG>oppG?"win":myG<oppG?"lose":"draw";
+        goalsFor += myG; goalsAgainst += oppG;
+        if (myOutcome==="win") wins++; else if (myOutcome==="draw") draws++; else losses++;
+        results.push({
+          round: "GRUPOS", opponent: oppTeamRef, myGoals: myG, theirGoals: oppG, outcome: myOutcome,
+          scorers: pickScorers(state.squad, myG),
+          conceded: pickScorers(oppTeamRef.players, oppG),
+          myMinutes: distributeMinutes(myG),
+          theirMinutes: distributeMinutes(oppG),
+        });
+      }
+    }
+
+    // Ordena tabela do grupo (pontos, depois saldo de gols)
+    groupTeams.sort((a,b) => (b.pts - a.pts) || ((b.gf-b.ga) - (a.gf-a.ga)) || (b.gf - a.gf));
+    myGroupPos = groupTeams.findIndex(t => t.isMe);
+    groupTable = groupTeams; // guardado para exibir depois
+
+    // Top 2 do grupo avancam (posicoes 0 e 1)
+    if (myGroupPos >= 2) {
+      eliminated = true;
+    }
+  }
+
+  // ===== MATA-MATA (se nao eliminado nos grupos, ou direto se for Copa do Brasil) =====
+  if (!eliminated) {
+    for (let i = 0; i < 4; i++) {
+      const opp = knockoutOpponents[i];
+      const oppAtk = teamAtk(opp.players);
+      const oppDef = teamDef(opp.players);
+      let {myGoals, theirGoals, outcome} = simulateMatch(myAtk, myDef, oppAtk, oppDef);
+      let penalties = null;
+      if (outcome === "draw") {
+        // Nos pênaltis a moeda é mais equilibrada, mas times mais fortes
+        // ainda têm uma leve vantagem (frieza, qualidade do goleiro etc.)
+        const myStrength = (myAtk + myDef) / 2;
+        const oppStrength = (oppAtk + oppDef) / 2;
+        const myPkChance = Math.max(0.3, Math.min(0.7, 0.5 + (myStrength - oppStrength) * 0.01));
+        const myPK = Math.random() < myPkChance;
+        penalties = myPK
+          ? { mine: 5 + Math.floor(Math.random()*2), theirs: 3 + Math.floor(Math.random()*2) }
+          : { mine: 3 + Math.floor(Math.random()*2), theirs: 5 + Math.floor(Math.random()*2) };
+        outcome = myPK ? "win" : "lose";
+      }
+      goalsFor += myGoals; goalsAgainst += theirGoals;
+      if (outcome==="win") wins++; else losses++;
+      results.push({
+        round: stages[i], opponent: opp, myGoals, theirGoals, outcome, penalties,
+        scorers: pickScorers(state.squad, myGoals),
+        conceded: pickScorers(opp.players, theirGoals),
+        myMinutes: distributeMinutes(myGoals),
+        theirMinutes: distributeMinutes(theirGoals),
+      });
+      if (outcome === "lose") { eliminated = true; break; }
+    }
+  }
+
+  renderTimelapse(results, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, groupTable, myGroupPos);
+}
+
+// ═══════════════════════════════════════════
+// TIMELAPSE
+// ═══════════════════════════════════════════
+function renderTimelapse(results, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, groupTable, myGroupPos) {
+  const container = document.getElementById("pageSimulation");
+  const isBrasil = state.mode === "brasil";
+  const isLibertadores = state.mode === "libertadores";
+  const simTitle = isBrasil ? "COPA DO BRASIL" : isLibertadores ? "COPA LIBERTADORES" : "CHAMPIONS LEAGUE";
+  const simLogo = isBrasil ? "🇧🇷" : isLibertadores ? "🌎" : "🏆";
+  const simWaiting = isBrasil ? "A Copa do Brasil começa em breve..." : isLibertadores ? "A Libertadores começa em breve..." : "A Champions começa em breve...";
+  container.innerHTML = `
+    <div class="timelapse-layout">
+      <div class="timelapse-left">
+        <div class="sim-header">
+          <div class="sim-title">${simTitle}</div>
+          <div class="sim-logo">${simLogo}</div>
+        </div>
+        <div id="tlMatchList" class="tl-match-list"></div>
+        <div id="tlGroupTable" class="tl-group-table" style="display:none"></div>
+      </div>
+      <div class="timelapse-right">
+        <div id="tlCurrentMatch" class="tl-current-match">
+          <div class="tl-waiting">${simWaiting}</div>
+        </div>
+        <div id="tlFinalCard" class="final-card" style="display:none"></div>
+      </div>
+    </div>`;
+  showMatchSequence(results, 0, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, groupTable, myGroupPos);
+}
+
+function renderGroupTable(groupTable, myGroupPos) {
+  const box = document.getElementById("tlGroupTable");
+  if (!box) return;
+  box.style.display = "block";
+  box.innerHTML = `
+    <div class="gt-title">TABELA DO GRUPO</div>
+    <div class="gt-header-row">
+      <span class="gt-col-team">TIME</span>
+      <span class="gt-col-num">P</span>
+      <span class="gt-col-num">V</span>
+      <span class="gt-col-num">E</span>
+      <span class="gt-col-num">D</span>
+      <span class="gt-col-num">SG</span>
+      <span class="gt-col-num">PTS</span>
+    </div>
+    ${groupTable.map((t, i) => `
+      <div class="gt-row ${t.isMe ? "gt-me" : ""} ${i < 2 ? "gt-qualified" : "gt-eliminated"}">
+        <span class="gt-col-team">${i < 2 ? "✓" : "✗"} ${t.flag||"⭐"} ${t.name}</span>
+        <span class="gt-col-num">${t.w+t.d+t.l}</span>
+        <span class="gt-col-num">${t.w}</span>
+        <span class="gt-col-num">${t.d}</span>
+        <span class="gt-col-num">${t.l}</span>
+        <span class="gt-col-num">${t.gf-t.ga>=0?"+":""}${t.gf-t.ga}</span>
+        <span class="gt-col-num gt-pts">${t.pts}</span>
+      </div>
+    `).join("")}
+    <div class="gt-footnote">${myGroupPos < 2 ? "✓ Classificado para as oitavas!" : "✗ Eliminado na fase de grupos"}</div>
+  `;
+}
+
+function showMatchSequence(results, idx, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, groupTable, myGroupPos) {
+  // Depois dos 3 jogos de grupo (se existirem), mostra a tabela antes de continuar
+  const groupMatchesCount = results.filter(r => r.round === "GRUPOS").length;
+  if (idx === groupMatchesCount && groupMatchesCount > 0 && groupTable) {
+    renderGroupTable(groupTable, myGroupPos);
+    setTimeout(() => showMatchSequence(results, idx, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, null, myGroupPos), 2600);
+    return;
+  }
+
+  if (idx >= results.length) {
+    setTimeout(() => renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall), 500);
+    return;
+  }
+  const r = results[idx];
+  addMatchToList(r, idx);
+  runMatchTimelapse(r, () => {
+    updateMatchInList(r, idx);
+    setTimeout(() => showMatchSequence(results, idx+1, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, groupTable, myGroupPos), 1000);
+  });
+}
+
+function addMatchToList(r, idx) {
+  const list = document.getElementById("tlMatchList");
+  const div = document.createElement("div");
+  div.className = "tl-match-entry pending";
+  div.id = `match-entry-${idx}`;
+  div.innerHTML = `
+    <div class="tl-entry-left">
+      <span class="tl-round">${r.round}</span>
+      <span class="tl-opp">${r.opponent.flag} ${r.opponent.name} <span class="tl-season">${r.opponent.season}</span></span>
+    </div>
+    <span class="tl-score-pill" id="score-pill-${idx}">...</span>`;
+  list.appendChild(div);
+}
+
+function updateMatchInList(r, idx) {
+  const pill = document.getElementById(`score-pill-${idx}`);
+  const entry = document.getElementById(`match-entry-${idx}`);
+  const pkText = r.penalties ? ` <small>(${r.penalties.mine}-${r.penalties.theirs} pen)</small>` : "";
+  if (pill) { pill.innerHTML=`${r.myGoals}–${r.theirGoals}${pkText}`; pill.className=`tl-score-pill ${r.outcome}`; }
+  if (entry) entry.className=`tl-match-entry ${r.outcome}`;
+
+  // Mostra gols e quem sofreu abaixo do placar
+  const scorersLine = r.scorers.length ? `<span class="tl-entry-scorers">⚽ ${r.scorers.join(", ")}</span>` : "";
+  const concededLine = r.conceded.length ? `<span class="tl-entry-conceded">· sofreu: ${r.conceded.join(", ")}</span>` : "";
+  if (scorersLine || concededLine) {
+    const sub = document.createElement("div");
+    sub.className = "tl-entry-sub";
+    sub.innerHTML = scorersLine + concededLine;
+    entry.appendChild(sub);
+  }
+}
+
+function runMatchTimelapse(r, onDone) {
+  const box = document.getElementById("tlCurrentMatch");
+  const events = [
+    ...r.myMinutes.map((m,i)=>({minute:m, type:"goal", scorer:r.scorers[i]||"?"})),
+    ...r.theirMinutes.map((m,i)=>({minute:m, type:"concede", scorer:r.conceded[i]||"?"})),
+  ].sort((a,b)=>a.minute-b.minute);
+
+  let myScore=0, theirScore=0, evtIdx=0, minute=0;
+  box.innerHTML = `
+    <div class="tl-match-header">
+      <div class="tl-match-vs">
+        <span class="tl-my-name">SEU TIME</span>
+        <span class="tl-vs">vs</span>
+        <span class="tl-opp-name">${r.opponent.flag} ${r.opponent.name}</span>
+      </div>
+      <div class="tl-stage">${r.round} · ${r.opponent.season}</div>
+    </div>
+    <div class="tl-scoreboard">
+      <span class="tl-score-my" id="tlScoreMy">0</span>
+      <div class="tl-score-center">
+        <div class="tl-clock" id="tlClock">1'</div>
+        <div class="tl-progress-bar"><div class="tl-progress-fill" id="tlProgressFill"></div></div>
+      </div>
+      <span class="tl-score-their" id="tlScoreTheir">0</span>
+    </div>
+    <div class="tl-events-list" id="tlEventsList"></div>
+    <button class="btn-skip-match" onclick="skipMatch()">Pular ⏩</button>`;
+
+  window._currentMatchInterval = setInterval(() => {
+    minute++;
+    const clockEl = document.getElementById("tlClock");
+    const fillEl  = document.getElementById("tlProgressFill");
+    if (clockEl) clockEl.textContent = minute <= 90 ? minute+"'" : "FT";
+    if (fillEl)  fillEl.style.width = (Math.min(minute,90)/90*100)+"%";
+
+    while (evtIdx < events.length && events[evtIdx].minute <= minute) {
+      const evt = events[evtIdx++];
+      window._matchEvtIdx = evtIdx;
+      if (evt.type==="goal") { myScore++; addTimelapseEvent("goal",evt.scorer,evt.minute); bump("tlScoreMy",myScore); }
+      else { theirScore++; addTimelapseEvent("concede",evt.scorer,evt.minute); bump("tlScoreTheir",theirScore); }
+    }
+
+    if (minute >= 90) {
+      clearInterval(window._currentMatchInterval);
+      window._matchDoneCallback = onDone;
+      addTimelapseEvent("whistle","",90);
+      setTimeout(onDone, 700);
+    }
+  }, 50);
+
+  window._matchDoneCallback = onDone;
+  window._matchEvents = events;
+  window._matchEvtIdx = 0;
+  window._matchR = r;
+}
+
+function skipMatch() {
+  if (window._currentMatchInterval) clearInterval(window._currentMatchInterval);
+  // Processa só os eventos que o interval ainda não mostrou
+  const events = window._matchEvents || [];
+  const startIdx = window._matchEvtIdx || 0;
+  const myEl = document.getElementById("tlScoreMy");
+  const thEl = document.getElementById("tlScoreTheir");
+  let myScore = parseInt(myEl?.textContent||0);
+  let thScore = parseInt(thEl?.textContent||0);
+  for (let i = startIdx; i < events.length; i++) {
+    const evt = events[i];
+    if (evt.type==="goal") { myScore++; addTimelapseEvent("goal",evt.scorer,evt.minute); }
+    else if (evt.type==="concede") { thScore++; addTimelapseEvent("concede",evt.scorer,evt.minute); }
+  }
+  if (myEl) myEl.textContent = myScore;
+  if (thEl) thEl.textContent = thScore;
+  const clockEl = document.getElementById("tlClock");
+  if (clockEl) clockEl.textContent = "FT";
+  const fillEl = document.getElementById("tlProgressFill");
+  if (fillEl) fillEl.style.width = "100%";
+  setTimeout(() => { if (window._matchDoneCallback) window._matchDoneCallback(); }, 400);
+  window._matchEvents = [];
+  window._matchEvtIdx = 0;
+}
+
+function bump(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = val;
+  el.classList.remove("score-bump");
+  void el.offsetWidth;
+  el.classList.add("score-bump");
+  setTimeout(()=>el.classList.remove("score-bump"),400);
+}
+
+function addTimelapseEvent(type, scorer, minute) {
+  const list = document.getElementById("tlEventsList");
+  if (!list) return;
+  const div = document.createElement("div");
+  div.className = `tl-event ${type}`;
+  if (type==="goal")         div.innerHTML=`<span class="tl-evt-icon">⚽</span><strong>${minute}'</strong> ${scorer} <span class="tl-evt-label gol">GOL!</span>`;
+  else if (type==="concede") div.innerHTML=`<span class="tl-evt-icon">🔴</span><strong>${minute}'</strong> ${scorer} <span class="tl-evt-label sof">Sofreu</span>`;
+  else                       div.innerHTML=`<span class="tl-evt-icon">🔔</span><strong>Apito Final</strong>`;
+  list.appendChild(div);
+  list.scrollTop = list.scrollHeight;
+}
+
+// ═══════════════════════════════════════════
+// FINAL CARD
+// ═══════════════════════════════════════════
+function renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall) {
+  const box = document.getElementById("tlCurrentMatch");
+  if (box) box.style.display = "none";
+  const card = document.getElementById("tlFinalCard");
+  if (!card) return;
+  card.style.display = "block";
+
+  const last = results[results.length-1];
+  const won = !eliminated && last.round === "FINAL" && last.outcome === "win";
+  const saldo = goalsFor - goalsAgainst;
+  const lastScoreText = last.penalties
+    ? `${last.myGoals}–${last.theirGoals} <small>(${last.penalties.mine}-${last.penalties.theirs} pen)</small>`
+    : `${last.myGoals}–${last.theirGoals}`;
+
+  card.innerHTML = `
+    <div class="fc-result">${won ? "🏆 CAMPEÃO!" : eliminated ? "ELIMINADO" : "FINALISTA"}</div>
+    <div class="fc-score ${won?"win":"lose"}">${lastScoreText}</div>
+    <div class="fc-stage-label">${last.round}</div>
+    <div class="fc-stats">
+      <div class="fc-stat"><span class="fc-stat-num">${wins}</span><span class="fc-stat-label">Vitórias</span></div>
+      <div class="fc-stat"><span class="fc-stat-num">${draws}</span><span class="fc-stat-label">Empates</span></div>
+      <div class="fc-stat"><span class="fc-stat-num">${losses}</span><span class="fc-stat-label">Derrotas</span></div>
+      <div class="fc-stat"><span class="fc-stat-num">${saldo>=0?"+":""}${saldo}</span><span class="fc-stat-label">Saldo</span></div>
+      <div class="fc-stat"><span class="fc-stat-num">${goalsFor}</span><span class="fc-stat-label">Gols pró</span></div>
+      <div class="fc-stat"><span class="fc-stat-num">${goalsAgainst}</span><span class="fc-stat-label">Sofridos</span></div>
+    </div>
+    <div class="fc-squad-header">ELENCO · OVERALL ${overall}</div>
+    <div class="fc-squad">${state.squad.map(p=>`
+      <div class="fc-player">
+        <div class="fc-player-left">
+          <span class="fc-player-pos">${p.pos}</span>
+          <span class="fc-player-name">${p.name}</span>
+        </div>
+        <div class="fc-player-right">
+          <span class="fc-player-team">${p.team} ${p.season}</span>
+          <span class="fc-player-num">${p.overall}</span>
+        </div>
+      </div>`).join("")}
+    </div>
+    <button class="btn-new-game" onclick="resetGame()">↺ NOVA PARTIDA</button>
+    <div class="fc-site">FutDraft</div>`;
+}
+
+// ═══════════════════════════════════════════
+// RESET
+// ═══════════════════════════════════════════
+function resetGame() {
+  if (window._currentMatchInterval) clearInterval(window._currentMatchInterval);
+  state = { currentTeam:null, rerollsLeft:3, formation:null, squad:[], phase:"landing", pickCount:0, mode:"champions" };
+  showPage("pageLanding");
+}
+
+// ═══════════════════════════════════════════
+// CHANGELOG
+// ═══════════════════════════════════════════
+function openChangelog() {
+  const ov = document.getElementById("changelogOverlay");
+  if (ov) ov.classList.add("open");
+}
+function closeChangelog() {
+  const ov = document.getElementById("changelogOverlay");
+  if (ov) ov.classList.remove("open");
+}
+
+document.getElementById("headerRight").insertAdjacentHTML("afterbegin",
+  `<span style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.5)">MONTE · SIMULE · FUTDRAFT</span>`);
+
+// ═══════════════════════════════════════════
+// CRÉDITOS
+// ═══════════════════════════════════════════
+function openCredits() {
+  const ov = document.getElementById("creditsOverlay");
+  if (ov) ov.classList.add("open");
+}
+function closeCredits() {
+  const ov = document.getElementById("creditsOverlay");
+  if (ov) ov.classList.remove("open");
+}

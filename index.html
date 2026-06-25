@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FutDraft · Champions · Libertadores · Copa do Brasil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-score">FUT<span class="dash">–</span>DRAFT</span>
+      <div class="brand-text">
+        <span class="brand-title">FUTDRAFT</span>
+        <span class="brand-sub">CHAMPIONS · LIBERTADORES · BRASIL</span>
+      </div>
+    </div>
+    <div class="header-right" id="headerRight">
+      <button class="btn-changelog" onclick="openChangelog()">CHANGELOG</button>
+      <button class="btn-credits" onclick="openCredits()">CRÉDITOS</button>
+    </div>
+  </div>
+</header>
+
+<!-- CHANGELOG (modal) -->
+<div id="changelogOverlay" class="credits-overlay">
+  <div class="credits-modal changelog-modal">
+    <button class="credits-close" onclick="closeChangelog()">✕</button>
+    <div class="credits-title">CHANGELOG</div>
+
+    <div class="cl-version current">
+      <div class="cl-ver-badge">v1.0 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-date">Junho 2026</div>
+      <ul class="cl-items">
+        <li>🏆 Modo Champions League — fase de grupos + mata-mata com times europeus históricos</li>
+        <li>🇧🇷 Modo Copa do Brasil — mata-mata direto com clássicos brasileiros</li>
+        <li>🌎 Modo Copa Libertadores — fase de grupos + mata-mata com times sul-americanos históricos</li>
+        <li>⚽ 10 formações jogáveis (4-3-3, 4-4-2, 3-5-2 e mais)</li>
+        <li>📊 Simulação com Poisson xG e timelapse de partida ao vivo</li>
+        <li>🎲 Sorteio animado tipo caça-níquel</li>
+        <li>♻️ Re-sorteios por partida (3 tentativas)</li>
+      </ul>
+    </div>
+
+    <div class="cl-version upcoming">
+      <div class="cl-ver-badge">v1.1 <span class="cl-badge-tag upcoming-tag">EM BREVE</span></div>
+      <div class="cl-ver-date">Próxima atualização</div>
+      <ul class="cl-items">
+        <li>🌍 Modo Copa do Mundo — grupos com 32 seleções históricas + mata-mata até a final</li>
+        <li>🗺️ Seleções de todos os continentes: América, Europa, África, Ásia e Oceania</li>
+        <li>🏟️ Novos efeitos visuais e sons de estádio</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- CRÉDITOS (modal) -->
+<div id="creditsOverlay" class="credits-overlay">
+  <div class="credits-modal">
+    <button class="credits-close" onclick="closeCredits()">✕</button>
+    <div class="credits-title">FUTDRAFT</div>
+    <p class="credits-text">
+      FutDraft é um jogo de sortear jogadores históricos e times, feito por fã, inspirado 
+	  em 7a0.com.br. Sorteie e ganhe!
+	  Jogo feito sem visar o lucro. Inspirado diretamente no 7a0.com.br!
+    </p>
+    <div class="credits-block">
+      <span class="credits-label">INSPIRADO EM</span>
+      <span class="credits-value">7a0.com.br</span>
+    </div>
+    <div class="credits-block">
+      <span class="credits-label">CRIADOR</span>
+      <span class="credits-value">PHDanoni</span>
+    </div>
+    <p class="credits-footer">Feito por fãs do futebol, sem fins comerciais.</p>
+  </div>
+</div>
+
+<!-- LANDING -->
+<div id="pageLanding" class="page active">
+  <div class="landing-inner">
+    <div class="landing-left">
+      <div class="landing-hero">
+        <span class="hero-score">FUT</span>
+        <span class="hero-sep">–</span>
+        <span class="hero-score gold">DRAFT</span>
+      </div>
+      <h1 class="landing-headline">Role o dado.<br>Monte seu time<br>dos sonhos</h1>
+      <p class="landing-desc">Sorteie times históricos do futebol. Escolha um craque de cada, complete os 11 e simule, ganhe o torneio.</p>
+      <div class="landing-buttons">
+        <button class="btn-primary" onclick="startGame()">JOGAR AGORA →</button>
+      </div>
+    </div>
+    <div class="landing-right">
+      <div class="landing-pitch-preview">
+        <div class="pitch-mini">
+          <div class="pm-row"><div class="pm-player"><span class="pm-num">9</span><span class="pm-name">Lewandowski</span></div></div>
+          <div class="pm-row triple">
+            <div class="pm-player"><span class="pm-num">7</span><span class="pm-name">Robben</span></div>
+            <div class="pm-player"><span class="pm-num">10</span><span class="pm-name">Müller</span></div>
+            <div class="pm-player"><span class="pm-num">8</span><span class="pm-name">Ribéry</span></div>
+          </div>
+          <div class="pm-row triple">
+            <div class="pm-player"><span class="pm-num">6</span><span class="pm-name">Alaba</span></div>
+            <div class="pm-player"><span class="pm-num">8</span><span class="pm-name">Lahm</span></div>
+            <div class="pm-player"><span class="pm-num">5</span><span class="pm-name">Martinez</span></div>
+          </div>
+          <div class="pm-row quad">
+            <div class="pm-player"><span class="pm-num">3</span><span class="pm-name">Dante</span></div>
+            <div class="pm-player"><span class="pm-num">5</span><span class="pm-name">Van Buyten</span></div>
+            <div class="pm-player"><span class="pm-num">4</span><span class="pm-name">Rafinha</span></div>
+            <div class="pm-player"><span class="pm-num">2</span><span class="pm-name">Boateng</span></div>
+          </div>
+          <div class="pm-row"><div class="pm-player"><span class="pm-num">1</span><span class="pm-name">Neuer</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ESCOLHA DE MODO -->
+<div id="pageModeSelect" class="page">
+  <div class="mode-pick-layout">
+    <div class="fp-title">ESCOLHA O MODO</div>
+    <p class="fp-desc">Em qual competição você quer montar e simular seu time?</p>
+    <div class="ms-grid ms-grid-three">
+      <div class="ms-card ms-champions" onclick="selectMode('champions')">
+        <div class="ms-emblem">🏆</div>
+        <div class="ms-name">CHAMPIONS LEAGUE</div>
+        <p class="ms-desc">Times históricos do futebol europeu. Fase de grupos (ida e volta) + mata-mata até a final.</p>
+        <div class="ms-tags"><span>Fase de grupos</span><span>Times europeus</span></div>
+      </div>
+      <div class="ms-card ms-libertadores" onclick="selectMode('libertadores')">
+        <div class="ms-emblem">🌎</div>
+        <div class="ms-name">COPA LIBERTADORES</div>
+        <p class="ms-desc">Times históricos da América do Sul e México. Fase de grupos (ida e volta) + mata-mata até a final.</p>
+        <div class="ms-tags"><span>Fase de grupos</span><span>Times sul-americanos</span></div>
+      </div>
+      <div class="ms-card ms-brasil" onclick="selectMode('brasil')">
+        <div class="ms-emblem">🇧🇷</div>
+        <div class="ms-name">COPA DO BRASIL</div>
+        <p class="ms-desc">Clássicos e campeões históricos do futebol brasileiro. Direto pro mata-mata, sem fase de grupos.</p>
+        <div class="ms-tags"><span>Mata-mata direto</span><span>Times brasileiros</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ESCOLHA DE FORMAÇÃO -->
+<div id="pageFormation" class="page">
+  <div class="formation-pick-layout">
+    <div class="fp-title">ESCOLHA A FORMAÇÃO</div>
+    <p class="fp-desc">Você vai montar o elenco baseado nessa formação. Escolha antes de começar.</p>
+    <div class="fp-grid" id="fpGrid"></div>
+  </div>
+</div>
+
+<!-- GAME PAGE -->
+<div id="pageGame" class="page">
+  <div class="game-layout">
+    <div class="panel-left" id="panelLeft">
+      <!-- Step 1: Roll -->
+      <div id="stepRoll" class="panel-section active">
+        <div class="rolled-team" id="rolledTeamDisplay" style="display:none">
+          <div class="rolled-label">SAIU</div>
+          <div class="rolled-flag" id="rolledFlag"></div>
+          <div class="rolled-name" id="rolledName"></div>
+          <div class="rolled-season" id="rolledSeason"></div>
+          <div class="reroll-area">
+            <div class="reroll-label">NÃO CURTIU? RE-SORTEIE · <span id="rerollCount">3</span> RESTANTES NA PARTIDA</div>
+            <div class="reroll-buttons">
+              <button class="btn-reroll" onclick="rerollTeam()" id="btnReroll">↺ OUTRO TIME</button>
+            </div>
+          </div>
+          <div class="pick-label">ESCOLHA UM JOGADOR</div>
+          <div class="player-list" id="playerList"></div>
+        </div>
+        <div class="roll-cta" id="rollCta">
+          <p class="roll-desc" id="rollDesc">Role para sortear um time histórico</p>
+          <button class="btn-roll" onclick="rollDice()">ROLAR <span class="dice-icon">⚄</span></button>
+        </div>
+      </div>
+      <!-- Step 2: Complete -->
+      <div id="stepFill" class="panel-section" style="display:none"></div>
+    </div>
+
+    <div class="panel-center">
+      <div class="pitch-container">
+        <div class="pitch" id="pitch"></div>
+      </div>
+    </div>
+
+    <div class="panel-right">
+      <div class="box-score-header">BOX SCORE · <span id="scoreCount">0/11</span></div>
+      <div class="score-bar">
+        <span class="score-bar-atk">■ ATAQUE</span>
+        <span class="score-bar-def">■ DEFESA</span>
+      </div>
+      <div class="score-list" id="scoreList"></div>
+      <div class="overall-badge" id="overallBadge" style="display:none">
+        <div class="ob-score" id="obScore"></div>
+        <div class="ob-breakdown" id="obBreakdown"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SIMULATION PAGE -->
+<div id="pageSimulation" class="page"></div>
+
+<script src="data.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
