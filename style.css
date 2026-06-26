@@ -2299,3 +2299,294 @@ body {
   .vt-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   .vt-squad-row { grid-template-columns: 32px 1fr 42px; }
 }
+
+/* ──────────────────────────────────────────
+   MULTIPLAYER — GERAL
+────────────────────────────────────────── */
+.btn-mp-launch {
+  background: transparent;
+  color: var(--text);
+  border: 2px solid var(--gold);
+  padding: 12px 26px;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: all 0.15s;
+}
+.btn-mp-launch:hover { background: var(--gold); color: #1a1a1a; transform: translateY(-1px); }
+
+.mp-back-link {
+  display: inline-block;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  margin-bottom: 18px;
+  padding: 6px 0;
+  transition: color 0.15s;
+}
+.mp-back-link:hover { color: var(--red); }
+
+.ms-card.ms-mphub:hover { border-color: var(--gold); }
+
+/* ──────────────────────────────────────────
+   MULTIPLAYER — FORMULÁRIOS (nomes / sala)
+────────────────────────────────────────── */
+.mp-names-layout {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 56px 24px;
+  text-align: center;
+}
+.mp-name-input-group {
+  text-align: left;
+  margin-bottom: 18px;
+}
+.mp-name-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.mp-name-label.side-a { color: var(--role-def); }
+.mp-name-label.side-b { color: var(--red); }
+.mp-name-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.mp-name-input:focus { border-color: var(--gold); }
+.mp-code-input { letter-spacing: 3px; font-family: var(--font-display); font-size: 1.1rem; }
+
+.mp-names-layout .btn-primary { width: 100%; margin-top: 8px; }
+
+.mp-entry-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.mp-entry-toggle-btn {
+  flex: 1;
+  background: var(--panel-bg);
+  border: 2px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  padding: 12px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mp-entry-toggle-btn.active {
+  background: var(--bg-dark);
+  border-color: var(--bg-dark);
+  color: var(--white);
+}
+.mp-entry-panel { text-align: left; }
+
+/* ──────────────────────────────────────────
+   MULTIPLAYER — LOBBY ONLINE
+────────────────────────────────────────── */
+.mp-room-code-box {
+  background: var(--bg-dark);
+  border-radius: 8px;
+  padding: 24px 20px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+.mp-room-code-label {
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 8px;
+}
+.mp-room-code-big {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  letter-spacing: 6px;
+  color: var(--gold);
+  margin-bottom: 14px;
+}
+.mp-room-code-box .btn-secondary { border-color: rgba(255,255,255,0.3); color: var(--white); }
+.mp-room-code-box .btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+.mp-lobby-status {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+.mp-lobby-spinner {
+  font-size: 1.8rem;
+  text-align: center;
+  animation: mpSpin 1.4s linear infinite;
+}
+@keyframes mpSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ──────────────────────────────────────────
+   MULTIPLAYER LOCAL — TELA DE HANDOFF
+────────────────────────────────────────── */
+.mp-handoff {
+  max-width: 440px;
+  margin: 80px auto;
+  padding: 40px 32px;
+  text-align: center;
+  background: var(--panel-bg);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+}
+.mp-handoff-badge {
+  font-size: 2.6rem;
+  margin-bottom: 16px;
+}
+.mp-handoff-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.mp-handoff.side-a .mp-handoff-title,
+.mp-handoff-badge.side-a { color: var(--role-def); }
+.mp-handoff-badge.side-b { color: var(--red); }
+.mp-handoff-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+/* ──────────────────────────────────────────
+   MULTIPLAYER — CABEÇALHO DO DRAFT (local e online)
+────────────────────────────────────────── */
+.mp-draft-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  border-radius: var(--radius);
+  background: var(--panel-bg);
+  border-left: 4px solid var(--border);
+}
+.mp-draft-header.side-a { border-left-color: var(--role-def); }
+.mp-draft-header.side-b { border-left-color: var(--red); }
+.mp-draft-team-tag {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+.mp-draft-progress {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 2px 10px;
+}
+.mp-draft-vs-opp {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* ──────────────────────────────────────────
+   MULTIPLAYER ONLINE — TIMER DE TURNO
+────────────────────────────────────────── */
+.mp-online-timer {
+  text-align: center;
+  margin-top: 14px;
+  padding: 14px;
+  background: var(--bg-dark);
+  border-radius: var(--radius);
+}
+.mp-timer-label {
+  font-size: 0.62rem;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 4px;
+}
+.mp-timer-num {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--gold);
+}
+
+/* ──────────────────────────────────────────
+   MULTIPLAYER — RESULTADO (confronto direto / mais longe)
+────────────────────────────────────────── */
+.mp-result-layout {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.mp-result-layout .final-card { position: static; top: auto; }
+.mp-result-layout .tl-current-match { min-height: 0; }
+
+.mp-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.mp-compare-col {
+  text-align: center;
+  padding: 16px 10px;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.1);
+}
+.mp-compare-col.mp-winner {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.08);
+}
+.mp-compare-name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.mp-compare-stage {
+  font-size: 0.78rem;
+  color: var(--gold);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.mp-compare-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.6);
+}
+.mp-compare-vs {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: rgba(255,255,255,0.4);
+}
+
+@media (max-width: 600px) {
+  .mp-compare-grid { grid-template-columns: 1fr; }
+  .mp-compare-vs { display: none; }
+}

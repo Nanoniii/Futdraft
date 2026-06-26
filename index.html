@@ -177,6 +177,7 @@
       <p class="landing-desc">Sorteie times históricos do futebol. Escolha um craque de cada, complete os 11 e simule, ganhe o torneio.</p>
       <div class="landing-buttons">
         <button class="btn-primary" onclick="startGame()">JOGAR AGORA →</button>
+        <button class="btn-mp-launch" onclick="openMultiplayerHub()">🎮 MULTIPLAYER</button>
         <button class="btn-secondary" onclick="openVitrine()">📋 VER VITRINE DE TIMES</button>
       </div>
     </div>
@@ -303,7 +304,188 @@
 <!-- SIMULATION PAGE -->
 <div id="pageSimulation" class="page"></div>
 
+<!-- ═══════════════════════════════════════════
+     MULTIPLAYER — HUB
+═══════════════════════════════════════════ -->
+<div id="pageMpHub" class="page">
+  <div class="mode-pick-layout">
+    <button class="mp-back-link" onclick="backToLandingFromMp()">← VOLTAR</button>
+    <div class="fp-title">MULTIPLAYER</div>
+    <p class="fp-desc">Monte seu time contra outro jogador. Escolha como vocês vão jogar.</p>
+    <div class="ms-grid">
+      <div class="ms-card ms-mphub" onclick="mpChooseKind('local')">
+        <div class="ms-emblem">📱</div>
+        <div class="ms-name">LOCAL · MESMO APARELHO</div>
+        <p class="ms-desc">Dois times no mesmo dispositivo. Cada um monta o seu, passando o aparelho entre as vezes.</p>
+        <div class="ms-tags"><span>2 jogadores</span><span>1 aparelho</span></div>
+      </div>
+      <div class="ms-card ms-mphub" onclick="mpChooseKind('online')">
+        <div class="ms-emblem">🌐</div>
+        <div class="ms-name">ONLINE · OUTROS APARELHOS</div>
+        <p class="ms-desc">Crie uma sala ou entre com um código. Draft em tempo real, 30s por escolha.</p>
+        <div class="ms-tags"><span>2 jogadores</span><span>Sala com código</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MULTIPLAYER — ESCOLHA DE MODO (competição) -->
+<div id="pageMpModeSelect" class="page">
+  <div class="mode-pick-layout">
+    <button class="mp-back-link" onclick="mpBackFromModeSelect()">← VOLTAR</button>
+    <div class="fp-title">ESCOLHA O MODO</div>
+    <p class="fp-desc">Em qual competição os dois times vão jogar?</p>
+    <div class="ms-grid ms-grid-four">
+      <div class="ms-card ms-champions" onclick="mpSelectMode('champions')">
+        <div class="ms-emblem">🏆</div>
+        <div class="ms-name">CHAMPIONS LEAGUE</div>
+        <p class="ms-desc">Times históricos do futebol europeu.</p>
+        <div class="ms-tags"><span>Times europeus</span></div>
+      </div>
+      <div class="ms-card ms-libertadores" onclick="mpSelectMode('libertadores')">
+        <div class="ms-emblem">🌎</div>
+        <div class="ms-name">COPA LIBERTADORES</div>
+        <p class="ms-desc">Times históricos da América do Sul e México.</p>
+        <div class="ms-tags"><span>Times sul-americanos</span></div>
+      </div>
+      <div class="ms-card ms-brasil" onclick="mpSelectMode('brasil')">
+        <div class="ms-emblem">🇧🇷</div>
+        <div class="ms-name">COPA DO BRASIL</div>
+        <p class="ms-desc">Clássicos e campeões do futebol brasileiro.</p>
+        <div class="ms-tags"><span>Times brasileiros</span></div>
+      </div>
+      <div class="ms-card ms-mundo" onclick="mpSelectMode('copadomundo')">
+        <div class="ms-emblem">🌍</div>
+        <div class="ms-name">COPA DO MUNDO</div>
+        <p class="ms-desc">Seleções históricas de 1930 a 2022.</p>
+        <div class="ms-tags"><span>Seleções</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MULTIPLAYER — ESCOLHA DO TIPO DE RESULTADO -->
+<div id="pageMpResultType" class="page">
+  <div class="mode-pick-layout">
+    <button class="mp-back-link" onclick="mpBackFromResultType()">← VOLTAR</button>
+    <div class="fp-title">COMO VAI SER A DISPUTA?</div>
+    <p class="fp-desc">Escolha o formato da partida entre os dois times.</p>
+    <div class="ms-grid">
+      <div class="ms-card ms-mphub" onclick="mpSelectResultType('direto')">
+        <div class="ms-emblem">⚔️</div>
+        <div class="ms-name">CONFRONTO DIRETO</div>
+        <p class="ms-desc">Depois de montar os 11, os dois times se enfrentam direto: ida e volta, agregado decide. Empate vai para os pênaltis.</p>
+        <div class="ms-tags"><span>Ida e volta</span><span>Pênaltis se empatar</span></div>
+      </div>
+      <div class="ms-card ms-mphub" onclick="mpSelectResultType('longe')">
+        <div class="ms-emblem">🏁</div>
+        <div class="ms-name">QUEM CHEGA MAIS LONGE</div>
+        <p class="ms-desc">Cada time roda sua própria copa contra adversários sorteados pela IA. Quem for mais longe na competição vence.</p>
+        <div class="ms-tags"><span>Campanhas separadas</span><span>Compara fase final</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MULTIPLAYER — ESCOLHA DE FORMAÇÃO -->
+<div id="pageMpFormation" class="page">
+  <div class="formation-pick-layout">
+    <button class="mp-back-link" onclick="mpBackFromFormation()">← VOLTAR</button>
+    <div class="fp-title">ESCOLHA A FORMAÇÃO</div>
+    <p class="fp-desc">Os dois times vão montar o elenco baseado nessa formação.</p>
+    <div class="fp-grid" id="mpFpGrid"></div>
+  </div>
+</div>
+
+<!-- MULTIPLAYER LOCAL — NOMES DOS TIMES -->
+<div id="pageMpLocalNames" class="page">
+  <div class="mp-names-layout">
+    <button class="mp-back-link" onclick="showPage('pageMpFormation')">← VOLTAR</button>
+    <div class="fp-title">NOMEIE OS TIMES</div>
+    <p class="fp-desc">Cada lado vai montar o elenco separadamente, passando o aparelho entre as vezes.</p>
+    <div class="mp-name-input-group">
+      <label class="mp-name-label side-a">🔵 TIME A</label>
+      <input type="text" id="mpNameA" class="mp-name-input" placeholder="Nome do time A" maxlength="20">
+    </div>
+    <div class="mp-name-input-group">
+      <label class="mp-name-label side-b">🔴 TIME B</label>
+      <input type="text" id="mpNameB" class="mp-name-input" placeholder="Nome do time B" maxlength="20">
+    </div>
+    <button class="btn-primary" onclick="mpStartLocalDraft()">COMEÇAR DRAFT →</button>
+  </div>
+</div>
+
+<!-- MULTIPLAYER LOCAL — DRAFT (preenchido via JS) -->
+<div id="pageMpLocalDraft" class="page"></div>
+
+<!-- MULTIPLAYER ONLINE — ENTRADA (criar ou entrar) -->
+<div id="pageMpOnlineEntry" class="page">
+  <div class="mp-names-layout">
+    <button class="mp-back-link" onclick="showPage('pageMpHub')">← VOLTAR</button>
+    <div class="fp-title">MULTIPLAYER ONLINE</div>
+    <p class="fp-desc">Crie uma sala e mande o código pro seu amigo, ou entre com um código que recebeu.</p>
+    <div class="mp-entry-toggle">
+      <button class="mp-entry-toggle-btn active" id="mpEntryToggleCreate" onclick="onlineShowCreateForm()">CRIAR SALA</button>
+      <button class="mp-entry-toggle-btn" id="mpEntryToggleJoin" onclick="onlineShowJoinForm()">ENTRAR COM CÓDIGO</button>
+    </div>
+
+    <div id="mpOnlineCreatePanel" class="mp-entry-panel" style="display:block">
+      <div class="mp-name-input-group">
+        <label class="mp-name-label">SEU NOME</label>
+        <input type="text" id="mpOnlineCreateName" class="mp-name-input" placeholder="Como vamos te chamar?" maxlength="20">
+      </div>
+      <button class="btn-primary" onclick="onlineCreateRoom()">CRIAR SALA →</button>
+    </div>
+
+    <div id="mpOnlineJoinPanel" class="mp-entry-panel" style="display:none">
+      <div class="mp-name-input-group">
+        <label class="mp-name-label">SEU NOME</label>
+        <input type="text" id="mpOnlineJoinName" class="mp-name-input" placeholder="Como vamos te chamar?" maxlength="20">
+      </div>
+      <div class="mp-name-input-group">
+        <label class="mp-name-label">CÓDIGO DA SALA</label>
+        <input type="text" id="mpOnlineJoinCode" class="mp-name-input mp-code-input" placeholder="EX: AB12C" maxlength="6" style="text-transform:uppercase">
+      </div>
+      <button class="btn-primary" onclick="onlineJoinRoom()">ENTRAR NA SALA →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MULTIPLAYER ONLINE — LOBBY -->
+<div id="pageMpOnlineLobby" class="page">
+  <div class="mp-names-layout">
+    <button class="mp-back-link" onclick="backToLandingFromMp()">SAIR DA SALA</button>
+    <div class="fp-title">SALA CRIADA</div>
+    <div class="mp-room-code-box">
+      <div class="mp-room-code-label">CÓDIGO DA SALA</div>
+      <div class="mp-room-code-big" id="mpRoomCodeDisplay">—</div>
+      <button class="btn-secondary" id="mpCopyCodeBtn" onclick="onlineCopyRoomCode()">📋 COPIAR CÓDIGO</button>
+    </div>
+
+    <div id="mpLobbyHostControls" style="display:none">
+      <p class="mp-lobby-status" id="mpLobbyWaitingText">Aguardando o segundo jogador entrar com o código...</p>
+      <div id="mpLobbyModePanel" style="display:none">
+        <button class="btn-primary" onclick="showPage('pageMpModeSelect')">ESCOLHER MODO E FORMAÇÃO →</button>
+      </div>
+    </div>
+
+    <div id="mpLobbyGuestWaiting" style="display:none">
+      <p class="mp-lobby-status">Você entrou na sala! Aguardando o anfitrião escolher o modo, a disputa e a formação...</p>
+      <div class="mp-lobby-spinner">⚽</div>
+    </div>
+  </div>
+</div>
+
+<!-- MULTIPLAYER ONLINE — DRAFT (preenchido via JS) -->
+<div id="pageMpOnlineDraft" class="page"></div>
+
+<!-- MULTIPLAYER — RESULTADO (preenchido via JS, local e online) -->
+<div id="pageMpResult" class="page"></div>
+
 <script src="data.js"></script>
 <script src="game.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="multiplayer.js"></script>
 </body>
 </html>
