@@ -1,4 +1,121 @@
 // ═══════════════════════════════════════════
+// CONFIGURAÇÕES (velocidade, avanço entre partidas, sons)
+// ═══════════════════════════════════════════
+const SETTINGS_KEY = "futdraft_settings_v1";
+const SETTINGS_DEFAULTS = {
+  autoAdvance: true,     // true = vai pro próximo jogo direto · false = precisa clicar
+  speed: "normal",       // "slow" | "normal" | "fast"
+  soundsEnabled: true,
+  soundGol: true,
+  soundApito: true,
+  soundAmbiente: true,
+};
+
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+    return { ...SETTINGS_DEFAULTS, ...(saved || {}) };
+  } catch (e) {
+    return { ...SETTINGS_DEFAULTS };
+  }
+}
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {}
+}
+let settings = loadSettings();
+
+// Multiplicador de duração aplicado aos tempos da simulação. >1 = mais lento, <1 = mais rápido.
+const SPEED_MULTIPLIERS = { slow: 2, normal: 1, fast: 0.5 };
+function speedMul() { return SPEED_MULTIPLIERS[settings.speed] || 1; }
+
+// ── Modal de configurações ──
+function openSettings() {
+  syncSettingsUI();
+  document.getElementById("settingsOverlay").classList.add("open");
+}
+function closeSettings() {
+  document.getElementById("settingsOverlay").classList.remove("open");
+}
+function syncSettingsUI() {
+  document.querySelectorAll("#speedOptions .settings-opt").forEach(b => {
+    b.classList.toggle("active", b.dataset.value === settings.speed);
+  });
+  document.querySelectorAll("#advanceOptions .settings-opt").forEach(b => {
+    b.classList.toggle("active", (b.dataset.value === "auto") === settings.autoAdvance);
+  });
+  const master = document.getElementById("chkSoundsMaster");
+  const gol = document.getElementById("chkSoundGol");
+  const apito = document.getElementById("chkSoundApito");
+  const ambiente = document.getElementById("chkSoundAmbiente");
+  if (master) master.checked = settings.soundsEnabled;
+  if (gol) gol.checked = settings.soundGol;
+  if (apito) apito.checked = settings.soundApito;
+  if (ambiente) ambiente.checked = settings.soundAmbiente;
+  const sub = document.getElementById("soundSubOptions");
+  if (sub) {
+    sub.classList.toggle("disabled", !settings.soundsEnabled);
+    sub.querySelectorAll("input").forEach(i => { i.disabled = !settings.soundsEnabled; });
+  }
+}
+function setSpeed(v) { settings.speed = v; saveSettings(); syncSettingsUI(); }
+function setAutoAdvance(v) { settings.autoAdvance = v; saveSettings(); syncSettingsUI(); }
+function toggleSoundsMaster(v) {
+  settings.soundsEnabled = v;
+  if (!v) stopAmbiente();
+  saveSettings();
+  syncSettingsUI();
+}
+function toggleSoundCategory(key, v) {
+  settings[key] = v;
+  if (key === "soundAmbiente" && !v) stopAmbiente();
+  saveSettings();
+}
+
+// ═══════════════════════════════════════════
+// SONS
+// ═══════════════════════════════════════════
+const SOUND_FILES = {
+  golTorcida: "sounds/gol-torcida.mp3",
+  apitoInicio: "sounds/apito-inicio.mp3",
+  apitoFim: "sounds/apito-fim.mp3",
+  ambienteTorcida: "sounds/ambiente-torcida.mp3",
+};
+const _audioCache = {};
+function getAudio(key) {
+  if (!_audioCache[key]) {
+    const a = new Audio(SOUND_FILES[key]);
+    if (key === "ambienteTorcida") { a.loop = true; a.volume = 0.32; }
+    else if (key === "golTorcida") { a.volume = 0.85; }
+    else { a.volume = 0.9; }
+    _audioCache[key] = a;
+  }
+  return _audioCache[key];
+}
+// category: "gol" | "apito" | "ambiente" — cada uma tem seu próprio toggle nas configurações
+function playSound(key, category) {
+  if (!settings.soundsEnabled) return;
+  if (category === "gol" && !settings.soundGol) return;
+  if (category === "apito" && !settings.soundApito) return;
+  if (category === "ambiente" && !settings.soundAmbiente) return;
+  const base = getAudio(key);
+  try {
+    if (category === "ambiente") {
+      base.currentTime = 0;
+      base.play().catch(() => {});
+    } else {
+      // clona pra permitir sons sobrepostos (ex: gols em sequência rápida)
+      const clone = base.cloneNode();
+      clone.volume = base.volume;
+      clone.play().catch(() => {});
+    }
+  } catch (e) {}
+}
+function stopAmbiente() {
+  const a = _audioCache["ambienteTorcida"];
+  if (a) { try { a.pause(); } catch (e) {} }
+}
+
+// ═══════════════════════════════════════════
 // GAME STATE
 // ═══════════════════════════════════════════
 let state = {
@@ -8,7 +125,7 @@ let state = {
   squad: [],
   phase: "landing",
   pickCount: 0,
-  mode: "champions",  // "champions" (Champions League, times europeus) ou "brasil" (Copa do Brasil, times históricos do Brasil)
+  mode: "champions",  // "champions" | "brasil" | "libertadores" | "copadomundo"
 };
 
 // IDs dos times brasileiros que participam do modo Libertadores (conforme lista oficial)
@@ -48,6 +165,7 @@ const LIBERTADORES_BR_IDS = new Set([
 // Retorna o pool de times do modo atualmente selecionado
 function getTeamPool() {
   if (state.mode === "brasil") return BRAZIL_TEAMS;
+  if (state.mode === "copadomundo") return WORLD_CUP_TEAMS;
   if (state.mode === "libertadores") {
     const brFiltered = BRAZIL_TEAMS.filter(t => LIBERTADORES_BR_IDS.has(t.id));
     return LIBERTADORES_TEAMS.concat(brFiltered);
@@ -337,7 +455,7 @@ function displayRolledTeam(team) {
   document.getElementById("rolledTeamDisplay").style.display = "block";
   document.getElementById("rolledFlag").textContent = team.flag;
   document.getElementById("rolledName").textContent = team.name;
-  document.getElementById("rolledSeason").textContent = state.mode === "champions" ? "Copa " + team.season : team.season;
+  document.getElementById("rolledSeason").textContent = state.mode === "champions" ? "Copa " + team.season : state.mode === "copadomundo" ? "Copa do Mundo " + team.season : team.season;
   document.getElementById("rerollCount").textContent = state.rerollsLeft;
   document.getElementById("btnReroll").disabled = state.rerollsLeft === 0;
   renderPlayerList(team);
@@ -426,7 +544,7 @@ function showCompletePanel() {
       <span class="oi-detail">${atk} atq · ${def} def</span>
     </div>
     <button class="btn-primary simulate-btn" onclick="startSimulation()">
-      SIMULAR ${state.mode === "brasil" ? "A COPA DO BRASIL" : state.mode === "libertadores" ? "A LIBERTADORES" : "A CHAMPIONS"} →
+      SIMULAR ${state.mode === "brasil" ? "A COPA DO BRASIL" : state.mode === "libertadores" ? "A LIBERTADORES" : state.mode === "copadomundo" ? "A COPA DO MUNDO" : "A CHAMPIONS"} →
     </button>
   `;
   document.getElementById("overallBadge").style.display = "none";
@@ -628,22 +746,32 @@ function runSimulation() {
   const overall = calcOverall();
   const isBrasil = state.mode === "brasil";
   const isLibertadores = state.mode === "libertadores";
-  const hasGroups = !isBrasil; // Champions e Libertadores têm fase de grupos
+  const isWorldCup = state.mode === "copadomundo";
+  const hasGroups = !isBrasil; // Champions, Libertadores e Copa do Mundo têm fase de grupos
   const allOpponents = [...getTeamPool()].sort(()=>Math.random()-0.5);
 
   let groupOpponents = [];
   let knockoutOpponents;
+  let stages;
   if (isBrasil) {
     // Copa do Brasil: sem fase de grupos, direto pro mata-mata (4 adversários)
     knockoutOpponents = allOpponents.slice(0, 4)
       .sort((a, b) => teamOverall(a.players) - teamOverall(b.players));
+    stages = ["OITAVAS","QUARTAS","SEMI","FINAL"];
+  } else if (isWorldCup) {
+    // Copa do Mundo: 3 adversários de grupo (turno único, sem volta) + 5 do
+    // mata-mata (dezesseis-avos -> oitavas -> quartas -> semi -> final)
+    groupOpponents = allOpponents.slice(0, 3);
+    knockoutOpponents = allOpponents.slice(3, 8)
+      .sort((a, b) => teamOverall(a.players) - teamOverall(b.players));
+    stages = ["16-AVOS","OITAVAS","QUARTAS","SEMI","FINAL"];
   } else {
-    // Champions / Libertadores: 3 adversários de grupo + 4 do mata-mata
+    // Champions / Libertadores: 3 adversários de grupo (ida e volta) + 4 do mata-mata
     groupOpponents = allOpponents.slice(0, 3);
     knockoutOpponents = allOpponents.slice(3, 7)
       .sort((a, b) => teamOverall(a.players) - teamOverall(b.players));
+    stages = ["OITAVAS","QUARTAS","SEMI","FINAL"];
   }
-  const stages = ["OITAVAS","QUARTAS","SEMI","FINAL"];
   const results = [];
   let wins=0, draws=0, losses=0, goalsFor=0, goalsAgainst=0, eliminated=false;
   let groupTable = null, myGroupPos = -1;
@@ -676,7 +804,9 @@ function runSimulation() {
     for (let i = 0; i < groupTeams.length; i++) {
       for (let j = i+1; j < groupTeams.length; j++) {
         groupMatches.push([groupTeams[i], groupTeams[j]]); // ida
-        groupMatches.push([groupTeams[j], groupTeams[i]]); // volta (mando de campo invertido)
+        // Copa do Mundo: turno único (3 jogos por time). Champions/Libertadores
+        // mantêm ida e volta (6 jogos por time).
+        if (!isWorldCup) groupMatches.push([groupTeams[j], groupTeams[i]]); // volta
       }
     }
     groupMatches.sort(() => Math.random() - 0.5);
@@ -720,7 +850,7 @@ function runSimulation() {
 
   // ===== MATA-MATA (se nao eliminado nos grupos, ou direto se for Copa do Brasil) =====
   if (!eliminated) {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < knockoutOpponents.length; i++) {
       const opp = knockoutOpponents[i];
       const oppAtk = teamAtk(opp.players);
       const oppDef = teamDef(opp.players);
@@ -761,9 +891,10 @@ function renderTimelapse(results, eliminated, goalsFor, goalsAgainst, wins, draw
   const container = document.getElementById("pageSimulation");
   const isBrasil = state.mode === "brasil";
   const isLibertadores = state.mode === "libertadores";
-  const simTitle = isBrasil ? "COPA DO BRASIL" : isLibertadores ? "COPA LIBERTADORES" : "CHAMPIONS LEAGUE";
-  const simLogo = isBrasil ? "🇧🇷" : isLibertadores ? "🌎" : "🏆";
-  const simWaiting = isBrasil ? "A Copa do Brasil começa em breve..." : isLibertadores ? "A Libertadores começa em breve..." : "A Champions começa em breve...";
+  const isWorldCup = state.mode === "copadomundo";
+  const simTitle = isBrasil ? "COPA DO BRASIL" : isLibertadores ? "COPA LIBERTADORES" : isWorldCup ? "COPA DO MUNDO" : "CHAMPIONS LEAGUE";
+  const simLogo = isBrasil ? "🇧🇷" : isLibertadores ? "🌎" : isWorldCup ? "🌍" : "🏆";
+  const simWaiting = isBrasil ? "A Copa do Brasil começa em breve..." : isLibertadores ? "A Libertadores começa em breve..." : isWorldCup ? "A Copa do Mundo começa em breve..." : "A Champions começa em breve...";
   container.innerHTML = `
     <div class="timelapse-layout">
       <div class="timelapse-left">
@@ -779,9 +910,36 @@ function renderTimelapse(results, eliminated, goalsFor, goalsAgainst, wins, draw
           <div class="tl-waiting">${simWaiting}</div>
         </div>
         <div id="tlFinalCard" class="final-card" style="display:none"></div>
+        <div id="tlContinueBar" class="tl-continue-bar" style="display:none">
+          <button class="btn-continue-next" id="tlContinueBtn" onclick="handleContinueClick()">PRÓXIMO JOGO →</button>
+        </div>
       </div>
     </div>`;
   showMatchSequence(results, 0, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, groupTable, myGroupPos);
+}
+
+// ── Avanço entre partidas (automático ou manual, conforme configurações) ──
+function showContinueButton(callback, label) {
+  const bar = document.getElementById("tlContinueBar");
+  if (!bar) { callback(); return; }
+  const btn = document.getElementById("tlContinueBtn");
+  if (btn) btn.textContent = label || "PRÓXIMO JOGO →";
+  bar.style.display = "flex";
+  window._tlContinueCallback = callback;
+}
+function handleContinueClick() {
+  const bar = document.getElementById("tlContinueBar");
+  if (bar) bar.style.display = "none";
+  const cb = window._tlContinueCallback;
+  window._tlContinueCallback = null;
+  if (cb) cb();
+}
+function waitThenContinue(callback, delayMs, label) {
+  if (settings.autoAdvance) {
+    setTimeout(callback, Math.round(delayMs * speedMul()));
+  } else {
+    showContinueButton(callback, label);
+  }
 }
 
 function renderGroupTable(groupTable, myGroupPos) {
@@ -819,19 +977,19 @@ function showMatchSequence(results, idx, eliminated, goalsFor, goalsAgainst, win
   const groupMatchesCount = results.filter(r => r.round === "GRUPOS").length;
   if (idx === groupMatchesCount && groupMatchesCount > 0 && groupTable) {
     renderGroupTable(groupTable, myGroupPos);
-    setTimeout(() => showMatchSequence(results, idx, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, null, myGroupPos), 2600);
+    waitThenContinue(() => showMatchSequence(results, idx, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, null, myGroupPos), 2600, "VER MATA-MATA →");
     return;
   }
 
   if (idx >= results.length) {
-    setTimeout(() => renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall), 500);
+    setTimeout(() => renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall), Math.round(500 * speedMul()));
     return;
   }
   const r = results[idx];
   addMatchToList(r, idx);
   runMatchTimelapse(r, () => {
     updateMatchInList(r, idx);
-    setTimeout(() => showMatchSequence(results, idx+1, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, groupTable, myGroupPos), 1000);
+    waitThenContinue(() => showMatchSequence(results, idx+1, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, groupTable, myGroupPos), 1000, "PRÓXIMO JOGO →");
   });
 }
 
@@ -895,6 +1053,10 @@ function runMatchTimelapse(r, onDone) {
     <div class="tl-events-list" id="tlEventsList"></div>
     <button class="btn-skip-match" onclick="skipMatch()">Pular ⏩</button>`;
 
+  playSound("apitoInicio", "apito");
+  playSound("ambienteTorcida", "ambiente");
+
+  const tickMs = Math.max(12, Math.round(50 * speedMul()));
   window._currentMatchInterval = setInterval(() => {
     minute++;
     const clockEl = document.getElementById("tlClock");
@@ -905,7 +1067,7 @@ function runMatchTimelapse(r, onDone) {
     while (evtIdx < events.length && events[evtIdx].minute <= minute) {
       const evt = events[evtIdx++];
       window._matchEvtIdx = evtIdx;
-      if (evt.type==="goal") { myScore++; addTimelapseEvent("goal",evt.scorer,evt.minute); bump("tlScoreMy",myScore); }
+      if (evt.type==="goal") { myScore++; addTimelapseEvent("goal",evt.scorer,evt.minute); bump("tlScoreMy",myScore); playSound("golTorcida","gol"); }
       else { theirScore++; addTimelapseEvent("concede",evt.scorer,evt.minute); bump("tlScoreTheir",theirScore); }
     }
 
@@ -913,9 +1075,11 @@ function runMatchTimelapse(r, onDone) {
       clearInterval(window._currentMatchInterval);
       window._matchDoneCallback = onDone;
       addTimelapseEvent("whistle","",90);
-      setTimeout(onDone, 700);
+      stopAmbiente();
+      playSound("apitoFim", "apito");
+      setTimeout(onDone, Math.round(700 * speedMul()));
     }
-  }, 50);
+  }, tickMs);
 
   window._matchDoneCallback = onDone;
   window._matchEvents = events;
@@ -925,6 +1089,8 @@ function runMatchTimelapse(r, onDone) {
 
 function skipMatch() {
   if (window._currentMatchInterval) clearInterval(window._currentMatchInterval);
+  stopAmbiente();
+  playSound("apitoFim", "apito");
   // Processa só os eventos que o interval ainda não mostrou
   const events = window._matchEvents || [];
   const startIdx = window._matchEvtIdx || 0;
@@ -1021,6 +1187,8 @@ function renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draw
 // ═══════════════════════════════════════════
 function resetGame() {
   if (window._currentMatchInterval) clearInterval(window._currentMatchInterval);
+  stopAmbiente();
+  window._tlContinueCallback = null;
   state = { currentTeam:null, rerollsLeft:3, formation:null, squad:[], phase:"landing", pickCount:0, mode:"champions" };
   showPage("pageLanding");
 }

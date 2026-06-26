@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FutDraft · Champions · Libertadores · Copa do Brasil</title>
+  <title>FutDraft · Champions · Libertadores · Brasil · Mundo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -16,10 +16,11 @@
       <span class="brand-score">FUT<span class="dash">–</span>DRAFT</span>
       <div class="brand-text">
         <span class="brand-title">FUTDRAFT</span>
-        <span class="brand-sub">CHAMPIONS · LIBERTADORES · BRASIL</span>
+        <span class="brand-sub">CHAMPIONS · LIBERTADORES · BRASIL · MUNDO</span>
       </div>
     </div>
     <div class="header-right" id="headerRight">
+      <button class="btn-settings" onclick="openSettings()">⚙ CONFIGURAÇÕES</button>
       <button class="btn-changelog" onclick="openChangelog()">CHANGELOG</button>
       <button class="btn-credits" onclick="openCredits()">CRÉDITOS</button>
     </div>
@@ -32,8 +33,8 @@
     <button class="credits-close" onclick="closeChangelog()">✕</button>
     <div class="credits-title">CHANGELOG</div>
 
-    <div class="cl-version current">
-      <div class="cl-ver-badge">v1.0 <span class="cl-badge-tag">ATUAL</span></div>
+    <div class="cl-version">
+      <div class="cl-ver-badge">v1.0</div>
       <div class="cl-ver-date">Junho 2026</div>
       <ul class="cl-items">
         <li>🏆 Modo Champions League — fase de grupos + mata-mata com times europeus históricos</li>
@@ -46,13 +47,22 @@
       </ul>
     </div>
 
+    <div class="cl-version current">
+      <div class="cl-ver-badge">v1.1 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-date">Junho 2026</div>
+      <ul class="cl-items">
+        <li>🌍 Modo Copa do Mundo — 111 seleções históricas (1930 a 2022)</li>
+        <li>🗺️ Seleções de todos os continentes: América, Europa, África, Ásia e Oceania</li>
+        <li>⚔️ Fase de grupos em turno único (3 jogos) + mata-mata desde os 16-avos de final até a final</li>
+      </ul>
+    </div>
+
     <div class="cl-version upcoming">
-      <div class="cl-ver-badge">v1.1 <span class="cl-badge-tag upcoming-tag">EM BREVE</span></div>
+      <div class="cl-ver-badge">v1.2 <span class="cl-badge-tag upcoming-tag">EM BREVE</span></div>
       <div class="cl-ver-date">Próxima atualização</div>
       <ul class="cl-items">
-        <li>🌍 Modo Copa do Mundo — grupos com 32 seleções históricas + mata-mata até a final</li>
-        <li>🗺️ Seleções de todos os continentes: América, Europa, África, Ásia e Oceania</li>
-        <li>🏟️ Novos efeitos visuais e sons de estádio</li>
+        <li>📋 Vitrine com todos os times do jogo, mostrando o elenco completo e o overall de cada jogador</li>
+        <li>🏴 Modo Eurocopa — mata-mata com seleções históricas da Eurocopa!</li>
       </ul>
     </div>
   </div>
@@ -77,6 +87,60 @@
       <span class="credits-value">PHDanoni</span>
     </div>
     <p class="credits-footer">Feito por fãs do futebol, sem fins comerciais.</p>
+  </div>
+</div>
+
+<!-- CONFIGURAÇÕES (modal) -->
+<div id="settingsOverlay" class="credits-overlay">
+  <div class="credits-modal settings-modal">
+    <button class="credits-close" onclick="closeSettings()">✕</button>
+    <div class="credits-title">CONFIGURAÇÕES</div>
+
+    <div class="settings-section">
+      <div class="settings-label">VELOCIDADE DA SIMULAÇÃO</div>
+      <p class="settings-desc">Controla o ritmo dos jogos durante a simulação.</p>
+      <div class="settings-options" id="speedOptions">
+        <button class="settings-opt" data-value="slow" onclick="setSpeed('slow')">LENTA</button>
+        <button class="settings-opt" data-value="normal" onclick="setSpeed('normal')">NORMAL</button>
+        <button class="settings-opt" data-value="fast" onclick="setSpeed('fast')">RÁPIDA</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label">AVANÇO ENTRE PARTIDAS</div>
+      <p class="settings-desc">Ir direto pro próximo jogo ou esperar você clicar.</p>
+      <div class="settings-options" id="advanceOptions">
+        <button class="settings-opt" data-value="auto" onclick="setAutoAdvance(true)">AUTOMÁTICO</button>
+        <button class="settings-opt" data-value="manual" onclick="setAutoAdvance(false)">CLICAR PRA CONTINUAR</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label-row">
+        <span class="settings-label">SONS DO JOGO</span>
+        <label class="switch">
+          <input type="checkbox" id="chkSoundsMaster" onchange="toggleSoundsMaster(this.checked)">
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+      <p class="settings-desc">Ative ou desative os efeitos sonoros da partida.</p>
+      <div class="settings-sub" id="soundSubOptions">
+        <label class="settings-check">
+          <input type="checkbox" id="chkSoundGol" onchange="toggleSoundCategory('soundGol', this.checked)">
+          ⚽ Gol da torcida
+        </label>
+        <label class="settings-check">
+          <input type="checkbox" id="chkSoundApito" onchange="toggleSoundCategory('soundApito', this.checked)">
+          🔔 Apitos (início/fim)
+        </label>
+        <label class="settings-check">
+          <input type="checkbox" id="chkSoundAmbiente" onchange="toggleSoundCategory('soundAmbiente', this.checked)">
+          📣 Ambiente da torcida
+        </label>
+      </div>
+    </div>
+
+    <p class="settings-footnote">Suas preferências ficam salvas neste navegador.</p>
   </div>
 </div>
 
@@ -127,7 +191,7 @@
   <div class="mode-pick-layout">
     <div class="fp-title">ESCOLHA O MODO</div>
     <p class="fp-desc">Em qual competição você quer montar e simular seu time?</p>
-    <div class="ms-grid ms-grid-three">
+    <div class="ms-grid ms-grid-four">
       <div class="ms-card ms-champions" onclick="selectMode('champions')">
         <div class="ms-emblem">🏆</div>
         <div class="ms-name">CHAMPIONS LEAGUE</div>
@@ -145,6 +209,12 @@
         <div class="ms-name">COPA DO BRASIL</div>
         <p class="ms-desc">Clássicos e campeões históricos do futebol brasileiro. Direto pro mata-mata, sem fase de grupos.</p>
         <div class="ms-tags"><span>Mata-mata direto</span><span>Times brasileiros</span></div>
+      </div>
+      <div class="ms-card ms-mundo" onclick="selectMode('copadomundo')">
+        <div class="ms-emblem">🌍</div>
+        <div class="ms-name">COPA DO MUNDO</div>
+        <p class="ms-desc">Seleções históricas de 1930 a 2022. Fase de grupos (turno único, 3 jogos) + mata-mata desde os 16-avos até a final.</p>
+        <div class="ms-tags"><span>Fase de grupos</span><span>Seleções</span></div>
       </div>
     </div>
   </div>

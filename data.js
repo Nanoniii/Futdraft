@@ -4680,7 +4680,7 @@ const LIBERTADORES_TEAMS = [
     formation: "4-2-3-1",
     players: [
       { name: "Carini", pos: "GK", overall: 78 },
-      { name: "Lodeiro", pos: "RB", overall: 75 },
+      { name: "Alejandro González", pos: "RB", overall: 75 },
       { name: "Lima", pos: "CB", overall: 76 },
       { name: "González", pos: "CB", overall: 76 },
       { name: "Rivero", pos: "LB", overall: 75 },
@@ -4771,7 +4771,7 @@ const LIBERTADORES_TEAMS = [
       { name: "Tarantini", pos: "CB", overall: 80 },
       { name: "Pernía", pos: "CB", overall: 77 },
       { name: "Suñé", pos: "LB", overall: 76 },
-      { name: "Pernía", pos: "CM", overall: 76 },
+      { name: "Zanabria", pos: "CM", overall: 76 },
       { name: "Salinas", pos: "CM", overall: 76 },
       { name: "Benítez", pos: "AM", overall: 78 },
       { name: "Mastrángelo", pos: "RW", overall: 77 },
@@ -4869,7 +4869,7 @@ const LIBERTADORES_TEAMS = [
     formation: "4-3-3",
     players: [
       { name: "Fillol", pos: "GK", overall: 86 },
-      { name: "Castro", pos: "RB", overall: 76 },
+      { name: "Villalba", pos: "RB", overall: 75 },
       { name: "Batista", pos: "CB", overall: 78 },
       { name: "Olarticoechea", pos: "CB", overall: 79 },
       { name: "Salas", pos: "LB", overall: 75 },
@@ -4888,7 +4888,7 @@ const LIBERTADORES_TEAMS = [
       { name: "Islas", pos: "GK", overall: 80 },
       { name: "Berti", pos: "RB", overall: 76 },
       { name: "Carrizo", pos: "CB", overall: 76 },
-      { name: "Alzamendi", pos: "CB", overall: 76 },
+      { name: "Montenegro", pos: "CB", overall: 76 },
       { name: "Ruggeri", pos: "LB", overall: 82 },
       { name: "Alonso", pos: "CM", overall: 78 },
       { name: "Gareca", pos: "CM", overall: 79 },
@@ -4958,7 +4958,7 @@ const LIBERTADORES_TEAMS = [
       { name: "Vivas", pos: "CB", overall: 76 },
       { name: "Comas", pos: "CB", overall: 76 },
       { name: "Alfaro", pos: "LB", overall: 75 },
-      { name: "Berizzo", pos: "CM", overall: 75 },
+      { name: "Martino", pos: "CM", overall: 75 },
       { name: "Acosta", pos: "CM", overall: 77 },
       { name: "Gamboa", pos: "AM", overall: 77 },
       { name: "Zamora", pos: "RW", overall: 76 },
@@ -5289,7 +5289,7 @@ const LIBERTADORES_TEAMS = [
       { name: "Reasco", pos: "CB", overall: 76 },
       { name: "Hurtado", pos: "CB", overall: 79 },
       { name: "Burbano", pos: "LB", overall: 75 },
-      { name: "Cevallos", pos: "RM", overall: 75 },
+      { name: "Quiñónez", pos: "RM", overall: 75 },
       { name: "Verduga", pos: "CM", overall: 75 },
       { name: "Espinoza", pos: "CM", overall: 75 },
       { name: "Spencer", pos: "LM", overall: 76 },
@@ -5325,7 +5325,7 @@ const LIBERTADORES_TEAMS = [
       { name: "Capurro", pos: "LB", overall: 75 },
       { name: "Espinoza", pos: "RM", overall: 75 },
       { name: "Verduga", pos: "CM", overall: 76 },
-      { name: "Cevallos", pos: "CM", overall: 75 },
+      { name: "Quiñónez", pos: "CM", overall: 75 },
       { name: "Spencer", pos: "LM", overall: 76 },
       { name: "Cuggiani", pos: "ST", overall: 77 },
       { name: "Hugo Pio", pos: "ST", overall: 76 }
@@ -5425,7 +5425,7 @@ const LIBERTADORES_TEAMS = [
     formation: "4-4-2",
     players: [
       { name: "Ibáñez", pos: "GK", overall: 80 },
-      { name: "Rebosio", pos: "RB", overall: 75 },
+      { name: "Marengo", pos: "RB", overall: 75 },
       { name: "Pajuelo", pos: "CB", overall: 76 },
       { name: "Rebosio", pos: "CB", overall: 75 },
       { name: "Olivares", pos: "LB", overall: 75 },
@@ -5469,8 +5469,1921 @@ const LIBERTADORES_TEAMS = [
       { name: "González", pos: "CM", overall: 74 },
       { name: "Cichero", pos: "CM", overall: 73 },
       { name: "Rondón", pos: "LM", overall: 74 },
-      { name: "Maldonado", pos: "ST", overall: 76 },
+      { name: "Beraza", pos: "ST", overall: 76 },
       { name: "Arango", pos: "ST", overall: 75 }
+    ]
+  }
+];
+
+const WORLD_CUP_TEAMS = [
+
+  // ───────── 1930 ─────────
+  {
+    id: "wc_uy_1930", name: "Uruguai", season: "1930", country: "UY", flag: "🇺🇾",
+    formation: "4-2-4",
+    players: [
+      { name: "Mazali", pos: "GK", overall: 82 },
+      { name: "Nasazzi", pos: "RB", overall: 86 },
+      { name: "Andrade", pos: "CB", overall: 87 },
+      { name: "Fernández", pos: "CB", overall: 79 },
+      { name: "Mascheroni", pos: "LB", overall: 81 },
+      { name: "Gestido", pos: "CM", overall: 80 },
+      { name: "Cea", pos: "CM", overall: 84 },
+      { name: "Dorado", pos: "RW", overall: 79 },
+      { name: "Castro", pos: "ST", overall: 87 },
+      { name: "Anselmo", pos: "ST", overall: 83 },
+      { name: "Urdinarán", pos: "LW", overall: 78 }
+    ]
+  },
+  {
+    id: "wc_ar_1930", name: "Argentina", season: "1930", country: "AR", flag: "🇦🇷",
+    formation: "4-2-4",
+    players: [
+      { name: "Botasso", pos: "GK", overall: 78 },
+      { name: "Della Torre", pos: "RB", overall: 76 },
+      { name: "Paternoster", pos: "CB", overall: 78 },
+      { name: "Juan Evaristo", pos: "CB", overall: 80 },
+      { name: "Mateucci", pos: "LB", overall: 76 },
+      { name: "Monti", pos: "CM", overall: 84 },
+      { name: "Suárez", pos: "CM", overall: 78 },
+      { name: "Peucelle", pos: "RW", overall: 81 },
+      { name: "Stábile", pos: "ST", overall: 85 },
+      { name: "Ferreira", pos: "ST", overall: 82 },
+      { name: "Mario Evaristo", pos: "LW", overall: 80 }
+    ]
+  },
+  {
+    id: "wc_us_1930", name: "EUA", season: "1930", country: "US", flag: "🇺🇸",
+    formation: "4-4-2",
+    players: [
+      { name: "Douglas", pos: "GK", overall: 74 },
+      { name: "Moorhouse", pos: "RB", overall: 73 },
+      { name: "Wood", pos: "CB", overall: 75 },
+      { name: "Pietras", pos: "CB", overall: 73 },
+      { name: "Auld", pos: "LB", overall: 73 },
+      { name: "Florie", pos: "RM", overall: 74 },
+      { name: "Gallagher", pos: "CM", overall: 75 },
+      { name: "Gonsalves", pos: "CM", overall: 76 },
+      { name: "Tracey", pos: "LM", overall: 73 },
+      { name: "Patenaude", pos: "ST", overall: 80 },
+      { name: "Brown", pos: "ST", overall: 75 }
+    ]
+  },
+  {
+    id: "wc_yu_1930", name: "Iugoslávia", season: "1930", country: "YU", flag: "🇷🇸",
+    formation: "4-4-2",
+    players: [
+      { name: "Jaksic", pos: "GK", overall: 76 },
+      { name: "Mihajlović", pos: "RB", overall: 75 },
+      { name: "Ivkovic", pos: "CB", overall: 77 },
+      { name: "Arsenijević", pos: "CB", overall: 75 },
+      { name: "Mitić", pos: "LB", overall: 75 },
+      { name: "Stefanović", pos: "RM", overall: 76 },
+      { name: "Marjanović", pos: "CM", overall: 77 },
+      { name: "Tirnanić", pos: "CM", overall: 79 },
+      { name: "Vujadinović", pos: "LM", overall: 75 },
+      { name: "Bek", pos: "ST", overall: 80 },
+      { name: "Vidak", pos: "ST", overall: 78 }
+    ]
+  },
+  // ───────── 1934 ─────────
+  {
+    id: "wc_it_1934", name: "Italia", season: "1934", country: "IT", flag: "🇮🇹",
+    formation: "4-2-4",
+    players: [
+      { name: "Combi", pos: "GK", overall: 87 },
+      { name: "Monzeglio", pos: "RB", overall: 80 },
+      { name: "Allemandi", pos: "CB", overall: 79 },
+      { name: "Monti", pos: "CB", overall: 84 },
+      { name: "Rava", pos: "LB", overall: 78 },
+      { name: "Pizziolo", pos: "CM", overall: 78 },
+      { name: "Ferrari", pos: "CM", overall: 87 },
+      { name: "Guaita", pos: "RW", overall: 81 },
+      { name: "Meazza", pos: "ST", overall: 92 },
+      { name: "Schiavio", pos: "ST", overall: 84 },
+      { name: "Orsi", pos: "LW", overall: 85 }
+    ]
+  },
+  {
+    id: "wc_tch_1934", name: "Tchecoslovaquia", season: "1934", country: "TCH", flag: "🇨🇿",
+    formation: "4-4-2",
+    players: [
+      { name: "Planička", pos: "GK", overall: 89 },
+      { name: "Burgr", pos: "RB", overall: 78 },
+      { name: "Ctyroky", pos: "CB", overall: 78 },
+      { name: "Krcil", pos: "CB", overall: 79 },
+      { name: "Stejskal", pos: "LB", overall: 77 },
+      { name: "Kostalek", pos: "RM", overall: 78 },
+      { name: "Sobotka", pos: "CM", overall: 80 },
+      { name: "Svoboda", pos: "CM", overall: 79 },
+      { name: "Junek", pos: "LM", overall: 78 },
+      { name: "Nejedlý", pos: "ST", overall: 88 },
+      { name: "Puc", pos: "ST", overall: 85 }
+    ]
+  },
+  {
+    id: "wc_de_1934", name: "Alemanha", season: "1934", country: "DE", flag: "🇩🇪",
+    formation: "4-4-2",
+    players: [
+      { name: "Kress", pos: "GK", overall: 79 },
+      { name: "Janes", pos: "RB", overall: 78 },
+      { name: "Münzenberg", pos: "CB", overall: 80 },
+      { name: "Bender", pos: "CB", overall: 77 },
+      { name: "Busch", pos: "LB", overall: 76 },
+      { name: "Albrecht", pos: "RM", overall: 76 },
+      { name: "Szepan", pos: "CM", overall: 86 },
+      { name: "Kobierski", pos: "CM", overall: 78 },
+      { name: "Lehner", pos: "LM", overall: 79 },
+      { name: "Conen", pos: "ST", overall: 83 },
+      { name: "Heidemann", pos: "ST", overall: 78 }
+    ]
+  },
+  {
+    id: "wc_at_1934", name: "Áustria", season: "1934", country: "AT", flag: "🇦🇹",
+    formation: "4-2-4",
+    players: [
+      { name: "Platzer", pos: "GK", overall: 81 },
+      { name: "Cisar", pos: "RB", overall: 77 },
+      { name: "Smistik", pos: "CB", overall: 80 },
+      { name: "Sesta", pos: "CB", overall: 79 },
+      { name: "Schramseis", pos: "LB", overall: 77 },
+      { name: "Gschweidl", pos: "CM", overall: 78 },
+      { name: "Bican", pos: "CM", overall: 90 },
+      { name: "Zischek", pos: "RW", overall: 84 },
+      { name: "Sindelar", pos: "ST", overall: 92 },
+      { name: "Horvath", pos: "ST", overall: 80 },
+      { name: "Schall", pos: "LW", overall: 80 }
+    ]
+  },
+  // ───────── 1938 ─────────
+  {
+    id: "wc_it_1938", name: "Italia", season: "1938", country: "IT", flag: "🇮🇹",
+    formation: "4-2-4",
+    players: [
+      { name: "Olivieri", pos: "GK", overall: 84 },
+      { name: "Foni", pos: "RB", overall: 82 },
+      { name: "Andreolo", pos: "CB", overall: 84 },
+      { name: "Rava", pos: "CB", overall: 79 },
+      { name: "Locatelli", pos: "LB", overall: 80 },
+      { name: "Serantoni", pos: "CM", overall: 79 },
+      { name: "Ferrari", pos: "CM", overall: 86 },
+      { name: "Biavati", pos: "RW", overall: 82 },
+      { name: "Piola", pos: "ST", overall: 91 },
+      { name: "Meazza", pos: "ST", overall: 91 },
+      { name: "Colaussi", pos: "LW", overall: 84 }
+    ]
+  },
+  {
+    id: "wc_hu_1938", name: "Hungria", season: "1938", country: "HU", flag: "🇭🇺",
+    formation: "4-3-3",
+    players: [
+      { name: "Szabó", pos: "GK", overall: 81 },
+      { name: "Polgár", pos: "RB", overall: 77 },
+      { name: "Biró", pos: "CB", overall: 78 },
+      { name: "Turay", pos: "CB", overall: 77 },
+      { name: "Korányi", pos: "LB", overall: 78 },
+      { name: "Lázár", pos: "CM", overall: 77 },
+      { name: "Szalay", pos: "CM", overall: 78 },
+      { name: "Zsengellér", pos: "CM", overall: 84 },
+      { name: "Titkos", pos: "RW", overall: 79 },
+      { name: "Sárosi", pos: "ST", overall: 80 },
+      { name: "Kohut", pos: "LW", overall: 78 }
+    ]
+  },
+  {
+    id: "wc_br_1938", name: "Brasil", season: "1938", country: "BR", flag: "🇧🇷",
+    formation: "4-2-4",
+    players: [
+      { name: "Walter", pos: "GK", overall: 81 },
+      { name: "Domingos da Guia", pos: "CB", overall: 88 },
+      { name: "Brandão", pos: "CB", overall: 78 },
+      { name: "Machado", pos: "RB", overall: 76 },
+      { name: "Argemiro", pos: "LB", overall: 76 },
+      { name: "Zezé Procópio", pos: "CM", overall: 77 },
+      { name: "Martim Silveira", pos: "CM", overall: 76 },
+      { name: "Lopes", pos: "RW", overall: 79 },
+      { name: "Leônidas", pos: "ST", overall: 92 },
+      { name: "Romeu", pos: "ST", overall: 80 },
+      { name: "Peracio", pos: "LW", overall: 81 }
+    ]
+  },
+  {
+    id: "wc_se_1938", name: "Suécia", season: "1938", country: "SE", flag: "🇸🇪",
+    formation: "4-4-2",
+    players: [
+      { name: "Abrahamsson", pos: "GK", overall: 78 },
+      { name: "Eriksson", pos: "RB", overall: 76 },
+      { name: "Linderholm", pos: "CB", overall: 77 },
+      { name: "Jacobsson", pos: "CB", overall: 76 },
+      { name: "Nyberg", pos: "LB", overall: 76 },
+      { name: "Almgren", pos: "RM", overall: 76 },
+      { name: "Åke Andersson", pos: "CM", overall: 77 },
+      { name: "Jonasson", pos: "CM", overall: 76 },
+      { name: "Keller", pos: "LM", overall: 77 },
+      { name: "Wetterström", pos: "ST", overall: 81 },
+      { name: "Harry Andersson", pos: "ST", overall: 79 }
+    ]
+  },
+  {
+    id: "wc_cu_1938", name: "Cuba", season: "1938", country: "CU", flag: "🇨🇺",
+    formation: "4-4-2",
+    players: [
+      { name: "Carvajales", pos: "GK", overall: 78 },
+      { name: "Barquín", pos: "RB", overall: 73 },
+      { name: "Tuñas", pos: "CB", overall: 74 },
+      { name: "Sosa", pos: "CB", overall: 73 },
+      { name: "Chorens", pos: "LB", overall: 73 },
+      { name: "Fernández", pos: "RM", overall: 73 },
+      { name: "Cárdenas", pos: "CM", overall: 74 },
+      { name: "Villaverde", pos: "CM", overall: 73 },
+      { name: "Camejo", pos: "LM", overall: 73 },
+      { name: "Socorro", pos: "ST", overall: 76 },
+      { name: "Magriñá", pos: "ST", overall: 75 }
+    ]
+  },
+  // ───────── 1950 ─────────
+  {
+    id: "wc_uy_1950", name: "Uruguai", season: "1950", country: "UY", flag: "🇺🇾",
+    formation: "4-3-3",
+    players: [
+      { name: "Máspoli", pos: "GK", overall: 87 },
+      { name: "Gonzáles", pos: "RB", overall: 79 },
+      { name: "Tejera", pos: "CB", overall: 78 },
+      { name: "Varela", pos: "CB", overall: 89 },
+      { name: "Andrade", pos: "LB", overall: 79 },
+      { name: "Gambetta", pos: "CM", overall: 80 },
+      { name: "Pérez", pos: "CM", overall: 79 },
+      { name: "Míguez", pos: "CM", overall: 84 },
+      { name: "Ghiggia", pos: "RW", overall: 87 },
+      { name: "Schiaffino", pos: "ST", overall: 91 },
+      { name: "Morán", pos: "LW", overall: 81 }
+    ]
+  },
+  {
+    id: "wc_br_1950", name: "Brasil", season: "1950", country: "BR", flag: "🇧🇷",
+    formation: "4-2-4",
+    players: [
+      { name: "Barbosa", pos: "GK", overall: 84 },
+      { name: "Augusto", pos: "RB", overall: 78 },
+      { name: "Juvenal", pos: "CB", overall: 79 },
+      { name: "Bauer", pos: "CB", overall: 83 },
+      { name: "Bigode", pos: "LB", overall: 80 },
+      { name: "Danilo", pos: "CM", overall: 80 },
+      { name: "Zizinho", pos: "CM", overall: 92 },
+      { name: "Friaça", pos: "RW", overall: 80 },
+      { name: "Ademir", pos: "ST", overall: 91 },
+      { name: "Baltazar", pos: "ST", overall: 80 },
+      { name: "Jair", pos: "LW", overall: 86 }
+    ]
+  },
+  {
+    id: "wc_se_1950", name: "Suécia", season: "1950", country: "SE", flag: "🇸🇪",
+    formation: "4-4-2",
+    players: [
+      { name: "Lindberg", pos: "GK", overall: 79 },
+      { name: "Nilsson", pos: "RB", overall: 76 },
+      { name: "Andersson", pos: "CB", overall: 77 },
+      { name: "Nordahl", pos: "CB", overall: 78 },
+      { name: "Samuelsson", pos: "LB", overall: 76 },
+      { name: "Johansson", pos: "RM", overall: 77 },
+      { name: "Rosengren", pos: "CM", overall: 78 },
+      { name: "Gren", pos: "CM", overall: 86 },
+      { name: "Carlsson", pos: "LM", overall: 79 },
+      { name: "Palmer", pos: "ST", overall: 80 },
+      { name: "Sundqvist", pos: "ST", overall: 78 }
+    ]
+  },
+  {
+    id: "wc_es_1950", name: "Espanha", season: "1950", country: "ES", flag: "🇪🇸",
+    formation: "4-3-3",
+    players: [
+      { name: "Ramallets", pos: "GK", overall: 84 },
+      { name: "Alonso", pos: "RB", overall: 78 },
+      { name: "Gonzalvo II", pos: "CB", overall: 79 },
+      { name: "Parra", pos: "CB", overall: 78 },
+      { name: "Gonzalvo III", pos: "LB", overall: 80 },
+      { name: "Puchades", pos: "CM", overall: 78 },
+      { name: "César", pos: "CM", overall: 79 },
+      { name: "Basora", pos: "CM", overall: 80 },
+      { name: "Igoa", pos: "RW", overall: 78 },
+      { name: "Zarra", pos: "ST", overall: 88 },
+      { name: "Gainza", pos: "LW", overall: 81 }
+    ]
+  },
+  {
+    id: "wc_us_1950", name: "EUA", season: "1950", country: "US", flag: "🇺🇸",
+    formation: "4-4-2",
+    players: [
+      { name: "Borghi", pos: "GK", overall: 75 },
+      { name: "Keough", pos: "RB", overall: 74 },
+      { name: "Colombo", pos: "CB", overall: 75 },
+      { name: "McIlvenny", pos: "CB", overall: 74 },
+      { name: "Bahr", pos: "LB", overall: 75 },
+      { name: "Maca", pos: "RM", overall: 74 },
+      { name: "Souza", pos: "CM", overall: 76 },
+      { name: "Pariani", pos: "CM", overall: 74 },
+      { name: "Wallace", pos: "LM", overall: 73 },
+      { name: "Gaetjens", pos: "ST", overall: 79 },
+      { name: "Wood", pos: "ST", overall: 75 }
+    ]
+  },
+  // ───────── 1954 ─────────
+  {
+    id: "wc_de_1954", name: "Alemanha Ocidental", season: "1954", country: "DE", flag: "🇩🇪",
+    formation: "4-2-4",
+    players: [
+      { name: "Turek", pos: "GK", overall: 84 },
+      { name: "Posipal", pos: "RB", overall: 79 },
+      { name: "Liebrich", pos: "CB", overall: 81 },
+      { name: "Kohlmeyer", pos: "CB", overall: 79 },
+      { name: "Eckel", pos: "LB", overall: 78 },
+      { name: "Mai", pos: "CM", overall: 78 },
+      { name: "Fritz Walter", pos: "CM", overall: 88 },
+      { name: "Rahn", pos: "RW", overall: 87 },
+      { name: "Morlock", pos: "ST", overall: 84 },
+      { name: "Ottmar Walter", pos: "ST", overall: 89 },
+      { name: "Schäfer", pos: "LW", overall: 83 }
+    ]
+  },
+  {
+    id: "wc_hu_1954", name: "Hungria", season: "1954", country: "HU", flag: "🇭🇺",
+    formation: "4-2-4",
+    players: [
+      { name: "Grosics", pos: "GK", overall: 90 },
+      { name: "Buzánszky", pos: "RB", overall: 81 },
+      { name: "Lóránt", pos: "CB", overall: 82 },
+      { name: "Lantos", pos: "CB", overall: 80 },
+      { name: "Bozsik", pos: "LB", overall: 88 },
+      { name: "Zakariás", pos: "CM", overall: 79 },
+      { name: "Kocsis", pos: "CM", overall: 93 },
+      { name: "Czibor", pos: "RW", overall: 87 },
+      { name: "Hidegkuti", pos: "ST", overall: 89 },
+      { name: "Puskás", pos: "ST", overall: 97 },
+      { name: "Tóth", pos: "LW", overall: 82 }
+    ]
+  },
+  {
+    id: "wc_at_1954", name: "Áustria", season: "1954", country: "AT", flag: "🇦🇹",
+    formation: "4-2-4",
+    players: [
+      { name: "Schmied", pos: "GK", overall: 81 },
+      { name: "Hanappi", pos: "RB", overall: 80 },
+      { name: "Happel", pos: "CB", overall: 84 },
+      { name: "Barschandt", pos: "CB", overall: 78 },
+      { name: "Ocwirk", pos: "LB", overall: 86 },
+      { name: "Koller", pos: "CM", overall: 79 },
+      { name: "Robert Körner", pos: "CM", overall: 78 },
+      { name: "Wagner", pos: "RW", overall: 84 },
+      { name: "Probst", pos: "ST", overall: 86 },
+      { name: "Stojaspal", pos: "ST", overall: 80 },
+      { name: "Alfred Körner", pos: "LW", overall: 78 }
+    ]
+  },
+  {
+    id: "wc_uy_1954", name: "Uruguai", season: "1954", country: "UY", flag: "🇺🇾",
+    formation: "4-3-3",
+    players: [
+      { name: "Máspoli", pos: "GK", overall: 85 },
+      { name: "Santamaría", pos: "RB", overall: 84 },
+      { name: "Martínez", pos: "CB", overall: 79 },
+      { name: "Varela", pos: "CB", overall: 87 },
+      { name: "Carballo Souto", pos: "LB", overall: 78 },
+      { name: "Andrade", pos: "CM", overall: 79 },
+      { name: "Cruz", pos: "CM", overall: 78 },
+      { name: "Abbadie", pos: "CM", overall: 80 },
+      { name: "Hohberg", pos: "RW", overall: 81 },
+      { name: "Míguez", pos: "ST", overall: 83 },
+      { name: "Schiaffino", pos: "LW", overall: 90 }
+    ]
+  },
+  // ───────── 1958 ─────────
+  {
+    id: "wc_br_1958", name: "Brasil", season: "1958", country: "BR", flag: "🇧🇷",
+    formation: "4-2-4",
+    players: [
+      { name: "Gilmar", pos: "GK", overall: 87 },
+      { name: "Djalma Santos", pos: "RB", overall: 89 },
+      { name: "Bellini", pos: "CB", overall: 84 },
+      { name: "Orlando", pos: "CB", overall: 80 },
+      { name: "Nilton Santos", pos: "LB", overall: 88 },
+      { name: "Zito", pos: "CM", overall: 81 },
+      { name: "Didi", pos: "CM", overall: 90 },
+      { name: "Garrincha", pos: "RW", overall: 95 },
+      { name: "Vavá", pos: "ST", overall: 86 },
+      { name: "Pelé", pos: "ST", overall: 98 },
+      { name: "Zagallo", pos: "LW", overall: 83 }
+    ]
+  },
+  {
+    id: "wc_se_1958", name: "Suécia", season: "1958", country: "SE", flag: "🇸🇪",
+    formation: "4-4-2",
+    players: [
+      { name: "Svensson", pos: "GK", overall: 81 },
+      { name: "Bergmark", pos: "RB", overall: 79 },
+      { name: "Axbom", pos: "CB", overall: 77 },
+      { name: "Gustavsson", pos: "CB", overall: 78 },
+      { name: "Parling", pos: "LB", overall: 78 },
+      { name: "Börjesson", pos: "RM", overall: 77 },
+      { name: "Gren", pos: "CM", overall: 84 },
+      { name: "Simonsson", pos: "CM", overall: 79 },
+      { name: "Skoglund", pos: "LM", overall: 84 },
+      { name: "Hamrin", pos: "ST", overall: 87 },
+      { name: "Liedholm", pos: "ST", overall: 87 }
+    ]
+  },
+  {
+    id: "wc_fr_1958", name: "França", season: "1958", country: "FR", flag: "🇫🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "Remetter", pos: "GK", overall: 80 },
+      { name: "Kaelbel", pos: "RB", overall: 76 },
+      { name: "Jonquet", pos: "CB", overall: 81 },
+      { name: "Marcel", pos: "CB", overall: 76 },
+      { name: "Lerond", pos: "LB", overall: 76 },
+      { name: "Penverne", pos: "CM", overall: 78 },
+      { name: "Wisnieski", pos: "CM", overall: 79 },
+      { name: "Kopa", pos: "CM", overall: 90 },
+      { name: "Piantoni", pos: "RW", overall: 83 },
+      { name: "Fontaine", pos: "ST", overall: 92 },
+      { name: "Vincent", pos: "LW", overall: 81 }
+    ]
+  },
+  {
+    id: "wc_de_1958", name: "Alemanha Ocidental", season: "1958", country: "DE", flag: "🇩🇪",
+    formation: "4-2-4",
+    players: [
+      { name: "Herkenrath", pos: "GK", overall: 81 },
+      { name: "Stollenwerk", pos: "RB", overall: 78 },
+      { name: "Erhardt", pos: "CB", overall: 79 },
+      { name: "Juskowiak", pos: "CB", overall: 78 },
+      { name: "Sturm", pos: "LB", overall: 76 },
+      { name: "Eckel", pos: "CM", overall: 78 },
+      { name: "Walter", pos: "CM", overall: 86 },
+      { name: "Rahn", pos: "RW", overall: 86 },
+      { name: "Seeler", pos: "ST", overall: 89 },
+      { name: "Schäfer", pos: "ST", overall: 82 },
+      { name: "Cieslarczyk", pos: "LW", overall: 77 }
+    ]
+  },
+  {
+    id: "wc_wal_1958", name: "País de Gales", season: "1958", country: "WAL", flag: "🏴",
+    formation: "4-4-2",
+    players: [
+      { name: "Kelsey", pos: "GK", overall: 80 },
+      { name: "Hewitt", pos: "RB", overall: 75 },
+      { name: "Sherwood", pos: "CB", overall: 76 },
+      { name: "R.Stevens", pos: "CB", overall: 75 },
+      { name: "Hopkins", pos: "LB", overall: 76 },
+      { name: "Allchurch", pos: "RM", overall: 84 },
+      { name: "Sullivan", pos: "CM", overall: 75 },
+      { name: "Webster", pos: "CM", overall: 79 },
+      { name: "Vernon", pos: "LM", overall: 81 },
+      { name: "Medwin", pos: "ST", overall: 81 },
+      { name: "Charles", pos: "ST", overall: 92 }
+    ]
+  },
+  {
+    id: "wc_nir_1958", name: "Irlanda do Norte", season: "1958", country: "NIR", flag: "🇬🇧",
+    formation: "4-4-2",
+    players: [
+      { name: "Gregg", pos: "GK", overall: 84 },
+      { name: "Keith", pos: "RB", overall: 76 },
+      { name: "Cunningham", pos: "CB", overall: 76 },
+      { name: "Blanchflower", pos: "CB", overall: 84 },
+      { name: "McMichael", pos: "LB", overall: 76 },
+      { name: "Peacock", pos: "RM", overall: 76 },
+      { name: "Danny Blanchflower", pos: "CM", overall: 84 },
+      { name: "Bingham", pos: "CM", overall: 80 },
+      { name: "Tully", pos: "LM", overall: 76 },
+      { name: "McParland", pos: "ST", overall: 82 },
+      { name: "Casey", pos: "ST", overall: 76 }
+    ]
+  },
+  // ───────── 1962 ─────────
+  {
+    id: "wc_br_1962", name: "Brasil", season: "1962", country: "BR", flag: "🇧🇷",
+    formation: "4-2-4",
+    players: [
+      { name: "Gilmar", pos: "GK", overall: 88 },
+      { name: "Djalma Santos", pos: "RB", overall: 89 },
+      { name: "Mauro", pos: "CB", overall: 82 },
+      { name: "Zózimo", pos: "CB", overall: 80 },
+      { name: "Nilton Santos", pos: "LB", overall: 87 },
+      { name: "Zito", pos: "CM", overall: 82 },
+      { name: "Didi", pos: "CM", overall: 88 },
+      { name: "Garrincha", pos: "RW", overall: 96 },
+      { name: "Vavá", pos: "ST", overall: 86 },
+      { name: "Amarildo", pos: "ST", overall: 84 },
+      { name: "Zagallo", pos: "LW", overall: 81 }
+    ]
+  },
+  {
+    id: "wc_tch_1962", name: "Tchecoslováquia", season: "1962", country: "TCH", flag: "🇨🇿",
+    formation: "4-3-3",
+    players: [
+      { name: "Schrojf", pos: "GK", overall: 84 },
+      { name: "Tichý", pos: "RB", overall: 77 },
+      { name: "Pluskal", pos: "CB", overall: 78 },
+      { name: "Novák", pos: "CB", overall: 81 },
+      { name: "Lala", pos: "LB", overall: 77 },
+      { name: "Pospíchal", pos: "CM", overall: 77 },
+      { name: "Kvašňák", pos: "CM", overall: 78 },
+      { name: "Masopust", pos: "CM", overall: 88 },
+      { name: "Scherer", pos: "RW", overall: 80 },
+      { name: "Kadraba", pos: "ST", overall: 79 },
+      { name: "Jelínek", pos: "LW", overall: 78 }
+    ]
+  },
+  {
+    id: "wc_cl_1962", name: "Chile", season: "1962", country: "CL", flag: "🇨🇱",
+    formation: "4-4-2",
+    players: [
+      { name: "Escuti", pos: "GK", overall: 81 },
+      { name: "Eyzaguirre", pos: "RB", overall: 78 },
+      { name: "Contreras", pos: "CB", overall: 77 },
+      { name: "Donoso", pos: "CB", overall: 76 },
+      { name: "Cruz Robles", pos: "LB", overall: 76 },
+      { name: "Rojas", pos: "RM", overall: 78 },
+      { name: "Toro", pos: "CM", overall: 79 },
+      { name: "Sánchez", pos: "CM", overall: 87 },
+      { name: "Ramírez", pos: "LM", overall: 76 },
+      { name: "Landa", pos: "ST", overall: 80 },
+      { name: "Tobar", pos: "ST", overall: 78 }
+    ]
+  },
+  {
+    id: "wc_yu_1962", name: "Iugoslávia", season: "1962", country: "YU", flag: "🇷🇸",
+    formation: "4-3-3",
+    players: [
+      { name: "Soskic", pos: "GK", overall: 83 },
+      { name: "Durković", pos: "RB", overall: 78 },
+      { name: "Jusufi", pos: "CB", overall: 80 },
+      { name: "Marković", pos: "CB", overall: 76 },
+      { name: "Belin", pos: "LB", overall: 76 },
+      { name: "Perusic", pos: "CM", overall: 78 },
+      { name: "Galic", pos: "CM", overall: 82 },
+      { name: "Skoblar", pos: "CM", overall: 81 },
+      { name: "Jerković", pos: "RW", overall: 80 },
+      { name: "Sekularac", pos: "ST", overall: 83 },
+      { name: "Kovacevic", pos: "LW", overall: 78 }
+    ]
+  },
+  // ───────── 1966 ─────────
+  {
+    id: "wc_eng_1966", name: "Inglaterra", season: "1966", country: "ENG", flag: "🏴",
+    formation: "4-3-3",
+    players: [
+      { name: "Banks", pos: "GK", overall: 89 },
+      { name: "Cohen", pos: "RB", overall: 81 },
+      { name: "J.Charlton", pos: "CB", overall: 86 },
+      { name: "Moore", pos: "CB", overall: 92 },
+      { name: "Wilson", pos: "LB", overall: 81 },
+      { name: "Ball", pos: "CM", overall: 86 },
+      { name: "Stiles", pos: "CM", overall: 82 },
+      { name: "Peters", pos: "CM", overall: 84 },
+      { name: "B.Charlton", pos: "RW", overall: 90 },
+      { name: "Hurst", pos: "ST", overall: 88 },
+      { name: "Hunt", pos: "LW", overall: 83 }
+    ]
+  },
+  {
+    id: "wc_de_1966", name: "Alemanha Ocidental", season: "1966", country: "DE", flag: "🇩🇪",
+    formation: "4-2-4",
+    players: [
+      { name: "Tilkowski", pos: "GK", overall: 82 },
+      { name: "Höttges", pos: "RB", overall: 78 },
+      { name: "Schulz", pos: "CB", overall: 80 },
+      { name: "Weber", pos: "CB", overall: 81 },
+      { name: "Schnellinger", pos: "LB", overall: 81 },
+      { name: "Beckenbauer", pos: "CM", overall: 91 },
+      { name: "Haller", pos: "CM", overall: 87 },
+      { name: "Seeler", pos: "RW", overall: 89 },
+      { name: "Held", pos: "ST", overall: 81 },
+      { name: "Overath", pos: "ST", overall: 84 },
+      { name: "Emmerich", pos: "LW", overall: 80 }
+    ]
+  },
+  {
+    id: "wc_pt_1966", name: "Portugal", season: "1966", country: "PT", flag: "🇵🇹",
+    formation: "4-3-3",
+    players: [
+      { name: "Pereira", pos: "GK", overall: 81 },
+      { name: "Festa", pos: "RB", overall: 77 },
+      { name: "Carlos", pos: "CB", overall: 76 },
+      { name: "Baptista", pos: "CB", overall: 78 },
+      { name: "Hilário", pos: "LB", overall: 79 },
+      { name: "Graça", pos: "CM", overall: 78 },
+      { name: "Coluna", pos: "CM", overall: 88 },
+      { name: "Augusto", pos: "RW", overall: 83 },
+      { name: "Torres", pos: "ST", overall: 86 },
+      { name: "Eusébio", pos: "ST", overall: 96 },
+      { name: "Simões", pos: "LW", overall: 81 }
+    ]
+  },
+  {
+    id: "wc_su_1966", name: "URSS", season: "1966", country: "SU", flag: "🇷🇺",
+    formation: "4-4-2",
+    players: [
+      { name: "Yashin", pos: "GK", overall: 92 },
+      { name: "Ponomarev", pos: "RB", overall: 77 },
+      { name: "Shesternyov", pos: "CB", overall: 84 },
+      { name: "Danilov", pos: "CB", overall: 80 },
+      { name: "Khurtsilava", pos: "LB", overall: 78 },
+      { name: "Sabo", pos: "RM", overall: 79 },
+      { name: "Voronin", pos: "CM", overall: 81 },
+      { name: "Chislenko", pos: "CM", overall: 81 },
+      { name: "Korneev", pos: "LM", overall: 76 },
+      { name: "Banishevskiy", pos: "ST", overall: 84 },
+      { name: "Malofeev", pos: "ST", overall: 78 }
+    ]
+  },
+  {
+    id: "wc_kp_1966", name: "Coreia do Norte", season: "1966", country: "KP", flag: "🇰🇵",
+    formation: "4-4-2",
+    players: [
+      { name: "Lee Chan-myung", pos: "GK", overall: 76 },
+      { name: "Shin Yung-kyoo", pos: "RB", overall: 73 },
+      { name: "Ha Jung-won", pos: "CB", overall: 74 },
+      { name: "Oh Yoon-kyung", pos: "CB", overall: 73 },
+      { name: "Lim Joong-sun", pos: "LB", overall: 73 },
+      { name: "Pak Seung-zin", pos: "RM", overall: 78 },
+      { name: "Han Bong-zin", pos: "CM", overall: 75 },
+      { name: "Yang Seung-kook", pos: "CM", overall: 74 },
+      { name: "Im Seung-hwi", pos: "LM", overall: 73 },
+      { name: "Pak Doo-ik", pos: "ST", overall: 80 },
+      { name: "Li Dong-woon", pos: "ST", overall: 75 }
+    ]
+  },
+  // ───────── 1970 ─────────
+  {
+    id: "wc_br_1970", name: "Brasil", season: "1970", country: "BR", flag: "🇧🇷",
+    formation: "4-2-4",
+    players: [
+      { name: "Félix", pos: "GK", overall: 80 },
+      { name: "Carlos Alberto", pos: "RB", overall: 88 },
+      { name: "Brito", pos: "CB", overall: 80 },
+      { name: "Piazza", pos: "CB", overall: 81 },
+      { name: "Everaldo", pos: "LB", overall: 82 },
+      { name: "Clodoaldo", pos: "CM", overall: 83 },
+      { name: "Gérson", pos: "CM", overall: 90 },
+      { name: "Jairzinho", pos: "RW", overall: 92 },
+      { name: "Tostão", pos: "ST", overall: 87 },
+      { name: "Pelé", pos: "ST", overall: 99 },
+      { name: "Rivellino", pos: "LW", overall: 89 }
+    ]
+  },
+  {
+    id: "wc_it_1970", name: "Itália", season: "1970", country: "IT", flag: "🇮🇹",
+    formation: "4-3-3",
+    players: [
+      { name: "Albertosi", pos: "GK", overall: 84 },
+      { name: "Burgnich", pos: "RB", overall: 84 },
+      { name: "Cera", pos: "CB", overall: 79 },
+      { name: "Rosato", pos: "CB", overall: 80 },
+      { name: "Facchetti", pos: "LB", overall: 87 },
+      { name: "Bertini", pos: "CM", overall: 79 },
+      { name: "Mazzola", pos: "CM", overall: 87 },
+      { name: "De Sisti", pos: "CM", overall: 80 },
+      { name: "Domenghini", pos: "RW", overall: 81 },
+      { name: "Boninsegna", pos: "ST", overall: 83 },
+      { name: "Riva", pos: "LW", overall: 90 }
+    ]
+  },
+  {
+    id: "wc_de_1970", name: "Alemanha Ocidental", season: "1970", country: "DE", flag: "🇩🇪",
+    formation: "4-2-4",
+    players: [
+      { name: "Maier", pos: "GK", overall: 89 },
+      { name: "Vogts", pos: "RB", overall: 84 },
+      { name: "Schulz", pos: "CB", overall: 81 },
+      { name: "Schnellinger", pos: "CB", overall: 82 },
+      { name: "Patzke", pos: "LB", overall: 76 },
+      { name: "Beckenbauer", pos: "CM", overall: 92 },
+      { name: "Overath", pos: "CM", overall: 86 },
+      { name: "Grabowski", pos: "RW", overall: 82 },
+      { name: "Müller", pos: "ST", overall: 95 },
+      { name: "Seeler", pos: "ST", overall: 88 },
+      { name: "Löhr", pos: "LW", overall: 78 }
+    ]
+  },
+  {
+    id: "wc_uy_1970", name: "Uruguai", season: "1970", country: "UY", flag: "🇺🇾",
+    formation: "4-4-2",
+    players: [
+      { name: "Mazurkiewicz", pos: "GK", overall: 85 },
+      { name: "Ubiña", pos: "RB", overall: 78 },
+      { name: "Ancheta", pos: "CB", overall: 78 },
+      { name: "Mujica", pos: "CB", overall: 77 },
+      { name: "Matosas", pos: "LB", overall: 78 },
+      { name: "Montero Castillo", pos: "RM", overall: 78 },
+      { name: "Cortés", pos: "CM", overall: 78 },
+      { name: "Maneiro", pos: "CM", overall: 79 },
+      { name: "Cubilla", pos: "LM", overall: 81 },
+      { name: "Esparrago", pos: "ST", overall: 80 },
+      { name: "Morales", pos: "ST", overall: 78 }
+    ]
+  },
+  {
+    id: "wc_pe_1970", name: "Peru", season: "1970", country: "PE", flag: "🇵🇪",
+    formation: "4-3-3",
+    players: [
+      { name: "Rubiños", pos: "GK", overall: 80 },
+      { name: "Campos", pos: "RB", overall: 76 },
+      { name: "Mifflin", pos: "CB", overall: 76 },
+      { name: "Chumpitaz", pos: "CB", overall: 81 },
+      { name: "Fuentes", pos: "LB", overall: 76 },
+      { name: "Gonzalez", pos: "CM", overall: 77 },
+      { name: "Challe", pos: "CM", overall: 76 },
+      { name: "Cubillas", pos: "CM", overall: 88 },
+      { name: "Baylón", pos: "RW", overall: 79 },
+      { name: "Sotil", pos: "ST", overall: 84 },
+      { name: "Gallardo", pos: "LW", overall: 78 }
+    ]
+  },
+  // ───────── 1974 ─────────
+  {
+    id: "wc_de_1974", name: "Alemanha Ocidental", season: "1974", country: "DE", flag: "🇩🇪",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Maier", pos: "GK", overall: 91 },
+      { name: "Vogts", pos: "RB", overall: 85 },
+      { name: "Schwarzenbeck", pos: "CB", overall: 82 },
+      { name: "Beckenbauer", pos: "CB", overall: 94 },
+      { name: "Breitner", pos: "LB", overall: 88 },
+      { name: "Bonhof", pos: "CM", overall: 83 },
+      { name: "Overath", pos: "CM", overall: 86 },
+      { name: "Grabowski", pos: "RW", overall: 81 },
+      { name: "Hölzenbein", pos: "AM", overall: 83 },
+      { name: "Hoeness", pos: "LW", overall: 84 },
+      { name: "Müller", pos: "ST", overall: 96 }
+    ]
+  },
+  {
+    id: "wc_nl_1974", name: "Holanda", season: "1974", country: "NL", flag: "🇳🇱",
+    formation: "4-3-3",
+    players: [
+      { name: "Jongbloed", pos: "GK", overall: 82 },
+      { name: "Suurbier", pos: "RB", overall: 82 },
+      { name: "Rijsbergen", pos: "CB", overall: 78 },
+      { name: "Haan", pos: "CB", overall: 83 },
+      { name: "Krol", pos: "LB", overall: 86 },
+      { name: "Jansen", pos: "CM", overall: 80 },
+      { name: "Neeskens", pos: "CM", overall: 90 },
+      { name: "Van Hanegem", pos: "CM", overall: 84 },
+      { name: "Rep", pos: "RW", overall: 86 },
+      { name: "Cruijff", pos: "ST", overall: 97 },
+      { name: "Rensenbrink", pos: "LW", overall: 84 }
+    ]
+  },
+  {
+    id: "wc_pl_1974", name: "Polonia", season: "1974", country: "PL", flag: "🇵🇱",
+    formation: "4-3-3",
+    players: [
+      { name: "Tomaszewski", pos: "GK", overall: 84 },
+      { name: "Szymanowski", pos: "RB", overall: 78 },
+      { name: "Górski", pos: "CB", overall: 78 },
+      { name: "Żmuda", pos: "CB", overall: 80 },
+      { name: "Musiał", pos: "LB", overall: 77 },
+      { name: "Deyna", pos: "CM", overall: 87 },
+      { name: "Maszczyk", pos: "CM", overall: 79 },
+      { name: "Kasperczak", pos: "CM", overall: 78 },
+      { name: "Lato", pos: "RW", overall: 88 },
+      { name: "Szarmach", pos: "ST", overall: 84 },
+      { name: "Gadocha", pos: "LW", overall: 81 }
+    ]
+  },
+  {
+    id: "wc_br_1974", name: "Brasil", season: "1974", country: "BR", flag: "🇧🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "Leão", pos: "GK", overall: 83 },
+      { name: "Ze Maria", pos: "RB", overall: 80 },
+      { name: "Marinho Peres", pos: "CB", overall: 79 },
+      { name: "Luís Pereira", pos: "CB", overall: 80 },
+      { name: "Francisco Marinho", pos: "LB", overall: 80 },
+      { name: "Rivellino", pos: "CM", overall: 88 },
+      { name: "Mirandinha", pos: "CM", overall: 78 },
+      { name: "Paulo César", pos: "CM", overall: 79 },
+      { name: "Jairzinho", pos: "RW", overall: 88 },
+      { name: "Valdomiro", pos: "ST", overall: 78 },
+      { name: "Dirceu", pos: "LW", overall: 80 }
+    ]
+  },
+  {
+    id: "wc_dd_1974", name: "Alemanha Oriental", season: "1974", country: "DD", flag: "🇩🇪",
+    formation: "4-4-2",
+    players: [
+      { name: "Croy", pos: "GK", overall: 81 },
+      { name: "Bransch", pos: "RB", overall: 77 },
+      { name: "Weise", pos: "CB", overall: 76 },
+      { name: "Kische", pos: "CB", overall: 76 },
+      { name: "Watzlich", pos: "LB", overall: 76 },
+      { name: "Lauck", pos: "RM", overall: 77 },
+      { name: "Pommerenke", pos: "CM", overall: 77 },
+      { name: "Vogel", pos: "CM", overall: 76 },
+      { name: "Hafner", pos: "LM", overall: 76 },
+      { name: "Sparwasser", pos: "ST", overall: 84 },
+      { name: "Streich", pos: "ST", overall: 78 }
+    ]
+  },
+  // ───────── 1978 ─────────
+  {
+    id: "wc_ar_1978", name: "Argentina", season: "1978", country: "AR", flag: "🇦🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "Fillol", pos: "GK", overall: 86 },
+      { name: "Olguín", pos: "RB", overall: 79 },
+      { name: "Passarella", pos: "CB", overall: 88 },
+      { name: "Galván", pos: "CB", overall: 80 },
+      { name: "Tarantini", pos: "LB", overall: 78 },
+      { name: "Ardiles", pos: "CM", overall: 84 },
+      { name: "Gallego", pos: "CM", overall: 79 },
+      { name: "Kempes", pos: "CM", overall: 90 },
+      { name: "Ortiz", pos: "RW", overall: 80 },
+      { name: "Luque", pos: "ST", overall: 86 },
+      { name: "Bertoni", pos: "LW", overall: 81 }
+    ]
+  },
+  {
+    id: "wc_nl_1978", name: "Holanda", season: "1978", country: "NL", flag: "🇳🇱",
+    formation: "4-3-3",
+    players: [
+      { name: "Jongbloed", pos: "GK", overall: 81 },
+      { name: "Krol", pos: "RB", overall: 86 },
+      { name: "Brandts", pos: "CB", overall: 79 },
+      { name: "Poortvliet", pos: "CB", overall: 78 },
+      { name: "Suurbier", pos: "LB", overall: 80 },
+      { name: "Jansen", pos: "CM", overall: 80 },
+      { name: "Neeskens", pos: "CM", overall: 90 },
+      { name: "Haan", pos: "CM", overall: 84 },
+      { name: "Rep", pos: "RW", overall: 86 },
+      { name: "Rensenbrink", pos: "ST", overall: 86 },
+      { name: "Van de Kerkhof", pos: "LW", overall: 80 }
+    ]
+  },
+  {
+    id: "wc_br_1978", name: "Brasil", season: "1978", country: "BR", flag: "🇧🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "Leão", pos: "GK", overall: 84 },
+      { name: "Edinho", pos: "RB", overall: 78 },
+      { name: "Amaral", pos: "CB", overall: 79 },
+      { name: "Oscar", pos: "CB", overall: 81 },
+      { name: "Júnior", pos: "LB", overall: 84 },
+      { name: "Batista", pos: "CM", overall: 78 },
+      { name: "Rivellino", pos: "CM", overall: 85 },
+      { name: "Cerezo", pos: "CM", overall: 81 },
+      { name: "Dirceu", pos: "RW", overall: 80 },
+      { name: "Roberto Dinamite", pos: "ST", overall: 84 },
+      { name: "Zico", pos: "LW", overall: 91 }
+    ]
+  },
+  {
+    id: "wc_it_1978", name: "Itália", season: "1978", country: "IT", flag: "🇮🇹",
+    formation: "4-3-3",
+    players: [
+      { name: "Zoff", pos: "GK", overall: 91 },
+      { name: "Cabrini", pos: "RB", overall: 84 },
+      { name: "Bellugi", pos: "CB", overall: 78 },
+      { name: "Gentile", pos: "CB", overall: 81 },
+      { name: "Scirea", pos: "LB", overall: 87 },
+      { name: "Tardelli", pos: "CM", overall: 84 },
+      { name: "Antognoni", pos: "CM", overall: 87 },
+      { name: "Benetti", pos: "CM", overall: 80 },
+      { name: "Causio", pos: "RW", overall: 82 },
+      { name: "Bettega", pos: "ST", overall: 84 },
+      { name: "Rossi", pos: "LW", overall: 86 }
+    ]
+  },
+  // ───────── 1982 ─────────
+  {
+    id: "wc_it_1982", name: "Itália", season: "1982", country: "IT", flag: "🇮🇹",
+    formation: "4-3-3",
+    players: [
+      { name: "Zoff", pos: "GK", overall: 90 },
+      { name: "Cabrini", pos: "RB", overall: 86 },
+      { name: "Collovati", pos: "CB", overall: 80 },
+      { name: "Scirea", pos: "CB", overall: 88 },
+      { name: "Bergomi", pos: "LB", overall: 79 },
+      { name: "Tardelli", pos: "CM", overall: 86 },
+      { name: "Oriali", pos: "CM", overall: 78 },
+      { name: "Conti", pos: "CM", overall: 84 },
+      { name: "Causio", pos: "RW", overall: 81 },
+      { name: "Rossi", pos: "ST", overall: 90 },
+      { name: "Graziani", pos: "LW", overall: 81 }
+    ]
+  },
+  {
+    id: "wc_de_1982", name: "Alemanha Ocidental", season: "1982", country: "DE", flag: "🇩🇪",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Schumacher", pos: "GK", overall: 86 },
+      { name: "Kaltz", pos: "RB", overall: 83 },
+      { name: "Stielike", pos: "CB", overall: 84 },
+      { name: "Förster", pos: "CB", overall: 83 },
+      { name: "Briegel", pos: "LB", overall: 84 },
+      { name: "Dremmler", pos: "CM", overall: 78 },
+      { name: "Breitner", pos: "CM", overall: 88 },
+      { name: "Littbarski", pos: "RW", overall: 84 },
+      { name: "Fischer", pos: "AM", overall: 80 },
+      { name: "Magath", pos: "LW", overall: 80 },
+      { name: "Rummenigge", pos: "ST", overall: 89 }
+    ]
+  },
+  {
+    id: "wc_pl_1982", name: "Polonia", season: "1982", country: "PL", flag: "🇵🇱",
+    formation: "4-3-3",
+    players: [
+      { name: "Mlynarczyk", pos: "GK", overall: 81 },
+      { name: "Żmuda", pos: "RB", overall: 80 },
+      { name: "Janas", pos: "CB", overall: 78 },
+      { name: "Majewski", pos: "CB", overall: 78 },
+      { name: "Dziuba", pos: "LB", overall: 77 },
+      { name: "Matysik", pos: "CM", overall: 78 },
+      { name: "Buncol", pos: "CM", overall: 78 },
+      { name: "Kupcewicz", pos: "CM", overall: 79 },
+      { name: "Lato", pos: "RW", overall: 86 },
+      { name: "Boniek", pos: "ST", overall: 89 },
+      { name: "Smolarek", pos: "LW", overall: 82 }
+    ]
+  },
+  {
+    id: "wc_fr_1982", name: "França", season: "1982", country: "FR", flag: "🇫🇷",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Ettori", pos: "GK", overall: 81 },
+      { name: "Amoros", pos: "RB", overall: 84 },
+      { name: "Janvion", pos: "CB", overall: 78 },
+      { name: "Trésor", pos: "CB", overall: 84 },
+      { name: "Bossis", pos: "LB", overall: 82 },
+      { name: "Giresse", pos: "CM", overall: 87 },
+      { name: "Tigana", pos: "CM", overall: 88 },
+      { name: "Genghini", pos: "RW", overall: 80 },
+      { name: "Platini", pos: "AM", overall: 94 },
+      { name: "Six", pos: "LW", overall: 80 },
+      { name: "Rocheteau", pos: "ST", overall: 84 }
+    ]
+  },
+  {
+    id: "wc_br_1982", name: "Brasil", season: "1982", country: "BR", flag: "🇧🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "Waldir Peres", pos: "GK", overall: 80 },
+      { name: "Leandro", pos: "RB", overall: 81 },
+      { name: "Luisinho", pos: "CB", overall: 79 },
+      { name: "Oscar", pos: "CB", overall: 82 },
+      { name: "Júnior", pos: "LB", overall: 86 },
+      { name: "Toninho Cerezo", pos: "CM", overall: 84 },
+      { name: "Falcão", pos: "CM", overall: 91 },
+      { name: "Sócrates", pos: "CM", overall: 92 },
+      { name: "Éder", pos: "RW", overall: 87 },
+      { name: "Serginho", pos: "ST", overall: 80 },
+      { name: "Zico", pos: "LW", overall: 93 }
+    ]
+  },
+  // ───────── 1986 ─────────
+  {
+    id: "wc_ar_1986", name: "Argentina", season: "1986", country: "AR", flag: "🇦🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "Pumpido", pos: "GK", overall: 83 },
+      { name: "Cuciuffo", pos: "RB", overall: 78 },
+      { name: "Brown", pos: "CB", overall: 82 },
+      { name: "Ruggeri", pos: "CB", overall: 83 },
+      { name: "Olarticoechea", pos: "LB", overall: 80 },
+      { name: "Batista", pos: "CM", overall: 80 },
+      { name: "Giusti", pos: "CM", overall: 79 },
+      { name: "Burruchaga", pos: "CM", overall: 84 },
+      { name: "Enrique", pos: "RW", overall: 80 },
+      { name: "Valdano", pos: "ST", overall: 86 },
+      { name: "Maradona", pos: "LW", overall: 99 }
+    ]
+  },
+  {
+    id: "wc_de_1986", name: "Alemanha Ocidental", season: "1986", country: "DE", flag: "🇩🇪",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Schumacher", pos: "GK", overall: 87 },
+      { name: "Berthold", pos: "RB", overall: 80 },
+      { name: "Förster", pos: "CB", overall: 84 },
+      { name: "Jakobs", pos: "CB", overall: 79 },
+      { name: "Briegel", pos: "LB", overall: 84 },
+      { name: "Eder", pos: "CM", overall: 79 },
+      { name: "Matthäus", pos: "CM", overall: 91 },
+      { name: "Allofs", pos: "RW", overall: 81 },
+      { name: "Magath", pos: "AM", overall: 80 },
+      { name: "Völler", pos: "LW", overall: 86 },
+      { name: "Rummenigge", pos: "ST", overall: 88 }
+    ]
+  },
+  {
+    id: "wc_fr_1986", name: "França", season: "1986", country: "FR", flag: "🇫🇷",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Bats", pos: "GK", overall: 81 },
+      { name: "Amoros", pos: "RB", overall: 85 },
+      { name: "Bossis", pos: "CB", overall: 83 },
+      { name: "Battiston", pos: "CB", overall: 81 },
+      { name: "Ayache", pos: "LB", overall: 78 },
+      { name: "Fernández", pos: "CM", overall: 84 },
+      { name: "Tigana", pos: "CM", overall: 89 },
+      { name: "Rocheteau", pos: "RW", overall: 85 },
+      { name: "Platini", pos: "AM", overall: 95 },
+      { name: "Giresse", pos: "LW", overall: 87 },
+      { name: "Stopyra", pos: "ST", overall: 79 }
+    ]
+  },
+  {
+    id: "wc_be_1986", name: "Bélgica", season: "1986", country: "BE", flag: "🇧🇪",
+    formation: "4-4-2",
+    players: [
+      { name: "Pfaff", pos: "GK", overall: 86 },
+      { name: "Gerets", pos: "RB", overall: 83 },
+      { name: "Renquin", pos: "CB", overall: 78 },
+      { name: "Plessers", pos: "CB", overall: 77 },
+      { name: "Demol", pos: "LB", overall: 78 },
+      { name: "Vervoort", pos: "RM", overall: 78 },
+      { name: "Vandenbergh", pos: "CM", overall: 79 },
+      { name: "Scifo", pos: "CM", overall: 87 },
+      { name: "Vandereycken", pos: "LM", overall: 80 },
+      { name: "Ceulemans", pos: "ST", overall: 86 },
+      { name: "Claesen", pos: "ST", overall: 81 }
+    ]
+  },
+  {
+    id: "wc_ma_1986", name: "Marrocos", season: "1986", country: "MA", flag: "🇲🇦",
+    formation: "4-4-2",
+    players: [
+      { name: "Zaki", pos: "GK", overall: 84 },
+      { name: "El Biaz", pos: "RB", overall: 76 },
+      { name: "Bouyahyaoui", pos: "CB", overall: 76 },
+      { name: "Lamriss", pos: "CB", overall: 75 },
+      { name: "Bouderbala", pos: "LB", overall: 76 },
+      { name: "Khalifi", pos: "RM", overall: 77 },
+      { name: "Mustapha El Haddaoui", pos: "CM", overall: 78 },
+      { name: "Timoumi", pos: "CM", overall: 84 },
+      { name: "Labied", pos: "LM", overall: 78 },
+      { name: "Krimau", pos: "ST", overall: 80 },
+      { name: "Bouyboud El Idrissi", pos: "ST", overall: 76 }
+    ]
+  },
+  // ───────── 1990 ─────────
+  {
+    id: "wc_de_1990", name: "Alemanha Ocidental", season: "1990", country: "DE", flag: "🇩🇪",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Illgner", pos: "GK", overall: 86 },
+      { name: "Berthold", pos: "RB", overall: 82 },
+      { name: "Augenthaler", pos: "CB", overall: 85 },
+      { name: "Kohler", pos: "CB", overall: 86 },
+      { name: "Buchwald", pos: "LB", overall: 84 },
+      { name: "Häßler", pos: "CM", overall: 84 },
+      { name: "Matthäus", pos: "CM", overall: 93 },
+      { name: "Brehme", pos: "RW", overall: 87 },
+      { name: "Littbarski", pos: "AM", overall: 84 },
+      { name: "Völler", pos: "LW", overall: 88 },
+      { name: "Klinsmann", pos: "ST", overall: 90 }
+    ]
+  },
+  {
+    id: "wc_ar_1990", name: "Argentina", season: "1990", country: "AR", flag: "🇦🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "Goycochea", pos: "GK", overall: 84 },
+      { name: "Simón", pos: "RB", overall: 78 },
+      { name: "Ruggeri", pos: "CB", overall: 84 },
+      { name: "Serrizuela", pos: "CB", overall: 79 },
+      { name: "Olarticoechea", pos: "LB", overall: 80 },
+      { name: "Basualdo", pos: "CM", overall: 81 },
+      { name: "Burruchaga", pos: "CM", overall: 83 },
+      { name: "Giusti", pos: "CM", overall: 80 },
+      { name: "Caniggia", pos: "RW", overall: 88 },
+      { name: "Troglio", pos: "ST", overall: 78 },
+      { name: "Maradona", pos: "LW", overall: 96 }
+    ]
+  },
+  {
+    id: "wc_it_1990", name: "Itália", season: "1990", country: "IT", flag: "🇮🇹",
+    formation: "4-3-3",
+    players: [
+      { name: "Zenga", pos: "GK", overall: 86 },
+      { name: "Bergomi", pos: "RB", overall: 84 },
+      { name: "Baresi", pos: "CB", overall: 92 },
+      { name: "Ferri", pos: "CB", overall: 80 },
+      { name: "Maldini", pos: "LB", overall: 90 },
+      { name: "Donadoni", pos: "CM", overall: 84 },
+      { name: "De Napoli", pos: "CM", overall: 80 },
+      { name: "Giannini", pos: "CM", overall: 83 },
+      { name: "Vialli", pos: "RW", overall: 86 },
+      { name: "Schillaci", pos: "ST", overall: 86 },
+      { name: "Baggio", pos: "LW", overall: 89 }
+    ]
+  },
+  {
+    id: "wc_eng_1990", name: "Inglaterra", season: "1990", country: "ENG", flag: "🏴",
+    formation: "4-4-2",
+    players: [
+      { name: "Shilton", pos: "GK", overall: 87 },
+      { name: "Parker", pos: "RB", overall: 78 },
+      { name: "Walker", pos: "CB", overall: 80 },
+      { name: "Butcher", pos: "CB", overall: 81 },
+      { name: "Pearce", pos: "LB", overall: 84 },
+      { name: "Platt", pos: "RM", overall: 84 },
+      { name: "Gascoigne", pos: "CM", overall: 90 },
+      { name: "Robson", pos: "CM", overall: 88 },
+      { name: "Waddle", pos: "LM", overall: 86 },
+      { name: "Lineker", pos: "ST", overall: 90 },
+      { name: "Beardsley", pos: "ST", overall: 84 }
+    ]
+  },
+  // ───────── 1994 ─────────
+  {
+    id: "wc_br_1994", name: "Brasil", season: "1994", country: "BR", flag: "🇧🇷",
+    formation: "4-4-2",
+    players: [
+      { name: "Taffarel", pos: "GK", overall: 87 },
+      { name: "Jorginho", pos: "RB", overall: 80 },
+      { name: "Aldair", pos: "CB", overall: 87 },
+      { name: "Marcio Santos", pos: "CB", overall: 79 },
+      { name: "Branco", pos: "LB", overall: 82 },
+      { name: "Mauro Silva", pos: "RM", overall: 83 },
+      { name: "Dunga", pos: "CM", overall: 84 },
+      { name: "Mazinho", pos: "CM", overall: 79 },
+      { name: "Zinho", pos: "LM", overall: 79 },
+      { name: "Romário", pos: "ST", overall: 94 },
+      { name: "Bebeto", pos: "ST", overall: 87 }
+    ]
+  },
+  {
+    id: "wc_it_1994", name: "Itália", season: "1994", country: "IT", flag: "🇮🇹",
+    formation: "4-3-3",
+    players: [
+      { name: "Pagliuca", pos: "GK", overall: 84 },
+      { name: "Mussi", pos: "RB", overall: 78 },
+      { name: "Baresi", pos: "CB", overall: 90 },
+      { name: "Maldini", pos: "CB", overall: 91 },
+      { name: "Benarrivo", pos: "LB", overall: 79 },
+      { name: "Albertini", pos: "CM", overall: 84 },
+      { name: "D.Baggio", pos: "CM", overall: 80 },
+      { name: "Donadoni", pos: "CM", overall: 82 },
+      { name: "Massaro", pos: "RW", overall: 80 },
+      { name: "R.Baggio", pos: "ST", overall: 92 },
+      { name: "Signori", pos: "LW", overall: 86 }
+    ]
+  },
+  {
+    id: "wc_se_1994", name: "Suécia", season: "1994", country: "SE", flag: "🇸🇪",
+    formation: "4-4-2",
+    players: [
+      { name: "Ravelli", pos: "GK", overall: 84 },
+      { name: "Björklund", pos: "RB", overall: 80 },
+      { name: "Patrik Andersson", pos: "CB", overall: 80 },
+      { name: "Nilsson", pos: "CB", overall: 78 },
+      { name: "Ljung", pos: "LB", overall: 78 },
+      { name: "Ingesson", pos: "RM", overall: 78 },
+      { name: "Schwarz", pos: "CM", overall: 81 },
+      { name: "Thern", pos: "CM", overall: 84 },
+      { name: "Brolin", pos: "LM", overall: 86 },
+      { name: "Dahlin", pos: "ST", overall: 81 },
+      { name: "Kennet Andersson", pos: "ST", overall: 79 }
+    ]
+  },
+  {
+    id: "wc_co_1994", name: "Colombia", season: "1994", country: "CO", flag: "🇨🇴",
+    formation: "4-3-3",
+    players: [
+      { name: "Córdoba", pos: "GK", overall: 82 },
+      { name: "Herrera", pos: "RB", overall: 79 },
+      { name: "Escobar", pos: "CB", overall: 80 },
+      { name: "Perea", pos: "CB", overall: 79 },
+      { name: "Gabriel Gómez", pos: "LB", overall: 76 },
+      { name: "Valencia", pos: "CM", overall: 78 },
+      { name: "Valderrama", pos: "CM", overall: 90 },
+      { name: "Asprilla", pos: "CM", overall: 86 },
+      { name: "Rincón", pos: "RW", overall: 84 },
+      { name: "Lozano", pos: "ST", overall: 80 },
+      { name: "Aristizábal", pos: "LW", overall: 78 }
+    ]
+  },
+  {
+    id: "wc_bg_1994", name: "Bulgária", season: "1994", country: "BG", flag: "🇧🇬",
+    formation: "4-3-3",
+    players: [
+      { name: "Mihaylov", pos: "GK", overall: 84 },
+      { name: "Kremenliev", pos: "RB", overall: 76 },
+      { name: "Hubchev", pos: "CB", overall: 78 },
+      { name: "Ivanov", pos: "CB", overall: 78 },
+      { name: "Kiriakov", pos: "LB", overall: 78 },
+      { name: "Yankov", pos: "CM", overall: 80 },
+      { name: "Sirakov", pos: "CM", overall: 78 },
+      { name: "Letchkov", pos: "CM", overall: 81 },
+      { name: "Balakov", pos: "RW", overall: 86 },
+      { name: "Stoichkov", pos: "ST", overall: 91 },
+      { name: "Kostadinov", pos: "LW", overall: 83 }
+    ]
+  },
+  // ───────── 1998 ─────────
+  {
+    id: "wc_fr_1998", name: "França", season: "1998", country: "FR", flag: "🇫🇷",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Barthez", pos: "GK", overall: 87 },
+      { name: "Thuram", pos: "RB", overall: 87 },
+      { name: "Desailly", pos: "CB", overall: 89 },
+      { name: "Blanc", pos: "CB", overall: 87 },
+      { name: "Lizarazu", pos: "LB", overall: 86 },
+      { name: "Deschamps", pos: "CM", overall: 84 },
+      { name: "Petit", pos: "CM", overall: 85 },
+      { name: "Djorkaeff", pos: "RW", overall: 87 },
+      { name: "Zidane", pos: "AM", overall: 95 },
+      { name: "Guivarc'h", pos: "LW", overall: 76 },
+      { name: "Henry", pos: "ST", overall: 87 }
+    ]
+  },
+  {
+    id: "wc_br_1998", name: "Brasil", season: "1998", country: "BR", flag: "🇧🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "Taffarel", pos: "GK", overall: 86 },
+      { name: "Cafu", pos: "RB", overall: 90 },
+      { name: "Aldair", pos: "CB", overall: 86 },
+      { name: "Júnior Baiano", pos: "CB", overall: 78 },
+      { name: "Roberto Carlos", pos: "LB", overall: 91 },
+      { name: "Dunga", pos: "CM", overall: 81 },
+      { name: "César Sampaio", pos: "CM", overall: 80 },
+      { name: "Leonardo", pos: "CM", overall: 84 },
+      { name: "Bebeto", pos: "RW", overall: 84 },
+      { name: "Ronaldo", pos: "ST", overall: 95 },
+      { name: "Rivaldo", pos: "LW", overall: 92 }
+    ]
+  },
+  {
+    id: "wc_hr_1998", name: "Croácia", season: "1998", country: "HR", flag: "🇭🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "Ladić", pos: "GK", overall: 81 },
+      { name: "Bilić", pos: "RB", overall: 81 },
+      { name: "Štimac", pos: "CB", overall: 83 },
+      { name: "Šimić", pos: "CB", overall: 79 },
+      { name: "Jarni", pos: "LB", overall: 84 },
+      { name: "Asanović", pos: "CM", overall: 84 },
+      { name: "Soldo", pos: "CM", overall: 78 },
+      { name: "Bošnjak", pos: "CM", overall: 76 },
+      { name: "Šuker", pos: "RW", overall: 90 },
+      { name: "Vlaović", pos: "ST", overall: 82 },
+      { name: "Boban", pos: "LW", overall: 86 }
+    ]
+  },
+  {
+    id: "wc_nl_1998", name: "Holanda", season: "1998", country: "NL", flag: "🇳🇱",
+    formation: "4-3-3",
+    players: [
+      { name: "Van der Sar", pos: "GK", overall: 86 },
+      { name: "Reiziger", pos: "RB", overall: 80 },
+      { name: "Stam", pos: "CB", overall: 90 },
+      { name: "F.de Boer", pos: "CB", overall: 87 },
+      { name: "Numan", pos: "LB", overall: 79 },
+      { name: "Davids", pos: "CM", overall: 87 },
+      { name: "R.de Boer", pos: "CM", overall: 85 },
+      { name: "Cocu", pos: "CM", overall: 82 },
+      { name: "Overmars", pos: "RW", overall: 86 },
+      { name: "Kluivert", pos: "ST", overall: 87 },
+      { name: "Bergkamp", pos: "LW", overall: 91 }
+    ]
+  },
+  // ───────── 2002 ─────────
+  {
+    id: "wc_br_2002", name: "Brasil", season: "2002", country: "BR", flag: "🇧🇷",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Marcos", pos: "GK", overall: 85 },
+      { name: "Cafu", pos: "RB", overall: 88 },
+      { name: "Lúcio", pos: "CB", overall: 86 },
+      { name: "Edmílson", pos: "CB", overall: 80 },
+      { name: "Roberto Carlos", pos: "LB", overall: 90 },
+      { name: "Gilberto Silva", pos: "CM", overall: 85 },
+      { name: "Kleberson", pos: "CM", overall: 80 },
+      { name: "Rivaldo", pos: "RW", overall: 90 },
+      { name: "Ronaldinho", pos: "AM", overall: 91 },
+      { name: "Luizão", pos: "LW", overall: 84 },
+      { name: "Ronaldo", pos: "ST", overall: 96 }
+    ]
+  },
+  {
+    id: "wc_de_2002", name: "Alemanha", season: "2002", country: "DE", flag: "🇩🇪",
+    formation: "4-4-2",
+    players: [
+      { name: "Kahn", pos: "GK", overall: 92 },
+      { name: "Linke", pos: "RB", overall: 79 },
+      { name: "Ramelow", pos: "CB", overall: 78 },
+      { name: "Metzelder", pos: "CB", overall: 82 },
+      { name: "Frings", pos: "LB", overall: 83 },
+      { name: "Hamann", pos: "RM", overall: 82 },
+      { name: "Jeremies", pos: "CM", overall: 79 },
+      { name: "Ballack", pos: "CM", overall: 89 },
+      { name: "Schneider", pos: "LM", overall: 83 },
+      { name: "Klose", pos: "ST", overall: 86 },
+      { name: "Neuville", pos: "ST", overall: 82 }
+    ]
+  },
+  {
+    id: "wc_tr_2002", name: "Turquia", season: "2002", country: "TR", flag: "🇹🇷",
+    formation: "4-4-2",
+    players: [
+      { name: "Rüştü", pos: "GK", overall: 85 },
+      { name: "Fatih Akyel", pos: "RB", overall: 78 },
+      { name: "Alpay", pos: "CB", overall: 79 },
+      { name: "Bülent Korkmaz", pos: "CB", overall: 78 },
+      { name: "Ümit Davala", pos: "LB", overall: 78 },
+      { name: "Tugay", pos: "RM", overall: 81 },
+      { name: "Yıldıray Baştürk", pos: "CM", overall: 78 },
+      { name: "Emre Belözoğlu", pos: "CM", overall: 84 },
+      { name: "Okan Buruk", pos: "LM", overall: 79 },
+      { name: "Hasan Şaş", pos: "ST", overall: 79 },
+      { name: "Hakan Şükür", pos: "ST", overall: 84 }
+    ]
+  },
+  {
+    id: "wc_kr_2002", name: "Coreia do Sul", season: "2002", country: "KR", flag: "🇰🇷",
+    formation: "4-4-2",
+    players: [
+      { name: "Lee Woon-jae", pos: "GK", overall: 83 },
+      { name: "Song Chong-gug", pos: "RB", overall: 78 },
+      { name: "Hong Myung-bo", pos: "CB", overall: 84 },
+      { name: "Choi Jin-cheul", pos: "CB", overall: 77 },
+      { name: "Lee Young-pyo", pos: "LB", overall: 83 },
+      { name: "Yoo Sang-chul", pos: "RM", overall: 80 },
+      { name: "Kim Nam-il", pos: "CM", overall: 78 },
+      { name: "Park Ji-sung", pos: "CM", overall: 87 },
+      { name: "Lee Eul-yong", pos: "LM", overall: 78 },
+      { name: "Ahn Jung-hwan", pos: "ST", overall: 81 },
+      { name: "Seol Ki-hyeon", pos: "ST", overall: 79 }
+    ]
+  },
+  // ───────── 2006 ─────────
+  {
+    id: "wc_it_2006", name: "Itália", season: "2006", country: "IT", flag: "🇮🇹",
+    formation: "4-3-1-2",
+    players: [
+      { name: "Buffon", pos: "GK", overall: 93 },
+      { name: "Zambrotta", pos: "RB", overall: 85 },
+      { name: "Cannavaro", pos: "CB", overall: 92 },
+      { name: "Materazzi", pos: "CB", overall: 83 },
+      { name: "Grosso", pos: "LB", overall: 81 },
+      { name: "Gattuso", pos: "CM", overall: 86 },
+      { name: "Pirlo", pos: "CM", overall: 91 },
+      { name: "De Rossi", pos: "CM", overall: 85 },
+      { name: "Camoranesi", pos: "AM", overall: 81 },
+      { name: "Totti", pos: "ST", overall: 90 },
+      { name: "Toni", pos: "ST", overall: 86 }
+    ]
+  },
+  {
+    id: "wc_fr_2006", name: "França", season: "2006", country: "FR", flag: "🇫🇷",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Barthez", pos: "GK", overall: 85 },
+      { name: "Sagnol", pos: "RB", overall: 81 },
+      { name: "Thuram", pos: "CB", overall: 86 },
+      { name: "Gallas", pos: "CB", overall: 84 },
+      { name: "Abidal", pos: "LB", overall: 82 },
+      { name: "Makélélé", pos: "CM", overall: 87 },
+      { name: "Vieira", pos: "CM", overall: 86 },
+      { name: "Ribéry", pos: "RW", overall: 86 },
+      { name: "Zidane", pos: "AM", overall: 92 },
+      { name: "Malouda", pos: "LW", overall: 80 },
+      { name: "Henry", pos: "ST", overall: 91 }
+    ]
+  },
+  {
+    id: "wc_br_2006", name: "Brasil", season: "2006", country: "BR", flag: "🇧🇷",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Dida", pos: "GK", overall: 84 },
+      { name: "Cafu", pos: "RB", overall: 84 },
+      { name: "Lúcio", pos: "CB", overall: 87 },
+      { name: "Juan", pos: "CB", overall: 84 },
+      { name: "Roberto Carlos", pos: "LB", overall: 86 },
+      { name: "Emerson", pos: "CM", overall: 80 },
+      { name: "Zé Roberto", pos: "CM", overall: 81 },
+      { name: "Kaká", pos: "RW", overall: 92 },
+      { name: "Ronaldinho", pos: "AM", overall: 93 },
+      { name: "Adriano", pos: "LW", overall: 87 },
+      { name: "Ronaldo", pos: "ST", overall: 90 }
+    ]
+  },
+  {
+    id: "wc_de_2006", name: "Alemanha", season: "2006", country: "DE", flag: "🇩🇪",
+    formation: "4-4-2",
+    players: [
+      { name: "Lehmann", pos: "GK", overall: 86 },
+      { name: "Friedrich", pos: "RB", overall: 80 },
+      { name: "Mertesacker", pos: "CB", overall: 81 },
+      { name: "Metzelder", pos: "CB", overall: 83 },
+      { name: "Lahm", pos: "LB", overall: 87 },
+      { name: "Schweinsteiger", pos: "RM", overall: 85 },
+      { name: "Frings", pos: "CM", overall: 84 },
+      { name: "Ballack", pos: "CM", overall: 90 },
+      { name: "Borowski", pos: "LM", overall: 78 },
+      { name: "Klose", pos: "ST", overall: 88 },
+      { name: "Podolski", pos: "ST", overall: 85 }
+    ]
+  },
+  {
+    id: "wc_pt_2006", name: "Portugal", season: "2006", country: "PT", flag: "🇵🇹",
+    formation: "4-3-3",
+    players: [
+      { name: "Ricardo", pos: "GK", overall: 84 },
+      { name: "Miguel", pos: "RB", overall: 79 },
+      { name: "Ricardo Carvalho", pos: "CB", overall: 87 },
+      { name: "Fernando Meira", pos: "CB", overall: 80 },
+      { name: "Nuno Valente", pos: "LB", overall: 78 },
+      { name: "Maniche", pos: "CM", overall: 81 },
+      { name: "Costinha", pos: "CM", overall: 80 },
+      { name: "Deco", pos: "CM", overall: 88 },
+      { name: "Cristiano Ronaldo", pos: "RW", overall: 89 },
+      { name: "Pauleta", pos: "ST", overall: 84 },
+      { name: "Figo", pos: "LW", overall: 89 }
+    ]
+  },
+  {
+    id: "wc_ua_2006", name: "Ucrânia", season: "2006", country: "UA", flag: "🇺🇦",
+    formation: "4-4-2",
+    players: [
+      { name: "Shovkovskyi", pos: "GK", overall: 82 },
+      { name: "Nesmachniy", pos: "RB", overall: 76 },
+      { name: "Vashchuk", pos: "CB", overall: 79 },
+      { name: "Fedorov", pos: "CB", overall: 77 },
+      { name: "Rusol", pos: "LB", overall: 76 },
+      { name: "Tymoshchuk", pos: "RM", overall: 84 },
+      { name: "Husyev", pos: "CM", overall: 79 },
+      { name: "Rotan", pos: "CM", overall: 77 },
+      { name: "Aliev", pos: "LM", overall: 78 },
+      { name: "Shevchenko", pos: "ST", overall: 91 },
+      { name: "Voronin", pos: "ST", overall: 81 }
+    ]
+  },
+  // ───────── 2010 ─────────
+  {
+    id: "wc_es_2010", name: "Espanha", season: "2010", country: "ES", flag: "🇪🇸",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Casillas", pos: "GK", overall: 91 },
+      { name: "Ramos", pos: "RB", overall: 87 },
+      { name: "Piqué", pos: "CB", overall: 85 },
+      { name: "Puyol", pos: "CB", overall: 88 },
+      { name: "Capdevila", pos: "LB", overall: 79 },
+      { name: "Xabi Alonso", pos: "CM", overall: 87 },
+      { name: "Busquets", pos: "CM", overall: 83 },
+      { name: "Pedro", pos: "RW", overall: 82 },
+      { name: "Iniesta", pos: "AM", overall: 92 },
+      { name: "Villa", pos: "LW", overall: 90 },
+      { name: "Torres", pos: "ST", overall: 84 }
+    ]
+  },
+  {
+    id: "wc_nl_2010", name: "Holanda", season: "2010", country: "NL", flag: "🇳🇱",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Stekelenburg", pos: "GK", overall: 84 },
+      { name: "Van der Wiel", pos: "RB", overall: 81 },
+      { name: "Heitinga", pos: "CB", overall: 80 },
+      { name: "Mathijsen", pos: "CB", overall: 80 },
+      { name: "Van Bronckhorst", pos: "LB", overall: 82 },
+      { name: "Van Bommel", pos: "CM", overall: 83 },
+      { name: "De Jong", pos: "CM", overall: 85 },
+      { name: "Robben", pos: "RW", overall: 90 },
+      { name: "Sneijder", pos: "AM", overall: 90 },
+      { name: "Kuyt", pos: "LW", overall: 82 },
+      { name: "Van Persie", pos: "ST", overall: 87 }
+    ]
+  },
+  {
+    id: "wc_de_2010", name: "Alemanha", season: "2010", country: "DE", flag: "🇩🇪",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Neuer", pos: "GK", overall: 87 },
+      { name: "Lahm", pos: "RB", overall: 88 },
+      { name: "Friedrich", pos: "CB", overall: 80 },
+      { name: "Mertesacker", pos: "CB", overall: 83 },
+      { name: "Boateng", pos: "LB", overall: 80 },
+      { name: "Khedira", pos: "CM", overall: 82 },
+      { name: "Schweinsteiger", pos: "CM", overall: 88 },
+      { name: "Müller", pos: "RW", overall: 87 },
+      { name: "Özil", pos: "AM", overall: 87 },
+      { name: "Podolski", pos: "LW", overall: 83 },
+      { name: "Klose", pos: "ST", overall: 85 }
+    ]
+  },
+  {
+    id: "wc_uy_2010", name: "Uruguai", season: "2010", country: "UY", flag: "🇺🇾",
+    formation: "4-4-2",
+    players: [
+      { name: "Muslera", pos: "GK", overall: 83 },
+      { name: "Maxi Pereira", pos: "RB", overall: 81 },
+      { name: "Lugano", pos: "CB", overall: 82 },
+      { name: "Godín", pos: "CB", overall: 84 },
+      { name: "Fucile", pos: "LB", overall: 77 },
+      { name: "Pérez", pos: "RM", overall: 79 },
+      { name: "Arévalo Ríos", pos: "CM", overall: 78 },
+      { name: "Gargano", pos: "CM", overall: 78 },
+      { name: "Álvaro Pereira", pos: "LM", overall: 76 },
+      { name: "Forlán", pos: "ST", overall: 88 },
+      { name: "Suárez", pos: "ST", overall: 90 }
+    ]
+  },
+  {
+    id: "wc_gh_2010", name: "Gana", season: "2010", country: "GH", flag: "🇬🇭",
+    formation: "4-4-2",
+    players: [
+      { name: "Kingson", pos: "GK", overall: 79 },
+      { name: "Pantsil", pos: "RB", overall: 78 },
+      { name: "Mensah", pos: "CB", overall: 79 },
+      { name: "Vorsah", pos: "CB", overall: 76 },
+      { name: "Sarpei", pos: "LB", overall: 76 },
+      { name: "Asamoah Gyan", pos: "RM", overall: 84 },
+      { name: "Anthony Annan", pos: "CM", overall: 77 },
+      { name: "Kwadwo Asamoah", pos: "CM", overall: 81 },
+      { name: "Boateng", pos: "LM", overall: 83 },
+      { name: "Muntari", pos: "ST", overall: 81 },
+      { name: "Inkoom", pos: "ST", overall: 75 }
+    ]
+  },
+  {
+    id: "wc_br_2010", name: "Brasil", season: "2010", country: "BR", flag: "🇧🇷",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Júlio César", pos: "GK", overall: 84 },
+      { name: "Maicon", pos: "RB", overall: 87 },
+      { name: "Lúcio", pos: "CB", overall: 84 },
+      { name: "Juan", pos: "CB", overall: 81 },
+      { name: "Michel Bastos", pos: "LB", overall: 79 },
+      { name: "Felipe Melo", pos: "CM", overall: 80 },
+      { name: "Gilberto Silva", pos: "CM", overall: 81 },
+      { name: "Robinho", pos: "RW", overall: 84 },
+      { name: "Kaká", pos: "AM", overall: 88 },
+      { name: "Elano", pos: "LW", overall: 80 },
+      { name: "Luís Fabiano", pos: "ST", overall: 85 }
+    ]
+  },
+  // ───────── 2014 ─────────
+  {
+    id: "wc_de_2014", name: "Alemanha", season: "2014", country: "DE", flag: "🇩🇪",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Neuer", pos: "GK", overall: 97 },
+      { name: "Lahm", pos: "RB", overall: 89 },
+      { name: "Boateng", pos: "CB", overall: 86 },
+      { name: "Hummels", pos: "CB", overall: 86 },
+      { name: "Höwedes", pos: "LB", overall: 80 },
+      { name: "Schweinsteiger", pos: "CM", overall: 87 },
+      { name: "Kroos", pos: "CM", overall: 87 },
+      { name: "Müller", pos: "RW", overall: 89 },
+      { name: "Özil", pos: "AM", overall: 87 },
+      { name: "Götze", pos: "LW", overall: 84 },
+      { name: "Klose", pos: "ST", overall: 83 }
+    ]
+  },
+  {
+    id: "wc_ar_2014", name: "Argentina", season: "2014", country: "AR", flag: "🇦🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "Romero", pos: "GK", overall: 81 },
+      { name: "Zabaleta", pos: "RB", overall: 82 },
+      { name: "Garay", pos: "CB", overall: 82 },
+      { name: "Demichelis", pos: "CB", overall: 79 },
+      { name: "Rojo", pos: "LB", overall: 79 },
+      { name: "Mascherano", pos: "CM", overall: 87 },
+      { name: "Biglia", pos: "CM", overall: 79 },
+      { name: "Di María", pos: "CM", overall: 87 },
+      { name: "Lavezzi", pos: "RW", overall: 81 },
+      { name: "Higuaín", pos: "ST", overall: 85 },
+      { name: "Messi", pos: "LW", overall: 97 }
+    ]
+  },
+  {
+    id: "wc_br_2014", name: "Brasil", season: "2014", country: "BR", flag: "🇧🇷",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Júlio César", pos: "GK", overall: 81 },
+      { name: "Daniel Alves", pos: "RB", overall: 85 },
+      { name: "Thiago Silva", pos: "CB", overall: 87 },
+      { name: "David Luiz", pos: "CB", overall: 83 },
+      { name: "Marcelo", pos: "LB", overall: 84 },
+      { name: "Fernandinho", pos: "CM", overall: 81 },
+      { name: "Luiz Gustavo", pos: "CM", overall: 80 },
+      { name: "Hulk", pos: "RW", overall: 84 },
+      { name: "Oscar", pos: "AM", overall: 82 },
+      { name: "Neymar", pos: "LW", overall: 90 },
+      { name: "Fred", pos: "ST", overall: 76 }
+    ]
+  },
+  {
+    id: "wc_nl_2014", name: "Holanda", season: "2014", country: "NL", flag: "🇳🇱",
+    formation: "5-3-2",
+    players: [
+      { name: "Cillessen", pos: "GK", overall: 81 },
+      { name: "Janmaat", pos: "RB", overall: 78 },
+      { name: "Vlaar", pos: "CB", overall: 81 },
+      { name: "De Vrij", pos: "CB", overall: 80 },
+      { name: "Martins Indi", pos: "CB", overall: 78 },
+      { name: "Blind", pos: "LB", overall: 79 },
+      { name: "De Jong", pos: "CM", overall: 82 },
+      { name: "De Guzmán", pos: "CM", overall: 78 },
+      { name: "Sneijder", pos: "CM", overall: 86 },
+      { name: "Robben", pos: "ST", overall: 91 },
+      { name: "Van Persie", pos: "ST", overall: 88 }
+    ]
+  },
+  {
+    id: "wc_cr_2014", name: "Costa Rica", season: "2014", country: "CR", flag: "🇨🇷",
+    formation: "4-4-2",
+    players: [
+      { name: "Navas", pos: "GK", overall: 84 },
+      { name: "Cunningham", pos: "RB", overall: 78 },
+      { name: "Umaña", pos: "CB", overall: 78 },
+      { name: "Gonzalez", pos: "CB", overall: 78 },
+      { name: "Duarte", pos: "LB", overall: 77 },
+      { name: "Borges", pos: "RM", overall: 76 },
+      { name: "Tejeda", pos: "CM", overall: 78 },
+      { name: "Diaz", pos: "CM", overall: 80 },
+      { name: "Ruiz", pos: "LM", overall: 79 },
+      { name: "Campbell", pos: "ST", overall: 81 },
+      { name: "Urena", pos: "ST", overall: 76 }
+    ]
+  },
+  {
+    id: "wc_co_2014", name: "Colombia", season: "2014", country: "CO", flag: "🇨🇴",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Ospina", pos: "GK", overall: 82 },
+      { name: "Zúñiga", pos: "RB", overall: 79 },
+      { name: "Yepes", pos: "CB", overall: 81 },
+      { name: "Mina", pos: "CB", overall: 77 },
+      { name: "Armero", pos: "LB", overall: 77 },
+      { name: "Aguilar", pos: "CM", overall: 78 },
+      { name: "Carlos Sánchez", pos: "CM", overall: 80 },
+      { name: "Cuadrado", pos: "RW", overall: 85 },
+      { name: "James Rodríguez", pos: "AM", overall: 90 },
+      { name: "Quintero", pos: "LW", overall: 80 },
+      { name: "Falcao", pos: "ST", overall: 89 }
+    ]
+  },
+  // ───────── 2018 ─────────
+  {
+    id: "wc_fr_2018", name: "França", season: "2018", country: "FR", flag: "🇫🇷",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Lloris", pos: "GK", overall: 88 },
+      { name: "Pavard", pos: "RB", overall: 80 },
+      { name: "Varane", pos: "CB", overall: 88 },
+      { name: "Umtiti", pos: "CB", overall: 83 },
+      { name: "Hernández", pos: "LB", overall: 81 },
+      { name: "Kanté", pos: "CM", overall: 88 },
+      { name: "Pogba", pos: "CM", overall: 87 },
+      { name: "Mbappé", pos: "RW", overall: 90 },
+      { name: "Griezmann", pos: "AM", overall: 90 },
+      { name: "Matuidi", pos: "LW", overall: 82 },
+      { name: "Giroud", pos: "ST", overall: 82 }
+    ]
+  },
+  {
+    id: "wc_hr_2018", name: "Croácia", season: "2018", country: "HR", flag: "🇭🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "Subašić", pos: "GK", overall: 84 },
+      { name: "Vrsaljko", pos: "RB", overall: 83 },
+      { name: "Lovren", pos: "CB", overall: 83 },
+      { name: "Vida", pos: "CB", overall: 81 },
+      { name: "Strinić", pos: "LB", overall: 78 },
+      { name: "Brozović", pos: "CM", overall: 84 },
+      { name: "Modrić", pos: "CM", overall: 95 },
+      { name: "Rakitić", pos: "CM", overall: 88 },
+      { name: "Perišić", pos: "RW", overall: 86 },
+      { name: "Mandžukić", pos: "ST", overall: 85 },
+      { name: "Rebić", pos: "LW", overall: 80 }
+    ]
+  },
+  {
+    id: "wc_eng_2018", name: "Inglaterra", season: "2018", country: "ENG", flag: "🏴",
+    formation: "3-5-2",
+    players: [
+      { name: "Pickford", pos: "GK", overall: 84 },
+      { name: "Stones", pos: "CB", overall: 82 },
+      { name: "Maguire", pos: "CB", overall: 81 },
+      { name: "Walker", pos: "CB", overall: 84 },
+      { name: "Trippier", pos: "RM", overall: 80 },
+      { name: "Henderson", pos: "CM", overall: 81 },
+      { name: "Alli", pos: "CM", overall: 82 },
+      { name: "Lingard", pos: "CM", overall: 80 },
+      { name: "Young", pos: "LM", overall: 78 },
+      { name: "Sterling", pos: "ST", overall: 84 },
+      { name: "Kane", pos: "ST", overall: 89 }
+    ]
+  },
+  {
+    id: "wc_be_2018", name: "Bélgica", season: "2018", country: "BE", flag: "🇧🇪",
+    formation: "3-4-3",
+    players: [
+      { name: "Courtois", pos: "GK", overall: 90 },
+      { name: "Alderweireld", pos: "CB", overall: 87 },
+      { name: "Kompany", pos: "CB", overall: 86 },
+      { name: "Vertonghen", pos: "CB", overall: 85 },
+      { name: "Meunier", pos: "RW", overall: 79 },
+      { name: "De Bruyne", pos: "CM", overall: 92 },
+      { name: "Witsel", pos: "CM", overall: 84 },
+      { name: "Chadli", pos: "LW", overall: 78 },
+      { name: "Mertens", pos: "ST", overall: 83 },
+      { name: "Lukaku", pos: "ST", overall: 86 },
+      { name: "Hazard", pos: "LW", overall: 90 }
+    ]
+  },
+  {
+    id: "wc_br_2018", name: "Brasil", season: "2018", country: "BR", flag: "🇧🇷",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Alisson", pos: "GK", overall: 88 },
+      { name: "Fagner", pos: "RB", overall: 78 },
+      { name: "Thiago Silva", pos: "CB", overall: 85 },
+      { name: "Miranda", pos: "CB", overall: 84 },
+      { name: "Marcelo", pos: "LB", overall: 86 },
+      { name: "Casemiro", pos: "CM", overall: 87 },
+      { name: "Paulinho", pos: "CM", overall: 81 },
+      { name: "Willian", pos: "RW", overall: 84 },
+      { name: "Coutinho", pos: "AM", overall: 87 },
+      { name: "Neymar", pos: "LW", overall: 92 },
+      { name: "Jesus", pos: "ST", overall: 81 }
+    ]
+  },
+  {
+    id: "wc_ru_2018", name: "Rússia", season: "2018", country: "RU", flag: "🇷🇺",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Akinfeev", pos: "GK", overall: 83 },
+      { name: "Mário Fernandes", pos: "RB", overall: 78 },
+      { name: "Ignashevich", pos: "CB", overall: 78 },
+      { name: "Kutepov", pos: "CB", overall: 76 },
+      { name: "Kudryashov", pos: "LB", overall: 76 },
+      { name: "Zobnin", pos: "CM", overall: 78 },
+      { name: "Gazinsky", pos: "CM", overall: 76 },
+      { name: "Samedov", pos: "RW", overall: 78 },
+      { name: "Golovin", pos: "AM", overall: 81 },
+      { name: "Cheryshev", pos: "LW", overall: 79 },
+      { name: "Dzyuba", pos: "ST", overall: 80 }
+    ]
+  },
+  {
+    id: "wc_se_2018", name: "Suécia", season: "2018", country: "SE", flag: "🇸🇪",
+    formation: "4-4-2",
+    players: [
+      { name: "R. Olsen", pos: "GK", overall: 80 },
+      { name: "Lustig", pos: "RB", overall: 78 },
+      { name: "Lindelöf", pos: "CB", overall: 80 },
+      { name: "Granqvist", pos: "CB", overall: 79 },
+      { name: "Augustinsson", pos: "LB", overall: 77 },
+      { name: "S. Larsson", pos: "RM", overall: 79 },
+      { name: "Ekdal", pos: "CM", overall: 79 },
+      { name: "Claesson", pos: "CM", overall: 78 },
+      { name: "E. Forsberg", pos: "LM", overall: 82 },
+      { name: "Berg", pos: "ST", overall: 78 },
+      { name: "Toivonen", pos: "ST", overall: 78 }
+    ]
+  },
+  // ───────── 2022 ─────────
+  {
+    id: "wc_ar_2022", name: "Argentina", season: "2022", country: "AR", flag: "🇦🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "E. Martínez", pos: "GK", overall: 90 },
+      { name: "Molina", pos: "RB", overall: 80 },
+      { name: "Otamendi", pos: "CB", overall: 79 },
+      { name: "C. Romero", pos: "CB", overall: 83 },
+      { name: "Tagliafico", pos: "LB", overall: 81 },
+      { name: "De Paul", pos: "CM", overall: 84 },
+      { name: "Mac Allister", pos: "CM", overall: 84 },
+      { name: "E. Fernández", pos: "CM", overall: 83 },
+      { name: "Di María", pos: "RW", overall: 88 },
+      { name: "J. Álvarez", pos: "ST", overall: 86 },
+      { name: "Messi", pos: "LW", overall: 99 }
+    ]
+  },
+  {
+    id: "wc_fr_2022", name: "França", season: "2022", country: "FR", flag: "🇫🇷",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Lloris", pos: "GK", overall: 84 },
+      { name: "Koundé", pos: "RB", overall: 83 },
+      { name: "Varane", pos: "CB", overall: 85 },
+      { name: "Upamecano", pos: "CB", overall: 82 },
+      { name: "T. Hernández", pos: "LB", overall: 84 },
+      { name: "Tchouaméni", pos: "CM", overall: 84 },
+      { name: "Rabiot", pos: "CM", overall: 82 },
+      { name: "O. Dembélé", pos: "RW", overall: 83 },
+      { name: "Griezmann", pos: "AM", overall: 88 },
+      { name: "Mbappé", pos: "LW", overall: 91 },
+      { name: "Giroud", pos: "ST", overall: 81 }
+    ]
+  },
+  {
+    id: "wc_hr_2022", name: "Croácia", season: "2022", country: "HR", flag: "🇭🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "Livaković", pos: "GK", overall: 84 },
+      { name: "Juranović", pos: "RB", overall: 80 },
+      { name: "Gvardiol", pos: "CB", overall: 84 },
+      { name: "Lovren", pos: "CB", overall: 79 },
+      { name: "B. Sosa", pos: "LB", overall: 78 },
+      { name: "Brozović", pos: "CM", overall: 85 },
+      { name: "Modrić", pos: "CM", overall: 90 },
+      { name: "Kovačić", pos: "CM", overall: 84 },
+      { name: "Perišić", pos: "RW", overall: 84 },
+      { name: "Kramarić", pos: "ST", overall: 81 },
+      { name: "Majer", pos: "LW", overall: 78 }
+    ]
+  },
+  {
+    id: "wc_ma_2022", name: "Marrocos", season: "2022", country: "MA", flag: "🇲🇦",
+    formation: "4-3-3",
+    players: [
+      { name: "Bounou", pos: "GK", overall: 85 },
+      { name: "Hakimi", pos: "RB", overall: 87 },
+      { name: "Saïss", pos: "CB", overall: 80 },
+      { name: "Aguerd", pos: "CB", overall: 80 },
+      { name: "Mazraoui", pos: "LB", overall: 82 },
+      { name: "Amrabat", pos: "CM", overall: 84 },
+      { name: "Ounahi", pos: "CM", overall: 79 },
+      { name: "Amallah", pos: "CM", overall: 78 },
+      { name: "Ziyech", pos: "RW", overall: 84 },
+      { name: "En-Nesyri", pos: "ST", overall: 80 },
+      { name: "Boufal", pos: "LW", overall: 79 }
+    ]
+  },
+  {
+    id: "wc_pt_2022", name: "Portugal", season: "2022", country: "PT", flag: "🇵🇹",
+    formation: "4-2-3-1",
+    players: [
+      { name: "D. Costa", pos: "GK", overall: 82 },
+      { name: "Dalot", pos: "RB", overall: 81 },
+      { name: "Pepe", pos: "CB", overall: 84 },
+      { name: "Rúben Dias", pos: "CB", overall: 87 },
+      { name: "Cancelo", pos: "LB", overall: 86 },
+      { name: "Bernardo Silva", pos: "CM", overall: 88 },
+      { name: "Bruno Fernandes", pos: "CM", overall: 86 },
+      { name: "João Félix", pos: "RW", overall: 83 },
+      { name: "Rúben Neves", pos: "AM", overall: 84 },
+      { name: "Gonçalo Ramos", pos: "LW", overall: 80 },
+      { name: "C. Ronaldo", pos: "ST", overall: 88 }
+    ]
+  },
+  {
+    id: "wc_br_2022", name: "Brasil", season: "2022", country: "BR", flag: "🇧🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "Alisson", pos: "GK", overall: 89 },
+      { name: "Danilo", pos: "RB", overall: 82 },
+      { name: "Thiago Silva", pos: "CB", overall: 83 },
+      { name: "Marquinhos", pos: "CB", overall: 86 },
+      { name: "Alex Sandro", pos: "LB", overall: 81 },
+      { name: "Casemiro", pos: "CM", overall: 88 },
+      { name: "Lucas Paquetá", pos: "CM", overall: 83 },
+      { name: "Fred", pos: "CM", overall: 79 },
+      { name: "Raphinha", pos: "RW", overall: 82 },
+      { name: "Richarlison", pos: "ST", overall: 82 },
+      { name: "Vinícius Júnior", pos: "LW", overall: 87 }
+    ]
+  },
+  {
+    id: "wc_nl_2022", name: "Holanda", season: "2022", country: "NL", flag: "🇳🇱",
+    formation: "3-4-3",
+    players: [
+      { name: "Noppert", pos: "GK", overall: 79 },
+      { name: "Van Dijk", pos: "CB", overall: 89 },
+      { name: "De Ligt", pos: "CB", overall: 85 },
+      { name: "Timber", pos: "CB", overall: 81 },
+      { name: "Dumfries", pos: "RW", overall: 82 },
+      { name: "De Jong", pos: "CM", overall: 86 },
+      { name: "Klaassen", pos: "CM", overall: 80 },
+      { name: "Blind", pos: "LW", overall: 79 },
+      { name: "Depay", pos: "ST", overall: 84 },
+      { name: "Gakpo", pos: "ST", overall: 84 },
+      { name: "Bergwijn", pos: "ST", overall: 79 }
+    ]
+  },
+  {
+    id: "wc_jp_2022", name: "Japão", season: "2022", country: "JP", flag: "🇯🇵",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Gonda", pos: "GK", overall: 80 },
+      { name: "Sakai", pos: "RB", overall: 78 },
+      { name: "Yoshida", pos: "CB", overall: 80 },
+      { name: "Tomiyasu", pos: "CB", overall: 81 },
+      { name: "Nagatomo", pos: "LB", overall: 76 },
+      { name: "Morita", pos: "CM", overall: 78 },
+      { name: "Tanaka", pos: "CM", overall: 79 },
+      { name: "Doan", pos: "RW", overall: 81 },
+      { name: "Kamada", pos: "AM", overall: 81 },
+      { name: "Mitoma", pos: "LW", overall: 82 },
+      { name: "Maeda", pos: "ST", overall: 78 }
     ]
   }
 ];
