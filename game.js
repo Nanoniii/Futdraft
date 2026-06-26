@@ -1219,3 +1219,127 @@ function closeCredits() {
   const ov = document.getElementById("creditsOverlay");
   if (ov) ov.classList.remove("open");
 }
+
+// ═══════════════════════════════════════════
+// VITRINE — todos os times do jogo, lendo direto
+// dos arrays (TEAMS, BRAZIL_TEAMS, LIBERTADORES_TEAMS,
+// WORLD_CUP_TEAMS), sem listar nenhum time na mão.
+// ═══════════════════════════════════════════
+
+// Cada filtro aponta pro mesmo array já usado em getTeamPool(),
+// então times novos adicionados no data.js aparecem aqui sozinhos.
+const VITRINE_FILTERS = [
+  { key: "champions",    label: "🏆 Champions",       teams: () => TEAMS },
+  { key: "libertadores", label: "🌎 Libertadores",    teams: () => LIBERTADORES_TEAMS.concat(BRAZIL_TEAMS.filter(t => LIBERTADORES_BR_IDS.has(t.id))) },
+  { key: "brasil",       label: "🇧🇷 Copa do Brasil",  teams: () => BRAZIL_TEAMS },
+  { key: "copadomundo",  label: "🌍 Copa do Mundo",   teams: () => WORLD_CUP_TEAMS },
+];
+
+let vitrineActiveFilter = "champions";
+
+function openVitrine() {
+  const ov = document.getElementById("vitrineOverlay");
+  if (!ov) return;
+  ov.classList.add("open");
+  if (!ov.dataset.built) {
+    ov.dataset.built = "1";
+    renderVitrineFilters();
+  }
+  document.getElementById("vitrineSearch").value = "";
+  renderVitrineGrid();
+}
+function closeVitrine() {
+  const ov = document.getElementById("vitrineOverlay");
+  if (ov) ov.classList.remove("open");
+}
+
+function renderVitrineFilters() {
+  const wrap = document.getElementById("vitrineFilters");
+  wrap.innerHTML = VITRINE_FILTERS.map(f =>
+    `<button class="vf-btn ${f.key === vitrineActiveFilter ? "active" : ""}" data-key="${f.key}" onclick="setVitrineFilter('${f.key}')">${f.label}</button>`
+  ).join("");
+}
+
+function setVitrineFilter(key) {
+  vitrineActiveFilter = key;
+  document.querySelectorAll(".vf-btn").forEach(b => b.classList.toggle("active", b.dataset.key === key));
+  renderVitrineGrid();
+}
+
+// Como o data.js não guarda um texto de "por que esse time está aqui",
+// a gente monta uma legenda curta automaticamente a partir do que já
+// existe (nome + temporada + país), sem precisar escrever uma por uma.
+function vitrineSubtitle(t) {
+  if (t.season && t.country) return `${t.season} · ${t.country}`;
+  if (t.season) return t.season;
+  return t.country || "";
+}
+
+function renderVitrineGrid() {
+  const filter = VITRINE_FILTERS.find(f => f.key === vitrineActiveFilter) || VITRINE_FILTERS[0];
+  const query = (document.getElementById("vitrineSearch").value || "").trim().toLowerCase();
+  let list = filter.teams();
+  if (query) {
+    list = list.filter(t =>
+      t.name.toLowerCase().includes(query) ||
+      (t.season || "").toLowerCase().includes(query) ||
+      (t.country || "").toLowerCase().includes(query)
+    );
+  }
+  document.getElementById("vitrineCount").textContent = `${list.length} TIME${list.length === 1 ? "" : "S"} ENCONTRADO${list.length === 1 ? "" : "S"}`;
+
+  const body = document.getElementById("vitrineBody");
+  if (!list.length) {
+    body.innerHTML = `<div class="vt-empty">Nenhum time encontrado com esse filtro/busca.</div>`;
+    return;
+  }
+  body.innerHTML = `<div class="vt-grid">${list.map(t => {
+    const ovr = Math.round(teamOverall(t.players));
+    return `<div class="vt-card" onclick="openVitrineDetail('${filter.key}','${t.id}')">
+      <div class="vt-card-top">
+        <span class="vt-flag">${t.flag || "⭐"}</span>
+        <div>
+          <div class="vt-name">${t.name}</div>
+          <div class="vt-season">${vitrineSubtitle(t)}</div>
+        </div>
+      </div>
+      <div class="vt-card-foot">
+        <span class="vt-formation-tag">${t.formation || "—"}</span>
+        <span><span class="vt-ovr-label">OVR</span><span class="vt-ovr">${ovr}</span></span>
+      </div>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function openVitrineDetail(filterKey, teamId) {
+  const filter = VITRINE_FILTERS.find(f => f.key === filterKey);
+  const team = filter.teams().find(t => t.id === teamId);
+  if (!team) return;
+
+  const ovr = Math.round(teamOverall(team.players));
+  const sortedPlayers = [...team.players].sort((a, b) => b.overall - a.overall);
+
+  const body = document.getElementById("vitrineBody");
+  body.innerHTML = `
+    <button class="vt-detail-back" onclick="renderVitrineGrid()">← VOLTAR PRA LISTA</button>
+    <div class="vt-detail-head">
+      <span class="vt-detail-flag">${team.flag || "⭐"}</span>
+      <div>
+        <div class="vt-detail-name">${team.name}</div>
+        <div class="vt-detail-meta">${vitrineSubtitle(team)} · Formação ${team.formation || "—"} · ${team.players.length} jogadores</div>
+      </div>
+      <div class="vt-detail-ovr">
+        <div class="vt-detail-ovr-num">${ovr}</div>
+        <div class="vt-detail-ovr-label">OVERALL</div>
+      </div>
+    </div>
+    <div class="vt-squad-list">
+      ${sortedPlayers.map(p => `
+        <div class="vt-squad-row">
+          <span class="vt-squad-pos role-${POS_ROLE[POS_LABELS[p.pos]] || "mid"}">${POS_LABELS[p.pos] || p.pos}</span>
+          <span class="vt-squad-name">${p.name}</span>
+          <span class="vt-squad-ovr">${p.overall}</span>
+        </div>`).join("")}
+    </div>
+  `;
+}

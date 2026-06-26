@@ -20,6 +20,7 @@
       </div>
     </div>
     <div class="header-right" id="headerRight">
+      <button class="btn-vitrine" onclick="openVitrine()">📋 VITRINE</button>
       <button class="btn-settings" onclick="openSettings()">⚙ CONFIGURAÇÕES</button>
       <button class="btn-changelog" onclick="openChangelog()">CHANGELOG</button>
       <button class="btn-credits" onclick="openCredits()">CRÉDITOS</button>
@@ -54,6 +55,7 @@
         <li>🌍 Modo Copa do Mundo — 111 seleções históricas (1930 a 2022)</li>
         <li>🗺️ Seleções de todos os continentes: América, Europa, África, Ásia e Oceania</li>
         <li>⚔️ Fase de grupos em turno único (3 jogos) + mata-mata desde os 16-avos de final até a final</li>
+        <li>📋 Vitrine com todos os times do jogo, mostrando o elenco completo e o overall de cada jogador</li>
       </ul>
     </div>
 
@@ -61,7 +63,6 @@
       <div class="cl-ver-badge">v1.2 <span class="cl-badge-tag upcoming-tag">EM BREVE</span></div>
       <div class="cl-ver-date">Próxima atualização</div>
       <ul class="cl-items">
-        <li>📋 Vitrine com todos os times do jogo, mostrando o elenco completo e o overall de cada jogador</li>
         <li>🏴 Modo Eurocopa — mata-mata com seleções históricas da Eurocopa!</li>
       </ul>
     </div>
@@ -144,6 +145,25 @@
   </div>
 </div>
 
+<!-- VITRINE (modal) -->
+<div id="vitrineOverlay" class="credits-overlay vitrine-overlay">
+  <div class="credits-modal vitrine-modal">
+    <button class="credits-close vitrine-close" onclick="closeVitrine()">✕</button>
+
+    <div class="vitrine-head">
+      <div class="vitrine-title">VITRINE DE TIMES</div>
+      <p class="vitrine-sub">Todos os times históricos do jogo, elenco completo e overall de cada jogador.</p>
+      <div class="vitrine-filters" id="vitrineFilters"></div>
+      <div class="vitrine-search">
+        <input type="text" id="vitrineSearch" placeholder="Buscar por nome do time..." oninput="renderVitrineGrid()">
+      </div>
+      <div class="vitrine-count" id="vitrineCount"></div>
+    </div>
+
+    <div class="vitrine-body" id="vitrineBody"></div>
+  </div>
+</div>
+
 <!-- LANDING -->
 <div id="pageLanding" class="page active">
   <div class="landing-inner">
@@ -157,6 +177,7 @@
       <p class="landing-desc">Sorteie times históricos do futebol. Escolha um craque de cada, complete os 11 e simule, ganhe o torneio.</p>
       <div class="landing-buttons">
         <button class="btn-primary" onclick="startGame()">JOGAR AGORA →</button>
+        <button class="btn-secondary" onclick="openVitrine()">📋 VER VITRINE DE TIMES</button>
       </div>
     </div>
     <div class="landing-right">
