@@ -52,7 +52,17 @@
     </div>
 
     <div class="cl-version current">
-      <div class="cl-ver-badge">v1.3 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-badge">v1.4 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-date">Julho 2026</div>
+      <ul class="cl-items">
+        <li>🥇 Modo Copa América — 70 seleções históricas, de 1916 a 2024</li>
+        <li>⚔️ Formato REAL do torneio: fase de grupos (turno único, 3 jogos) e direto pras quartas de final, sem 16-avos nem oitavas</li>
+        <li>📋 Times da Copa América agora aparecem na Vitrine</li>
+      </ul>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-ver-badge">v1.3</div>
       <div class="cl-ver-date">Julho 2026</div>
       <ul class="cl-items">
         <li>🎚️ Slider de estilo de jogo: Ofensivo, Equilibrado ou Retranca</li>
@@ -295,7 +305,7 @@
       </div>
     </div>
 
-    <div class="ms-grid ms-grid-five">
+    <div class="ms-grid ms-grid-six">
       <div class="ms-card ms-champions" onclick="selectMode('champions')">
         <div class="ms-emblem">🏆</div>
         <div class="ms-name">CHAMPIONS LEAGUE</div>
@@ -325,6 +335,12 @@
         <div class="ms-name">EUROCOPA</div>
         <p class="ms-desc">Seleções históricas da Eurocopa, de 1960 a 2024. Fase de grupos (turno único, 3 jogos) + mata-mata até a final.</p>
         <div class="ms-tags"><span>Fase de grupos</span><span>Seleções</span></div>
+      </div>
+      <div class="ms-card ms-copaamerica" onclick="selectMode('copaamerica')">
+        <div class="ms-emblem">🥇</div>
+        <div class="ms-name">COPA AMÉRICA</div>
+        <p class="ms-desc">Seleções históricas da Copa América, de 1916 a 2024. Fase de grupos (turno único, 3 jogos) e direto pras quartas de final — sem oitavas, como no torneio de verdade.</p>
+        <div class="ms-tags"><span>Formato real</span><span>Seleções</span></div>
       </div>
     </div>
 
@@ -649,6 +665,7 @@
 
 <script src="data.js"></script>
 <script src="eurocopa_teams.js"></script>
+<script src="copa_america_teams.js"></script>
 <script src="progression.js"></script>
 <script src="game.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>

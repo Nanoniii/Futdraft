@@ -172,7 +172,7 @@ let state = {
   squad: [],
   phase: "landing",
   pickCount: 0,
-  mode: "champions",  // "champions" | "brasil" | "libertadores" | "copadomundo" | "eurocopa" | "livre"
+  mode: "champions",  // "champions" | "brasil" | "libertadores" | "copadomundo" | "eurocopa" | "copaamerica" | "livre"
   freeModeTeams: [],  // pool de times escolhido manualmente no Modo Livre
   captain: null,      // nome do capitão (dá pequeno bônus no time)
   pkTaker: null,      // cobrador de pênalti escolhido
@@ -223,7 +223,7 @@ const LIBERTADORES_BR_IDS = new Set([
 // Todos os times do jogo, de todas as competições — usado no "Todos" do
 // Modo Livre e como pool de adversários do Modo Livre (ver getOpponentPool).
 function allTeamsList() {
-  return [...TEAMS, ...BRAZIL_TEAMS, ...LIBERTADORES_TEAMS, ...WORLD_CUP_TEAMS, ...EUROCOPA_TEAMS];
+  return [...TEAMS, ...BRAZIL_TEAMS, ...LIBERTADORES_TEAMS, ...WORLD_CUP_TEAMS, ...EUROCOPA_TEAMS, ...COPA_AMERICA_TEAMS];
 }
 
 // Retorna o pool de times do modo atualmente selecionado
@@ -231,6 +231,7 @@ function getTeamPool() {
   if (state.mode === "brasil") return BRAZIL_TEAMS;
   if (state.mode === "copadomundo") return WORLD_CUP_TEAMS;
   if (state.mode === "eurocopa") return EUROCOPA_TEAMS;
+  if (state.mode === "copaamerica") return COPA_AMERICA_TEAMS;
   if (state.mode === "livre") return state.freeModeTeams || [];
   if (state.mode === "libertadores") {
     const brFiltered = BRAZIL_TEAMS.filter(t => LIBERTADORES_BR_IDS.has(t.id));
@@ -288,6 +289,7 @@ const MODE_META = {
   brasil:       { title: "COPA DO BRASIL",    short: "A COPA DO BRASIL", logo: "🇧🇷", waiting: "A Copa do Brasil começa em breve...", seasonPrefix: "" },
   copadomundo:  { title: "COPA DO MUNDO",     short: "A COPA DO MUNDO", logo: "🌍", waiting: "A Copa do Mundo começa em breve...", seasonPrefix: "Copa do Mundo " },
   eurocopa:     { title: "EUROCOPA",          short: "A EUROCOPA",     logo: "⭐", waiting: "A Eurocopa começa em breve...",       seasonPrefix: "Eurocopa " },
+  copaamerica:  { title: "COPA AMÉRICA",      short: "A COPA AMÉRICA", logo: "🥇", waiting: "A Copa América começa em breve...",  seasonPrefix: "Copa América " },
   livre:        { title: "MODO LIVRE",        short: "A SIMULAÇÃO",    logo: "🎮", waiting: "A simulação começa em breve...",      seasonPrefix: "" },
 };
 function modeMeta() { return MODE_META[state.mode] || MODE_META.champions; }
@@ -395,6 +397,7 @@ const FREE_MODE_SOURCES = [
   { id: "libertadores", label: "Libertadores", teams: () => LIBERTADORES_TEAMS },
   { id: "copadomundo", label: "Copa do Mundo", teams: () => WORLD_CUP_TEAMS },
   { id: "eurocopa", label: "Eurocopa", teams: () => EUROCOPA_TEAMS },
+  { id: "copaamerica", label: "Copa América", teams: () => COPA_AMERICA_TEAMS },
 ];
 const FREE_MODE_MIN_TEAMS = 8;
 let freeModeSelected = new Set();  // guarda os ids dos times marcados
@@ -1258,11 +1261,12 @@ function runSimulation() {
   const isLibertadores = state.mode === "libertadores";
   const isWorldCup = state.mode === "copadomundo";
   const isEurocopa = state.mode === "eurocopa";
+  const isCopaAmerica = state.mode === "copaamerica";
   const isFreeMode = state.mode === "livre";
-  const hasGroups = !isBrasil; // Champions, Libertadores, Copa do Mundo, Eurocopa e Livre têm fase de grupos
+  const hasGroups = !isBrasil; // Champions, Libertadores, Copa do Mundo, Eurocopa, Copa América e Livre têm fase de grupos
   const allOpponents = [...getRestrictedOpponentPool()].sort(()=>Math.random()-0.5);
   // turno único (sem jogo de volta) na fase de grupos — vale pra seleções
-  const isSingleRoundGroup = isWorldCup || isEurocopa;
+  const isSingleRoundGroup = isWorldCup || isEurocopa || isCopaAmerica;
 
   let groupOpponents = [];
   let knockoutOpponents;
@@ -1272,6 +1276,15 @@ function runSimulation() {
     knockoutOpponents = allOpponents.slice(0, 4)
       .sort((a, b) => teamOverall(a.players) - teamOverall(b.players));
     stages = ["OITAVAS","QUARTAS","SEMI","FINAL"];
+  } else if (isCopaAmerica) {
+    // Copa América — formato REAL do torneio moderno (desde 2015): grupos de
+    // 4 times em turno único (3 jogos) e os 2 primeiros de cada grupo avançam
+    // DIRETO pras quartas de final — sem 16-avos nem oitavas, diferente da
+    // Copa do Mundo/Eurocopa. Só 3 rodadas de mata-mata: quartas, semi, final.
+    groupOpponents = allOpponents.slice(0, 3);
+    knockoutOpponents = allOpponents.slice(3, 6)
+      .sort((a, b) => teamOverall(a.players) - teamOverall(b.players));
+    stages = ["QUARTAS","SEMI","FINAL"];
   } else if (isWorldCup || isEurocopa) {
     // Copa do Mundo / Eurocopa: 3 adversários de grupo (turno único, sem volta) + 5 do
     // mata-mata (dezesseis-avos -> oitavas -> quartas -> semi -> final)
@@ -1459,6 +1472,7 @@ function renderTimelapse(results, eliminated, goalsFor, goalsAgainst, wins, draw
   const isLibertadores = state.mode === "libertadores";
   const isWorldCup = state.mode === "copadomundo";
   const isEurocopa = state.mode === "eurocopa";
+  const isCopaAmerica = state.mode === "copaamerica";
   const isFreeMode = state.mode === "livre";
   const simTitle = modeMeta().title;
   const simLogo = modeMeta().logo;
@@ -2041,6 +2055,7 @@ const VITRINE_FILTERS = [
   { key: "brasil",       label: "🇧🇷 Copa do Brasil",  teams: () => BRAZIL_TEAMS },
   { key: "copadomundo",  label: "🌍 Copa do Mundo",   teams: () => WORLD_CUP_TEAMS },
   { key: "eurocopa",     label: "🏴 Eurocopa",         teams: () => EUROCOPA_TEAMS },
+  { key: "copaamerica",  label: "🥇 Copa América",     teams: () => COPA_AMERICA_TEAMS },
 ];
 
 let vitrineActiveFilter = "champions";

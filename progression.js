@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// PROGRESSÃO — histórico do jogador + 50 conquistas
+// PROGRESSÃO — histórico do jogador + 51 conquistas
 // Não é chamado no Modo Livre (isProgressionDisabled() em game.js).
 // ═══════════════════════════════════════════════════════════════
 
@@ -11,8 +11,8 @@ const HISTORY_DEFAULTS = () => ({
   goalsFor: 0, goalsAgainst: 0,
   streak: 0, bestStreak: 0,
   titles: 0,
-  titlesByMode: { champions: 0, libertadores: 0, brasil: 0, copadomundo: 0, eurocopa: 0 },
-  playedByMode: { champions: 0, libertadores: 0, brasil: 0, copadomundo: 0, eurocopa: 0 },
+  titlesByMode: { champions: 0, libertadores: 0, brasil: 0, copadomundo: 0, eurocopa: 0, copaamerica: 0 },
+  playedByMode: { champions: 0, libertadores: 0, brasil: 0, copadomundo: 0, eurocopa: 0, copaamerica: 0 },
   eliminatedAtGroup: 0, eliminatedAtFinal: 0,
   cleanSheetTitles: 0,
   hardcorePlayed: 0, hardcoreTitles: 0, themeTitles: 0,
@@ -46,7 +46,7 @@ function saveAchState(s) {
 }
 
 // ═══════════════════════════════════════════
-// 50 CONQUISTAS
+// 51 CONQUISTAS
 // Cada uma tem: id, name, desc, icon, check(m, h) -> bool
 // m = resumo da partida que acabou de terminar · h = histórico JÁ atualizado
 // ═══════════════════════════════════════════
@@ -79,7 +79,8 @@ const ACHIEVEMENTS = [
   { id:"title_brasil",       name:"Campeão Nacional",    desc:"Seja campeão da Copa do Brasil.",     icon:"🏆", check:(m,h)=>h.titlesByMode.brasil>=1 },
   { id:"title_copadomundo",  name:"Campeão Mundial",     desc:"Seja campeão da Copa do Mundo.",      icon:"🏆", check:(m,h)=>h.titlesByMode.copadomundo>=1 },
   { id:"title_eurocopa",     name:"Campeão Europeu",     desc:"Seja campeão da Eurocopa.",           icon:"🏆", check:(m,h)=>h.titlesByMode.eurocopa>=1 },
-  { id:"title_grandslam",    name:"Grand Slam",          desc:"Seja campeão em todas as 5 competições.", icon:"👑",
+  { id:"title_copaamerica",  name:"Campeão Sul-Americano", desc:"Seja campeão da Copa América.",     icon:"🏆", check:(m,h)=>h.titlesByMode.copaamerica>=1 },
+  { id:"title_grandslam",    name:"Grand Slam",          desc:"Seja campeão em todas as 6 competições.", icon:"👑",
     check:(m,h)=>Object.values(h.titlesByMode).every(v=>v>=1) },
   { id:"title_clean",  name:"Muralha", desc:"Seja campeão sem perder nenhuma partida na campanha.", icon:"🧱", check:(m,h)=>h.cleanSheetTitles>=1 },
 
@@ -110,7 +111,7 @@ const ACHIEVEMENTS = [
   { id:"formations_all",name:"Estrategista",   desc:"Jogue com todas as formações disponíveis.", icon:"🧩", check:(m,h)=>h.formationsUsed.length>=10 },
   { id:"players_50",  name:"Colecionador",     desc:"Escale 50 jogadores diferentes ao longo da carreira.", icon:"📚", check:(m,h)=>h.playersUsed.length>=50 },
   { id:"players_150", name:"Enciclopédia Viva",desc:"Escale 150 jogadores diferentes ao longo da carreira.", icon:"📚", check:(m,h)=>h.playersUsed.length>=150 },
-  { id:"all_modes", name:"Turista do Futebol", desc:"Jogue ao menos uma partida em cada uma das 5 competições.", icon:"🗺️",
+  { id:"all_modes", name:"Turista do Futebol", desc:"Jogue ao menos uma partida em cada uma das 6 competições.", icon:"🗺️",
     check:(m,h)=>Object.values(h.playedByMode).every(v=>v>=1) },
 
   // ── Hardcore / restrição temática ──
@@ -245,7 +246,7 @@ function setHistoryTab(tab) {
   document.querySelectorAll(".history-tab").forEach(b => b.classList.toggle("active", b.dataset.tab===tab));
 }
 
-const MODE_LABELS_PT = { champions:"Champions", libertadores:"Libertadores", brasil:"Copa do Brasil", copadomundo:"Copa do Mundo", eurocopa:"Eurocopa" };
+const MODE_LABELS_PT = { champions:"Champions", libertadores:"Libertadores", brasil:"Copa do Brasil", copadomundo:"Copa do Mundo", eurocopa:"Eurocopa", copaamerica:"Copa América" };
 
 function renderHistoryStats() {
   const h = loadHistory();

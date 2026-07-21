@@ -2165,22 +2165,20 @@ body {
 }
 
 /* ──────────────────────────────────────────
-   GRID DE MODOS — 5 COLUNAS (com Eurocopa)
+   GRID DE MODOS — 6 COLUNAS (com Eurocopa + Copa América)
 ────────────────────────────────────────── */
 .mode-pick-layout { max-width: 1140px; }
-.ms-grid-five {
-  grid-template-columns: repeat(5, 1fr);
+.ms-grid-six {
+  grid-template-columns: repeat(3, 1fr);
 }
 .ms-card.ms-eurocopa:hover { border-color: #4361ee; }
+.ms-card.ms-copaamerica:hover { border-color: #f2a900; }
 .ms-card.ms-livre:hover { border-color: #2d7a3a; }
-@media (max-width: 1200px) {
-  .ms-grid-five { grid-template-columns: 1fr 1fr 1fr; }
-}
-@media (max-width: 700px) {
-  .ms-grid-five { grid-template-columns: 1fr 1fr; }
+@media (max-width: 900px) {
+  .ms-grid-six { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 480px) {
-  .ms-grid-five { grid-template-columns: 1fr; }
+  .ms-grid-six { grid-template-columns: 1fr; }
 }
 
 .fp-divider {
