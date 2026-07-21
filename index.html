@@ -52,7 +52,20 @@
     </div>
 
     <div class="cl-version current">
-      <div class="cl-ver-badge">v1.2 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-badge">v1.3 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-date">Julho 2026</div>
+      <ul class="cl-items">
+        <li>🎚️ Slider de estilo de jogo: Ofensivo, Equilibrado ou Retranca</li>
+        <li>🎖️ Capitão do time, com pequeno bônus de solidez quando escolhido</li>
+        <li>🎯 Escolha de cobrador de pênalti e de falta — eles protagonizam esses lances na simulação</li>
+        <li>🔄 Banco de reservas gerado automaticamente, com substituição no meio da partida</li>
+        <li>🏴 Times da Eurocopa agora aparecem na Vitrine</li>
+        <li>⚽ Vitrine agora mostra a escalação real no campinho, por formação — não só uma lista de nomes</li>
+      </ul>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-ver-badge">v1.2</div>
       <div class="cl-ver-date">Julho 2026</div>
       <ul class="cl-items">
         <li>🎙️ Simulação mais viva: cartão amarelo, cartão vermelho, pênalti perdido e gol anulado, com comentários tipo Desafio Diário</li>
@@ -70,17 +83,6 @@
         <li>🗺️ Seleções de todos os continentes: América, Europa, África, Ásia e Oceania</li>
         <li>⚔️ Fase de grupos em turno único (3 jogos) + mata-mata desde os 16-avos de final até a final</li>
         <li>📋 Vitrine com todos os times do jogo, mostrando o elenco completo e o overall de cada jogador</li>
-      </ul>
-    </div>
-
-    <div class="cl-version upcoming">
-      <div class="cl-ver-badge">v1.3 <span class="cl-badge-tag upcoming-tag">EM BREVE</span></div>
-      <div class="cl-ver-date">Próxima atualização</div>
-      <ul class="cl-items">
-        <li>🎚️ Slider de estilo de jogo: Ofensivo, Equilibrado ou Retranca</li>
-        <li>©️ Capitão do time com bônus quando escolhido</li>
-        <li>🎯 Escolha de cobrador de falta e pênalti</li>
-        <li>🔄 Banco de reservas com substituição no meio da partida</li>
       </ul>
     </div>
   </div>
@@ -417,6 +419,50 @@
         <div class="ob-breakdown" id="obBreakdown"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- AJUSTES DA PARTIDA (Fase 4: estilo tático, capitão, cobradores, banco) -->
+<div id="pageMatchSetup" class="page">
+  <div class="ms-setup-layout">
+    <div class="fp-title">AJUSTES DA PARTIDA</div>
+    <p class="fp-desc">Últimos detalhes antes de simular. Tudo aqui é opcional — se pular, o time joga sem essas escolhas.</p>
+
+    <div class="ms-setup-card">
+      <div class="ms-setup-label">ESTILO DE JOGO</div>
+      <input type="range" id="tacticSlider" min="0" max="2" step="1" value="1" class="tactic-slider" oninput="setTacticStyle(this.value)">
+      <div class="tactic-slider-labels">
+        <span>🛡️ Retranca</span>
+        <span>⚖️ Equilibrado</span>
+        <span>⚔️ Ofensivo</span>
+      </div>
+    </div>
+
+    <div class="ms-setup-grid">
+      <div class="ms-setup-card">
+        <div class="ms-setup-label">🎖️ CAPITÃO</div>
+        <p class="ms-setup-desc">Dá um pequeno bônus de solidez ao time.</p>
+        <select id="selCaptain" class="ms-setup-select" onchange="setCaptain(this.value)"></select>
+      </div>
+      <div class="ms-setup-card">
+        <div class="ms-setup-label">🎯 COBRADOR DE PÊNALTI</div>
+        <p class="ms-setup-desc">Quem bate quando rola um pênalti a seu favor.</p>
+        <select id="selPkTaker" class="ms-setup-select" onchange="setPkTaker(this.value)"></select>
+      </div>
+      <div class="ms-setup-card">
+        <div class="ms-setup-label">🥅 COBRADOR DE FALTA</div>
+        <p class="ms-setup-desc">Quem bate as faltas perigosas.</p>
+        <select id="selFkTaker" class="ms-setup-select" onchange="setFkTaker(this.value)"></select>
+      </div>
+    </div>
+
+    <div class="ms-setup-card">
+      <div class="ms-setup-label">🔄 BANCO DE RESERVAS</div>
+      <p class="ms-setup-desc">Pra cada posição usada na sua formação, sorteamos 5 jogadores — escolha 1 de cada pra levar pro banco e usar nas substituições.</p>
+      <div id="benchList" class="bench-list"></div>
+    </div>
+
+    <button class="btn-primary simulate-btn" onclick="startSimulation()" id="btnGoSimulate">SIMULAR →</button>
   </div>
 </div>
 

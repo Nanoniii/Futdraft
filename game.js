@@ -174,6 +174,13 @@ let state = {
   pickCount: 0,
   mode: "champions",  // "champions" | "brasil" | "libertadores" | "copadomundo" | "eurocopa" | "livre"
   freeModeTeams: [],  // pool de times escolhido manualmente no Modo Livre
+  captain: null,      // nome do capitão (dá pequeno bônus no time)
+  pkTaker: null,      // cobrador de pênalti escolhido
+  fkTaker: null,      // cobrador de falta escolhido
+  tacticStyle: "equilibrado", // "ofensivo" | "equilibrado" | "retranca"
+  bench: [],          // banco de reservas escolhido manualmente (não faz parte do draft)
+  benchChoices: {},   // { [categoria]: nomeDoJogador } — escolha do jogador por posição
+  benchGroups: [],    // categorias de banco disponíveis pra formação atual, com opções
 };
 
 // Modo Livre não gera conquistas nem entra no histórico do jogador — é só lazer.
@@ -757,8 +764,8 @@ function showCompletePanel() {
       <span class="oi-score">${maskOvr(ovr)}</span>
       <span class="oi-detail">${atk} atq · ${def} def</span>
     </div>
-    <button class="btn-primary simulate-btn" onclick="startSimulation()">
-      SIMULAR ${modeMeta().short} →
+    <button class="btn-primary simulate-btn" onclick="openMatchSetup()">
+      CONTINUAR →
     </button>
   `;
   document.getElementById("overallBadge").style.display = "none";
@@ -837,7 +844,7 @@ function renderPitch() {
       if (inSquad) {
         circle.className = `pd-circle filled role-${role}${inSquad.isHighlight ? " highlight" : ""}`;
         circle.textContent = maskOvr(inSquad.overall);
-        nameEl.textContent = inSquad.name.split(" ").pop();
+        nameEl.textContent = inSquad.name.split(" ").pop() + (state.captain === inSquad.name ? " (C)" : "");
       } else {
         circle.className = `pd-circle empty role-${role}`;
         circle.textContent = pos;
@@ -896,6 +903,160 @@ function updateOverallBadge() {
 // ═══════════════════════════════════════════
 // SIMULATION
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// AJUSTES DA PARTIDA (estilo tático, capitão, cobradores, banco)
+// ═══════════════════════════════════════════
+const TACTIC_STYLE_MULT = {
+  retranca:    { atk: 0.90, def: 1.10 },
+  equilibrado: { atk: 1.00, def: 1.00 },
+  ofensivo:    { atk: 1.08, def: 0.92 },
+};
+const TACTIC_STYLE_ORDER = ["retranca", "equilibrado", "ofensivo"];
+const CAPTAIN_BONUS = 2; // pequeno bônus de atq/def aplicado quando há capitão escolhido
+
+function setTacticStyle(sliderVal) {
+  state.tacticStyle = TACTIC_STYLE_ORDER[sliderVal] || "equilibrado";
+}
+function setCaptain(name) { state.captain = name || null; }
+function setPkTaker(name) { state.pkTaker = name || null; }
+function setFkTaker(name) { state.fkTaker = name || null; }
+
+// Categorias de banco (goleiro, zagueiro, lateral, meia, atacante). Cada uma
+// só é oferecida se a formação escolhida realmente usa alguma posição dela —
+// e dentro da categoria só entram jogadores com a posição exata usada na
+// formação (ex.: numa 4-4-2, sem "PE"/"PD" no ataque, o banco de atacante
+// só mostra centroavantes, não pontas). Nada é sorteado: o jogador escolhe
+// quem quer no banco em cada categoria disponível.
+const BENCH_GROUPS = [
+  { key: "GOL", label: "Goleiro",    role: "gk",  raws: ["GK"],                    labels: ["GOL"] },
+  { key: "ZAG", label: "Zagueiro",   role: "def", raws: ["CB"],                    labels: ["ZAG"] },
+  { key: "LAT", label: "Lateral",    role: "def", raws: ["RB","LB","RWB","LWB"],   labels: ["LD","LE"] },
+  { key: "MEI", label: "Meio-campo", role: "mid", raws: ["CM","AM","RM","LM"],     labels: ["MC","MEI","MD","ME"] },
+  { key: "ATA", label: "Atacante",   role: "atk", raws: ["ST","CF","RW","LW"],     labels: ["CA","PD","PE"] },
+];
+const RAW_TO_LABEL = {
+  GK: "GOL", CB: "ZAG", RB: "LD", LB: "LE", RWB: "LD", LWB: "LE",
+  CM: "MC", AM: "MEI", RM: "MD", LM: "ME", ST: "CA", CF: "CA", RW: "PD", LW: "PE",
+};
+
+function getFormationLabels(fm) {
+  const f = FORMATIONS[fm] || FORMATIONS["4-3-3"];
+  const set = new Set();
+  f.rows.forEach(row => row.forEach(l => set.add(l)));
+  return set;
+}
+
+// Monta as opções de banco disponíveis pra formação atual. Cada grupo traz
+// a lista de jogadores (fora do time titular) que jogam numa posição
+// realmente usada na formação — o jogador escolhe um (ou nenhum) por grupo.
+function getBenchGroups() {
+  const usedNames = new Set(state.squad.map(s => s.name));
+  const pool = getTeamPool();
+  const candidates = [];
+  pool.forEach(t => (t.players || []).forEach(p => {
+    if (!usedNames.has(p.name)) candidates.push({ ...p, team: t.name, season: t.season });
+  }));
+
+  const fmLabels = getFormationLabels(state.formation || "4-3-3");
+
+  return BENCH_GROUPS
+    .filter(g => g.labels.some(l => fmLabels.has(l)))
+    .map(g => {
+      const allowedRaws = g.raws.filter(r => fmLabels.has(RAW_TO_LABEL[r]));
+      const matches = candidates.filter(p => allowedRaws.includes(p.pos));
+      // Sorteia até 5 opções pra essa categoria — o jogador escolhe uma
+      // delas (ou nenhuma), mas não visualiza o elenco inteiro disponível.
+      const shuffled = [...matches].sort(() => Math.random() - 0.5);
+      const options = shuffled.slice(0, 5).sort((a, b) => b.overall - a.overall);
+      return { key: g.key, label: g.label, role: g.role, options };
+    })
+    .filter(g => g.options.length > 0);
+}
+
+// Recalcula state.bench (formato usado pela substituição em partida) a
+// partir das escolhas manuais guardadas em state.benchChoices.
+function rebuildBenchFromChoices() {
+  state.bench = (state.benchGroups || [])
+    .map(g => {
+      const name = state.benchChoices[g.key];
+      if (!name) return null;
+      const p = g.options.find(o => o.name === name);
+      if (!p) return null;
+      return {
+        name: p.name,
+        pos: POS_LABELS[p.pos] || p.pos,
+        rawPos: p.pos,
+        overall: p.overall,
+        team: p.team,
+        season: p.season,
+      };
+    })
+    .filter(Boolean);
+}
+
+function setBenchChoice(key, name) {
+  if (!state.benchChoices) state.benchChoices = {};
+  if (name) state.benchChoices[key] = name; else delete state.benchChoices[key];
+  rebuildBenchFromChoices();
+}
+
+function openMatchSetup() {
+  state.benchGroups = getBenchGroups();
+  // Mantém escolhas anteriores se o jogador ainda estiver disponível na
+  // categoria (ex.: voltou dos ajustes sem trocar a formação); senão limpa.
+  const prevChoices = state.benchChoices || {};
+  state.benchChoices = {};
+  state.benchGroups.forEach(g => {
+    if (prevChoices[g.key] && g.options.find(p => p.name === prevChoices[g.key])) {
+      state.benchChoices[g.key] = prevChoices[g.key];
+    }
+  });
+  rebuildBenchFromChoices();
+  showPage("pageMatchSetup");
+  renderMatchSetup();
+}
+
+function renderMatchSetup() {
+  const playerOptions = (extraLabel) => {
+    let html = `<option value="">${extraLabel}</option>`;
+    state.squad.forEach(p => { html += `<option value="${p.name}">${p.pos} · ${p.name}</option>`; });
+    return html;
+  };
+  const selCaptain = document.getElementById("selCaptain");
+  const selPk = document.getElementById("selPkTaker");
+  const selFk = document.getElementById("selFkTaker");
+  if (selCaptain) selCaptain.innerHTML = playerOptions("Sem capitão");
+  if (selPk) selPk.innerHTML = playerOptions("Sem cobrador definido");
+  if (selFk) selFk.innerHTML = playerOptions("Sem cobrador definido");
+  if (selCaptain) selCaptain.value = state.captain || "";
+  if (selPk) selPk.value = state.pkTaker || "";
+  if (selFk) selFk.value = state.fkTaker || "";
+
+  const slider = document.getElementById("tacticSlider");
+  if (slider) slider.value = TACTIC_STYLE_ORDER.indexOf(state.tacticStyle) >= 0 ? TACTIC_STYLE_ORDER.indexOf(state.tacticStyle) : 1;
+
+  const benchEl = document.getElementById("benchList");
+  if (benchEl) {
+    const groups = state.benchGroups || [];
+    benchEl.innerHTML = groups.length
+      ? groups.map(g => {
+          const current = state.benchChoices[g.key] || "";
+          return `
+          <div class="bench-row bench-row-select">
+            <span class="bench-pos role-${g.role}">${g.label}</span>
+            <select class="bench-select" onchange="setBenchChoice('${g.key}', this.value)">
+              <option value="">Sem reserva nessa posição</option>
+              ${g.options.map(p => `<option value="${p.name}" ${p.name === current ? "selected" : ""}>${POS_LABELS[p.pos] || p.pos} · ${p.name} (${p.team} ${p.season}) · ${maskOvr(p.overall)}</option>`).join("")}
+            </select>
+          </div>`;
+        }).join("")
+      : `<div class="bench-empty">Nenhum reserva disponível pra essa formação.</div>`;
+  }
+
+  const btn = document.getElementById("btnGoSimulate");
+  if (btn) btn.textContent = `SIMULAR ${modeMeta().short} →`;
+}
+
 function startSimulation() {
   showPage("pageSimulation");
   runSimulation();
@@ -976,6 +1137,12 @@ const DISALLOWED_PHRASES = [
   "toque de mão anula a comemoração.",
   "árbitro anula após checar o lance no monitor.",
 ];
+const FREEKICK_PHRASES = [
+  "bate a falta e a bola explode na barreira.",
+  "manda uma pancada e o goleiro faz um milagre!",
+  "acerta o travessão numa cobrança perigosa!",
+  "cobra falta rasteira que passa rente à trave.",
+];
 
 function randomPick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
@@ -994,7 +1161,9 @@ function randomPlayerName(players, rawField, onlyAttackers) {
 
 // Gera os eventos extras de UMA partida. mySquad = state.squad (rawPos),
 // oppPlayers = opp.players (pos = posição real já no formato do data.js).
-function buildFlavorEvents(mySquad, oppPlayers) {
+// pkTakerName/fkTakerName: se o jogador escolheu cobradores fixos (Fase 4),
+// eles são priorizados nos eventos de pênalti/falta do SEU time.
+function buildFlavorEvents(mySquad, oppPlayers, pkTakerName, fkTakerName) {
   const events = [];
 
   // Cartões amarelos: 0 a ~3 no total da partida, distribuídos entre os dois lados
@@ -1020,10 +1189,11 @@ function buildFlavorEvents(mySquad, oppPlayers) {
     });
   }
 
-  // Pênalti perdido: raro, no máximo 1 por partida
+  // Pênalti perdido: raro, no máximo 1 por partida. Se o jogador escolheu um
+  // cobrador fixo, é ele quem perde (faz mais sentido narrativamente).
   if (Math.random() < 0.13) {
     const mine = Math.random() < 0.5;
-    const player = randomPlayerName(mine ? mySquad : oppPlayers, mine ? "rawPos" : "pos", true);
+    const player = (mine && pkTakerName) ? pkTakerName : randomPlayerName(mine ? mySquad : oppPlayers, mine ? "rawPos" : "pos", true);
     events.push({
       minute: 1 + Math.floor(Math.random() * 90),
       type: "missedPen", mine, player,
@@ -1042,7 +1212,29 @@ function buildFlavorEvents(mySquad, oppPlayers) {
     });
   }
 
+  // Cobrança de falta perigosa: puramente cosmético (não altera o placar),
+  // mas usa o cobrador de falta escolhido pelo jogador quando existe.
+  if (Math.random() < 0.15) {
+    const mine = Math.random() < 0.5;
+    const player = (mine && fkTakerName) ? fkTakerName : randomPlayerName(mine ? mySquad : oppPlayers, mine ? "rawPos" : "pos", false);
+    events.push({
+      minute: 1 + Math.floor(Math.random() * 90),
+      type: "freekick", mine, player,
+      phrase: randomPick(FREEKICK_PHRASES),
+    });
+  }
+
   return events;
+}
+
+// Dá uma chance do cobrador de pênalti escolhido aparecer como autor de um
+// dos gols do seu time (fase 4: escolher cobrador de pênalti).
+function applyPenaltyBias(scorers) {
+  if (state.pkTaker && scorers.length && Math.random() < 0.3) {
+    const i = Math.floor(Math.random() * scorers.length);
+    scorers[i] = `${state.pkTaker} (pên.)`;
+  }
+  return scorers;
 }
 
 function distributeMinutes(count) {
@@ -1057,7 +1249,10 @@ function distributeMinutes(count) {
 }
 
 function runSimulation() {
-  const myAtk = calcAtk(), myDef = calcDef();
+  const captainBonus = state.captain ? CAPTAIN_BONUS : 0;
+  const tacticMult = TACTIC_STYLE_MULT[state.tacticStyle] || TACTIC_STYLE_MULT.equilibrado;
+  const myAtk = Math.round((calcAtk() + captainBonus) * tacticMult.atk);
+  const myDef = Math.round((calcDef() + captainBonus) * tacticMult.def);
   const overall = calcOverall();
   const isBrasil = state.mode === "brasil";
   const isLibertadores = state.mode === "libertadores";
@@ -1148,11 +1343,11 @@ function runSimulation() {
         if (myOutcome==="win") wins++; else if (myOutcome==="draw") draws++; else losses++;
         results.push({
           round: "GRUPOS", opponent: oppTeamRef, myGoals: myG, theirGoals: oppG, outcome: myOutcome,
-          scorers: pickScorers(state.squad, myG),
+          scorers: applyPenaltyBias(pickScorers(state.squad, myG)),
           conceded: pickScorers(oppTeamRef.players, oppG),
           myMinutes: distributeMinutes(myG),
           theirMinutes: distributeMinutes(oppG),
-          flavorEvents: buildFlavorEvents(state.squad, oppTeamRef.players),
+          flavorEvents: buildFlavorEvents(state.squad, oppTeamRef.players, state.pkTaker, state.fkTaker),
         });
       }
     }
@@ -1192,11 +1387,11 @@ function runSimulation() {
       if (outcome==="win") wins++; else losses++;
       results.push({
         round: stages[i], opponent: opp, myGoals, theirGoals, outcome, penalties,
-        scorers: pickScorers(state.squad, myGoals),
+        scorers: applyPenaltyBias(pickScorers(state.squad, myGoals)),
         conceded: pickScorers(opp.players, theirGoals),
         myMinutes: distributeMinutes(myGoals),
         theirMinutes: distributeMinutes(theirGoals),
-        flavorEvents: buildFlavorEvents(state.squad, opp.players),
+        flavorEvents: buildFlavorEvents(state.squad, opp.players, state.pkTaker, state.fkTaker),
       });
       if (outcome === "lose") { eliminated = true; break; }
     }
@@ -1390,7 +1585,7 @@ function updateMatchInList(r, idx) {
   // Mostra gols e quem sofreu abaixo do placar
   const scorersLine = r.scorers.length ? `<span class="tl-entry-scorers">⚽ ${r.scorers.join(", ")}</span>` : "";
   const concededLine = r.conceded.length ? `<span class="tl-entry-conceded">· sofreu: ${r.conceded.join(", ")}</span>` : "";
-  const flavorIcons = { yellow: "🟨", red: "🟥", missedPen: "❌", disallowed: "🚫" };
+  const flavorIcons = { yellow: "🟨", red: "🟥", missedPen: "❌", disallowed: "🚫", freekick: "🎯" };
   const flavorLine = (r.flavorEvents || []).length
     ? `<span class="tl-entry-flavor">${r.flavorEvents.map(e => flavorIcons[e.type] || "").join(" ")}</span>`
     : "";
@@ -1418,7 +1613,18 @@ function runMatchTimelapse(r, onDone) {
     ...(r.flavorEvents||[]).map(e=>({minute:e.minute, type:e.type, mine:e.mine, scorer:e.player, phrase:e.phrase})),
   ].sort((a,b)=>a.minute-b.minute);
 
-  let myScore=0, theirScore=0, evtIdx=0, minute=0;
+  // Estado da partida ao vivo, guardado num único objeto (em vez de variáveis
+  // soltas) pra poder ser pausado/retomado quando o jogador abre o modal de
+  // substituição no meio do jogo.
+  window._matchState = {
+    events, evtIdx: 0, minute: 0, myScore: 0, theirScore: 0,
+    subsUsed: 0, maxSubs: 2, r, onDone,
+    tickMs: Math.max(12, Math.round(50 * speedMul())),
+    interval: null,
+  };
+  window._matchR = r; // mantido pra compatibilidade com outras funções que já usavam isso
+
+  const hasBench = state.bench && state.bench.length > 0;
   box.innerHTML = `
     <div class="tl-match-header">
       <div class="tl-match-vs">
@@ -1437,70 +1643,152 @@ function runMatchTimelapse(r, onDone) {
       <span class="tl-score-their" id="tlScoreTheir">0</span>
     </div>
     <div class="tl-events-list" id="tlEventsList"></div>
-    <button class="btn-skip-match" onclick="skipMatch()">Pular ⏩</button>`;
+    <div class="tl-match-actions">
+      ${hasBench ? `<button class="btn-sub-match" id="btnSubMatch" onclick="openSubModal()" style="display:none">🔄 Substituição</button>` : ""}
+      <button class="btn-skip-match" onclick="skipMatch()">Pular ⏩</button>
+    </div>
+    <div id="subModal" class="sub-modal-overlay" style="display:none"></div>`;
 
   playSound("apitoInicio", "apito");
   playSound("ambienteTorcida", "ambiente");
 
-  const tickMs = Math.max(12, Math.round(50 * speedMul()));
-  window._currentMatchInterval = setInterval(() => {
-    minute++;
+  startMatchTicking();
+}
+
+function startMatchTicking() {
+  const ms = window._matchState;
+  if (!ms) return;
+  ms.interval = setInterval(() => {
+    ms.minute++;
     const clockEl = document.getElementById("tlClock");
     const fillEl  = document.getElementById("tlProgressFill");
-    if (clockEl) clockEl.textContent = minute <= 90 ? minute+"'" : "FT";
-    if (fillEl)  fillEl.style.width = (Math.min(minute,90)/90*100)+"%";
+    if (clockEl) clockEl.textContent = ms.minute <= 90 ? ms.minute+"'" : "FT";
+    if (fillEl)  fillEl.style.width = (Math.min(ms.minute,90)/90*100)+"%";
 
-    while (evtIdx < events.length && events[evtIdx].minute <= minute) {
-      const evt = events[evtIdx++];
-      window._matchEvtIdx = evtIdx;
-      if (evt.type==="goal") { myScore++; addTimelapseEvent(evt, r); bump("tlScoreMy",myScore); playSound("golTorcida","gol"); }
-      else if (evt.type==="concede") { theirScore++; addTimelapseEvent(evt, r); bump("tlScoreTheir",theirScore); }
-      else { addTimelapseEvent(evt, r); }
+    while (ms.evtIdx < ms.events.length && ms.events[ms.evtIdx].minute <= ms.minute) {
+      const evt = ms.events[ms.evtIdx++];
+      if (evt.type==="goal") { ms.myScore++; addTimelapseEvent(evt, ms.r); bump("tlScoreMy",ms.myScore); playSound("golTorcida","gol"); }
+      else if (evt.type==="concede") { ms.theirScore++; addTimelapseEvent(evt, ms.r); bump("tlScoreTheir",ms.theirScore); }
+      else { addTimelapseEvent(evt, ms.r); }
     }
 
-    if (minute >= 90) {
-      clearInterval(window._currentMatchInterval);
-      window._matchDoneCallback = onDone;
-      addTimelapseEvent({type:"whistle"}, r);
+    // A partir dos 46', libera o botão de substituição (se ainda houver trocas e banco)
+    const subBtn = document.getElementById("btnSubMatch");
+    if (subBtn && ms.minute >= 46 && ms.minute < 88 && ms.subsUsed < ms.maxSubs) {
+      subBtn.style.display = "inline-block";
+    }
+
+    if (ms.minute >= 90) {
+      clearInterval(ms.interval);
+      addTimelapseEvent({type:"whistle"}, ms.r);
       stopAmbiente();
       playSound("apitoFim", "apito");
-      setTimeout(onDone, Math.round(700 * speedMul()));
+      if (subBtn) subBtn.style.display = "none";
+      setTimeout(ms.onDone, Math.round(700 * speedMul()));
     }
-  }, tickMs);
+  }, ms.tickMs);
+}
 
-  window._matchDoneCallback = onDone;
-  window._matchEvents = events;
-  window._matchEvtIdx = 0;
-  window._matchR = r;
+function pauseMatchTicking() {
+  const ms = window._matchState;
+  if (ms && ms.interval) { clearInterval(ms.interval); ms.interval = null; }
+}
+
+// ═══════════════════════════════════════════
+// SUBSTITUIÇÃO NO MEIO DA PARTIDA
+// Usa o banco gerado em generateBench() (tela de ajustes da partida). Não
+// exige escalar mais que 11 jogadores — o banco é só pra essa mecânica.
+// ═══════════════════════════════════════════
+function openSubModal() {
+  const ms = window._matchState;
+  if (!ms || !state.bench.length) return;
+  pauseMatchTicking();
+  const modal = document.getElementById("subModal");
+  if (!modal) return;
+  const alreadyOut = ms.subbedOffNames || (ms.subbedOffNames = new Set());
+  const eligible = state.squad.filter(p => !alreadyOut.has(p.name));
+  modal.style.display = "flex";
+  modal.innerHTML = `
+    <div class="sub-modal">
+      <div class="sub-modal-title">SUBSTITUIÇÃO (${ms.subsUsed}/${ms.maxSubs})</div>
+      <label class="sub-modal-label">Sai</label>
+      <select id="subOutSel" class="ms-setup-select">
+        ${eligible.map(p => `<option value="${p.name}">${p.pos} · ${p.name}</option>`).join("")}
+      </select>
+      <label class="sub-modal-label">Entra</label>
+      <select id="subInSel" class="ms-setup-select">
+        ${state.bench.map(p => `<option value="${p.name}">${p.pos} · ${p.name} (${p.team} ${p.season})</option>`).join("")}
+      </select>
+      <div class="sub-modal-actions">
+        <button class="btn-secondary" onclick="closeSubModal()">Cancelar</button>
+        <button class="btn-primary" onclick="confirmSub()">Confirmar</button>
+      </div>
+    </div>`;
+}
+
+function closeSubModal() {
+  const modal = document.getElementById("subModal");
+  if (modal) { modal.style.display = "none"; modal.innerHTML = ""; }
+  startMatchTicking();
+}
+
+function confirmSub() {
+  const ms = window._matchState;
+  if (!ms) return;
+  const outSel = document.getElementById("subOutSel");
+  const inSel = document.getElementById("subInSel");
+  const outName = outSel ? outSel.value : "";
+  const inName = inSel ? inSel.value : "";
+  if (!outName || !inName) { closeSubModal(); return; }
+
+  ms.subbedOffNames = ms.subbedOffNames || new Set();
+  ms.subbedOffNames.add(outName);
+  ms.subsUsed++;
+
+  // O jogador que sai não pode mais aparecer em eventos futuros dessa
+  // partida — quem estava em campo (o substituto) passa a ser o protagonista
+  // desses lances a partir de agora.
+  for (let i = ms.evtIdx; i < ms.events.length; i++) {
+    const evt = ms.events[i];
+    if (evt.mine && evt.scorer === outName) evt.scorer = inName;
+  }
+
+  addTimelapseEvent({ type: "sub", minute: ms.minute, scorer: `${outName} sai, entra ${inName}` }, ms.r);
+
+  const modal = document.getElementById("subModal");
+  if (modal) { modal.style.display = "none"; modal.innerHTML = ""; }
+  const subBtn = document.getElementById("btnSubMatch");
+  if (subBtn) subBtn.style.display = (ms.subsUsed >= ms.maxSubs) ? "none" : "inline-block";
+
+  startMatchTicking();
 }
 
 function skipMatch() {
-  if (window._currentMatchInterval) clearInterval(window._currentMatchInterval);
+  const ms = window._matchState;
+  if (!ms) return;
+  if (ms.interval) clearInterval(ms.interval);
+  const modal = document.getElementById("subModal");
+  if (modal) { modal.style.display = "none"; modal.innerHTML = ""; }
   stopAmbiente();
   playSound("apitoFim", "apito");
-  // Processa só os eventos que o interval ainda não mostrou
-  const events = window._matchEvents || [];
-  const startIdx = window._matchEvtIdx || 0;
+  for (let i = ms.evtIdx; i < ms.events.length; i++) {
+    const evt = ms.events[i];
+    if (evt.type==="goal") { ms.myScore++; addTimelapseEvent(evt, ms.r); }
+    else if (evt.type==="concede") { ms.theirScore++; addTimelapseEvent(evt, ms.r); }
+    else { addTimelapseEvent(evt, ms.r); }
+  }
+  ms.evtIdx = ms.events.length;
   const myEl = document.getElementById("tlScoreMy");
   const thEl = document.getElementById("tlScoreTheir");
-  let myScore = parseInt(myEl?.textContent||0);
-  let thScore = parseInt(thEl?.textContent||0);
-  const r = window._matchR;
-  for (let i = startIdx; i < events.length; i++) {
-    const evt = events[i];
-    if (evt.type==="goal") { myScore++; addTimelapseEvent(evt, r); }
-    else if (evt.type==="concede") { thScore++; addTimelapseEvent(evt, r); }
-    else { addTimelapseEvent(evt, r); }
-  }
-  if (myEl) myEl.textContent = myScore;
-  if (thEl) thEl.textContent = thScore;
+  if (myEl) myEl.textContent = ms.myScore;
+  if (thEl) thEl.textContent = ms.theirScore;
   const clockEl = document.getElementById("tlClock");
   if (clockEl) clockEl.textContent = "FT";
   const fillEl = document.getElementById("tlProgressFill");
   if (fillEl) fillEl.style.width = "100%";
-  setTimeout(() => { if (window._matchDoneCallback) window._matchDoneCallback(); }, 400);
-  window._matchEvents = [];
-  window._matchEvtIdx = 0;
+  const subBtn = document.getElementById("btnSubMatch");
+  if (subBtn) subBtn.style.display = "none";
+  setTimeout(() => { if (ms.onDone) ms.onDone(); }, 400);
 }
 
 function bump(id, val) {
@@ -1524,7 +1812,8 @@ function addTimelapseEvent(evt, r) {
   div.className = `tl-event ${type}`;
 
   if (type === "goal") {
-    div.innerHTML = `<span class="tl-evt-icon">⚽</span><strong>${minute}'</strong> ${scorer} <span class="tl-evt-label gol">GOL!</span>`;
+    const capTag = (evt.mine && scorer === state.captain) ? ` <span class="tl-cap-badge">C</span>` : "";
+    div.innerHTML = `<span class="tl-evt-icon">⚽</span><strong>${minute}'</strong> ${scorer}${capTag} <span class="tl-evt-label gol">GOL!</span>`;
   } else if (type === "concede") {
     div.innerHTML = `<span class="tl-evt-icon">🔴</span><strong>${minute}'</strong> ${scorer} <span class="tl-evt-label sof">Sofreu</span>`;
   } else if (type === "yellow") {
@@ -1539,6 +1828,11 @@ function addTimelapseEvent(evt, r) {
   } else if (type === "disallowed") {
     const who = evt.mine ? scorer : `${scorer} (${oppName})`;
     div.innerHTML = `<span class="tl-evt-icon">🚫</span><strong>${minute}'</strong> Gol anulado de ${who} — ${phrase || "o lance é anulado."} <span class="tl-evt-label voided">ANULADO</span>`;
+  } else if (type === "freekick") {
+    const who = evt.mine ? scorer : `${scorer} (${oppName})`;
+    div.innerHTML = `<span class="tl-evt-icon">🎯</span><strong>${minute}'</strong> Falta perigosa! ${who} ${phrase || "cobra e a bola passa perto."} <span class="tl-evt-label fk">Falta</span>`;
+  } else if (type === "sub") {
+    div.innerHTML = `<span class="tl-evt-icon">🔄</span><strong>${minute}'</strong> ${scorer} <span class="tl-evt-label sub">Substituição</span>`;
   } else {
     div.innerHTML = `<span class="tl-evt-icon">🔔</span><strong>Apito Final</strong>`;
   }
@@ -1551,15 +1845,16 @@ function addTimelapseEvent(evt, r) {
 // ═══════════════════════════════════════════
 function buildMatchShareText(r) {
   const scoreLine = r.penalties
-    ? `${r.myGoals}-${r.theirGoals} (${r.penalties.mine}-${r.penalties.theirs} pên.)`
-    : `${r.myGoals}-${r.theirGoals}`;
-  const resultWord = r.outcome === "win" ? "Vitória" : r.outcome === "lose" ? "Derrota" : "Empate";
-  let text = `⚽ FutDraft — ${modeMeta().short}\n`;
-  text += `${r.round}: ${resultWord} · Seu Time ${scoreLine} ${r.opponent.flag || ""} ${r.opponent.name} ${r.opponent.season}\n`;
-  if (r.scorers && r.scorers.length) text += `Gols: ${r.scorers.join(", ")}\n`;
+    ? `${r.myGoals}x${r.theirGoals} (${r.penalties.mine}x${r.penalties.theirs} nos pênaltis)`
+    : `${r.myGoals}x${r.theirGoals}`;
+  const resultWord = r.outcome === "win" ? "🏆 Vitória" : r.outcome === "lose" ? "😔 Derrota" : "🤝 Empate";
+  let text = `⚽ FutDraft — ${modeMeta().short}\n\n`;
+  text += `${resultWord} na ${r.round}!\n`;
+  text += `Meu Time ${scoreLine} ${r.opponent.flag || ""} ${r.opponent.name} ${r.opponent.season}\n`;
+  if (r.scorers && r.scorers.length) text += `\n⚽ Gols: ${r.scorers.join(", ")}\n`;
   const cards = (r.flavorEvents || []).filter(e => e.type === "yellow" || e.type === "red");
   if (cards.length) text += `Cartões: ${cards.map(c => c.type === "red" ? "🟥" : "🟨").join(" ")}\n`;
-  text += `#FutDraft`;
+  text += `\nJoga também: monte seu time dos sonhos no FutDraft ⚔️\n#FutDraft`;
   return text;
 }
 
@@ -1567,10 +1862,29 @@ function buildTournamentShareText() {
   const s = window._lastSummary;
   if (!s) return "FutDraft";
   const modeShort = MODE_META[s.mode] ? MODE_META[s.mode].short : "FUTDRAFT";
-  const headline = s.champion ? "🏆 CAMPEÃO!" : s.eliminated ? `Eliminado — ${s.stageReached}` : s.stageReached;
-  let text = `⚽ FutDraft — ${modeShort}\n${headline}\n`;
-  text += `${s.wins}V ${s.draws}E ${s.losses}D · ${s.goalsFor}-${s.goalsAgainst} gols\n`;
-  text += `Overall do time: ${maskOvr(s.overall)}\n#FutDraft`;
+  const headline = s.champion
+    ? "🏆 FUI CAMPEÃO!"
+    : s.eliminated
+      ? `Caí ${s.stageReached && s.stageReached !== "—" ? "na " + s.stageReached : "no meio do caminho"}`
+      : `Cheguei até ${s.stageReached}`;
+
+  let text = `⚽ FutDraft — ${modeShort}\n\n${headline}\n\n`;
+  text += `📊 ${s.wins}V ${s.draws}E ${s.losses}D  ·  ${s.goalsFor}x${s.goalsAgainst} no total\n`;
+  text += `⭐ Overall do meu time: ${maskOvr(s.overall)}\n`;
+
+  const results = window._lastResults || [];
+  if (results.length) {
+    text += `\n🗓️ Meus jogos:\n`;
+    results.forEach(r => {
+      const icon = r.outcome === "win" ? "✅" : r.outcome === "lose" ? "❌" : "➖";
+      const score = r.penalties
+        ? `${r.myGoals}x${r.theirGoals} (pên. ${r.penalties.mine}x${r.penalties.theirs})`
+        : `${r.myGoals}x${r.theirGoals}`;
+      text += `${icon} ${r.round}: ${score} vs ${r.opponent.flag || ""} ${r.opponent.name}\n`;
+    });
+  }
+
+  text += `\nMonta o seu time também no FutDraft ⚔️\n#FutDraft`;
   return text;
 }
 
@@ -1626,14 +1940,24 @@ function renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draw
   const last = results[results.length-1];
   const won = !eliminated && last.round === "FINAL" && last.outcome === "win";
   const saldo = goalsFor - goalsAgainst;
-  const lastScoreText = last.penalties
-    ? `${last.myGoals}–${last.theirGoals} <small>(${last.penalties.mine}-${last.penalties.theirs} pen)</small>`
-    : `${last.myGoals}–${last.theirGoals}`;
+
+  const outcomeIcon = { win: "✅", draw: "➖", lose: "❌" };
+  const outcomeLabel = { win: "Vitória", draw: "Empate", lose: "Derrota" };
+  const matchRowsHtml = results.map(r => {
+    const scoreText = r.penalties
+      ? `${r.myGoals}–${r.theirGoals} <small>(${r.penalties.mine}-${r.penalties.theirs} pên)</small>`
+      : `${r.myGoals}–${r.theirGoals}`;
+    return `
+      <div class="fc-match-row fc-match-${r.outcome}" title="${outcomeLabel[r.outcome] || ""}">
+        <span class="fc-match-round">${r.round}</span>
+        <span class="fc-match-opp">${r.opponent.flag || ""} ${r.opponent.name} <small>${r.opponent.season || ""}</small></span>
+        <span class="fc-match-score">${scoreText}</span>
+        <span class="fc-match-icon">${outcomeIcon[r.outcome] || ""}</span>
+      </div>`;
+  }).join("");
 
   card.innerHTML = `
     <div class="fc-result">${won ? "🏆 CAMPEÃO!" : eliminated ? "ELIMINADO" : "FINALISTA"}</div>
-    <div class="fc-score ${won?"win":"lose"}">${lastScoreText}</div>
-    <div class="fc-stage-label">${last.round}</div>
     <div class="fc-stats">
       <div class="fc-stat"><span class="fc-stat-num">${wins}</span><span class="fc-stat-label">Vitórias</span></div>
       <div class="fc-stat"><span class="fc-stat-num">${draws}</span><span class="fc-stat-label">Empates</span></div>
@@ -1641,6 +1965,10 @@ function renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draw
       <div class="fc-stat"><span class="fc-stat-num">${saldo>=0?"+":""}${saldo}</span><span class="fc-stat-label">Saldo</span></div>
       <div class="fc-stat"><span class="fc-stat-num">${goalsFor}</span><span class="fc-stat-label">Gols pró</span></div>
       <div class="fc-stat"><span class="fc-stat-num">${goalsAgainst}</span><span class="fc-stat-label">Sofridos</span></div>
+    </div>
+    <div class="fc-matches">
+      <div class="fc-matches-title">JOGOS DO CAMPEONATO</div>
+      ${matchRowsHtml}
     </div>
     <div class="fc-squad-header">ELENCO · OVERALL ${maskOvr(overall)}</div>
     <div class="fc-squad">${state.squad.map(p=>`
@@ -1655,7 +1983,7 @@ function renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draw
         </div>
       </div>`).join("")}
     </div>
-    <button class="btn-share-result" onclick="shareTournamentResult()">📤 COMPARTILHAR RESULTADO</button>
+    <button class="btn-share-result" onclick="shareTournamentResult()">📤 Compartilhar essa campanha</button>
     <button class="btn-new-game" onclick="resetGame()">↺ NOVA PARTIDA</button>
     <div class="fc-site">FutDraft</div>`;
 }
@@ -1664,10 +1992,11 @@ function renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draw
 // RESET
 // ═══════════════════════════════════════════
 function resetGame() {
-  if (window._currentMatchInterval) clearInterval(window._currentMatchInterval);
+  if (window._matchState && window._matchState.interval) clearInterval(window._matchState.interval);
+  window._matchState = null;
   stopAmbiente();
   window._tlContinueCallback = null;
-  state = { currentTeam:null, rerollsLeft:3, formation:null, squad:[], phase:"landing", pickCount:0, mode:"champions" };
+  state = { currentTeam:null, rerollsLeft:3, formation:null, squad:[], phase:"landing", pickCount:0, mode:"champions", freeModeTeams:[], captain:null, pkTaker:null, fkTaker:null, tacticStyle:"equilibrado", bench:[], benchChoices:{}, benchGroups:[] };
   showPage("pageLanding");
 }
 
@@ -1711,6 +2040,7 @@ const VITRINE_FILTERS = [
   { key: "libertadores", label: "🌎 Libertadores",    teams: () => LIBERTADORES_TEAMS.concat(BRAZIL_TEAMS.filter(t => LIBERTADORES_BR_IDS.has(t.id))) },
   { key: "brasil",       label: "🇧🇷 Copa do Brasil",  teams: () => BRAZIL_TEAMS },
   { key: "copadomundo",  label: "🌍 Copa do Mundo",   teams: () => WORLD_CUP_TEAMS },
+  { key: "eurocopa",     label: "🏴 Eurocopa",         teams: () => EUROCOPA_TEAMS },
 ];
 
 let vitrineActiveFilter = "champions";
@@ -1789,13 +2119,77 @@ function renderVitrineGrid() {
   }).join("")}</div>`;
 }
 
+// Monta a escalação de um time da vitrine no formato da formação real dele
+// (rows do FORMATIONS), preenchendo cada posição com o melhor jogador
+// disponível daquele setor — em vez de só listar nome+overall em ordem.
+function buildTeamLineup(team) {
+  const formationKey = (team.formation && FORMATIONS[team.formation]) ? team.formation : "4-3-3";
+  const slots = getFormationSlots(formationKey);
+
+  const grouped = {};
+  team.players.forEach(p => {
+    const label = POS_LABELS[p.pos] || p.pos;
+    (grouped[label] = grouped[label] || []).push(p);
+  });
+  Object.values(grouped).forEach(arr => arr.sort((a, b) => b.overall - a.overall));
+
+  const usedNames = new Set();
+  const lineup = slots.map(slot => {
+    const pool = grouped[slot.pos] || [];
+    const pick = pool.find(p => !usedNames.has(p.name));
+    if (pick) usedNames.add(pick.name);
+    return { pos: slot.pos, player: pick || null };
+  });
+
+  const bench = team.players
+    .filter(p => !usedNames.has(p.name))
+    .sort((a, b) => b.overall - a.overall);
+
+  return { formationKey, lineup, bench };
+}
+
+// Gera o HTML do "campinho" com a escalação, reaproveitando o mesmo visual
+// de campo verde usado na tela de draft (classes .pitch/.pitch-row/.pd-circle).
+function renderTeamLineupHTML(team) {
+  const { formationKey, lineup, bench } = buildTeamLineup(team);
+  const rows = FORMATIONS[formationKey].rows;
+  let slotId = 0;
+  let rowsHtml = "";
+  for (const row of rows) {
+    rowsHtml += `<div class="pitch-row">`;
+    for (const posLabel of row) {
+      const entry = lineup[slotId++];
+      const role = POS_ROLE[posLabel] || "mid";
+      if (entry && entry.player) {
+        rowsHtml += `
+          <div class="player-dot">
+            <div class="pd-circle filled role-${role}">${maskOvr(entry.player.overall)}</div>
+            <div class="pd-name">${entry.player.name.split(" ").pop()}</div>
+          </div>`;
+      } else {
+        rowsHtml += `
+          <div class="player-dot">
+            <div class="pd-circle empty role-${role}">${posLabel}</div>
+            <div class="pd-name">—</div>
+          </div>`;
+      }
+    }
+    rowsHtml += `</div>`;
+  }
+  const pitchHtml = `
+    <div class="pitch-container vt-pitch-container">
+      <div class="pitch vt-pitch">${rowsHtml}</div>
+    </div>`;
+  return { pitchHtml, bench, formationKey };
+}
+
 function openVitrineDetail(filterKey, teamId) {
   const filter = VITRINE_FILTERS.find(f => f.key === filterKey);
   const team = filter.teams().find(t => t.id === teamId);
   if (!team) return;
 
   const ovr = Math.round(teamOverall(team.players));
-  const sortedPlayers = [...team.players].sort((a, b) => b.overall - a.overall);
+  const { pitchHtml, bench, formationKey } = renderTeamLineupHTML(team);
 
   const body = document.getElementById("vitrineBody");
   body.innerHTML = `
@@ -1804,20 +2198,23 @@ function openVitrineDetail(filterKey, teamId) {
       <span class="vt-detail-flag">${team.flag || "⭐"}</span>
       <div>
         <div class="vt-detail-name">${team.name}</div>
-        <div class="vt-detail-meta">${vitrineSubtitle(team)} · Formação ${team.formation || "—"} · ${team.players.length} jogadores</div>
+        <div class="vt-detail-meta">${vitrineSubtitle(team)} · Formação ${formationKey} · ${team.players.length} jogadores</div>
       </div>
       <div class="vt-detail-ovr">
         <div class="vt-detail-ovr-num">${ovr}</div>
         <div class="vt-detail-ovr-label">OVERALL</div>
       </div>
     </div>
-    <div class="vt-squad-list">
-      ${sortedPlayers.map(p => `
-        <div class="vt-squad-row">
-          <span class="vt-squad-pos role-${POS_ROLE[POS_LABELS[p.pos]] || "mid"}">${POS_LABELS[p.pos] || p.pos}</span>
-          <span class="vt-squad-name">${p.name}</span>
-          <span class="vt-squad-ovr">${maskOvr(p.overall)}</span>
-        </div>`).join("")}
-    </div>
+    ${pitchHtml}
+    ${bench.length ? `
+      <div class="vt-bench-title">ELENCO COMPLETO / RESERVAS</div>
+      <div class="vt-squad-list">
+        ${bench.map(p => `
+          <div class="vt-squad-row">
+            <span class="vt-squad-pos role-${POS_ROLE[POS_LABELS[p.pos]] || "mid"}">${POS_LABELS[p.pos] || p.pos}</span>
+            <span class="vt-squad-name">${p.name}</span>
+            <span class="vt-squad-ovr">${maskOvr(p.overall)}</span>
+          </div>`).join("")}
+      </div>` : ""}
   `;
 }
