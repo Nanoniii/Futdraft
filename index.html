@@ -21,12 +21,15 @@
     </div>
     <div class="header-right" id="headerRight">
       <button class="btn-vitrine" onclick="openVitrine()">📋 VITRINE</button>
+      <button class="btn-vitrine" onclick="openHistory()">🏆 HISTÓRICO</button>
       <button class="btn-settings" onclick="openSettings()">⚙ CONFIGURAÇÕES</button>
       <button class="btn-changelog" onclick="openChangelog()">CHANGELOG</button>
       <button class="btn-credits" onclick="openCredits()">CRÉDITOS</button>
     </div>
   </div>
 </header>
+
+<div id="achToastStack" class="ach-toast-stack"></div>
 
 <!-- CHANGELOG (modal) -->
 <div id="changelogOverlay" class="credits-overlay">
@@ -49,7 +52,18 @@
     </div>
 
     <div class="cl-version current">
-      <div class="cl-ver-badge">v1.1 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-badge">v1.2 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-date">Julho 2026</div>
+      <ul class="cl-items">
+        <li>🎙️ Simulação mais viva: cartão amarelo, cartão vermelho, pênalti perdido e gol anulado, com comentários tipo Desafio Diário</li>
+        <li>📤 Compartilhar resultado — de uma partida específica ou do torneio inteiro</li>
+        <li>⚙️ Hardcore e Restrição Temática agora se escolhem na tela de modo, antes do torneio começar</li>
+        <li>🎮 Modo Livre: os adversários do torneio agora são sorteados entre TODOS os times do jogo, não só os que você escolheu pro seu elenco</li>
+      </ul>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-ver-badge">v1.1</div>
       <div class="cl-ver-date">Junho 2026</div>
       <ul class="cl-items">
         <li>🌍 Modo Copa do Mundo — 111 seleções históricas (1930 a 2022)</li>
@@ -60,10 +74,13 @@
     </div>
 
     <div class="cl-version upcoming">
-      <div class="cl-ver-badge">v1.2 <span class="cl-badge-tag upcoming-tag">EM BREVE</span></div>
+      <div class="cl-ver-badge">v1.3 <span class="cl-badge-tag upcoming-tag">EM BREVE</span></div>
       <div class="cl-ver-date">Próxima atualização</div>
       <ul class="cl-items">
-        <li>🏴 Modo Eurocopa — mata-mata com seleções históricas da Eurocopa!</li>
+        <li>🎚️ Slider de estilo de jogo: Ofensivo, Equilibrado ou Retranca</li>
+        <li>©️ Capitão do time com bônus quando escolhido</li>
+        <li>🎯 Escolha de cobrador de falta e pênalti</li>
+        <li>🔄 Banco de reservas com substituição no meio da partida</li>
       </ul>
     </div>
   </div>
@@ -141,7 +158,46 @@
       </div>
     </div>
 
+    <div class="settings-section">
+      <div class="settings-label-row">
+        <span class="settings-label">MODO HARDCORE</span>
+        <label class="switch">
+          <input type="checkbox" id="chkHardcore" onchange="toggleHardcore(this.checked)">
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+      <p class="settings-desc">Esconde os overalls dos jogadores e desativa o re-sorteio. Só pra quem confia no próprio julgamento.</p>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label-row">
+        <span class="settings-label">RESTRIÇÃO TEMÁTICA</span>
+        <label class="switch">
+          <input type="checkbox" id="chkThemeRestriction" onchange="toggleThemeRestriction(this.checked)">
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+      <p class="settings-desc">A cada partida, sorteia um país/confederação e restringe o sorteio de times só àquele tema (quando houver times suficientes).</p>
+    </div>
+
     <p class="settings-footnote">Suas preferências ficam salvas neste navegador.</p>
+  </div>
+</div>
+
+<!-- HISTÓRICO & CONQUISTAS (modal) -->
+<div id="historyOverlay" class="credits-overlay">
+  <div class="credits-modal history-modal">
+    <button class="credits-close" onclick="closeHistory()">✕</button>
+    <div class="credits-title">HISTÓRICO & CONQUISTAS</div>
+    <div class="history-tabs">
+      <button class="history-tab active" data-tab="stats" onclick="setHistoryTab('stats')">RESUMO</button>
+      <button class="history-tab" data-tab="achievements" onclick="setHistoryTab('achievements')">CONQUISTAS <span id="achCountBadge"></span></button>
+      <button class="history-tab" data-tab="matches" onclick="setHistoryTab('matches')">ÚLTIMAS PARTIDAS</button>
+    </div>
+    <div class="history-panel" id="historyPanelStats"></div>
+    <div class="history-panel" id="historyPanelAchievements" style="display:none"></div>
+    <div class="history-panel" id="historyPanelMatches" style="display:none"></div>
+    <p class="settings-footnote">O Modo Livre não conta pro histórico nem gera conquistas.</p>
   </div>
 </div>
 
@@ -213,7 +269,31 @@
   <div class="mode-pick-layout">
     <div class="fp-title">ESCOLHA O MODO</div>
     <p class="fp-desc">Em qual competição você quer montar e simular seu time?</p>
-    <div class="ms-grid ms-grid-four">
+
+    <div class="ms-toggles">
+      <div class="ms-toggle-card">
+        <div class="settings-label-row">
+          <span class="settings-label">MODO HARDCORE</span>
+          <label class="switch">
+            <input type="checkbox" id="msChkHardcore" onchange="toggleHardcore(this.checked)">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <p class="settings-desc">Esconde os overalls e desativa o re-sorteio nessa partida.</p>
+      </div>
+      <div class="ms-toggle-card">
+        <div class="settings-label-row">
+          <span class="settings-label">RESTRIÇÃO TEMÁTICA</span>
+          <label class="switch">
+            <input type="checkbox" id="msChkThemeRestriction" onchange="toggleThemeRestriction(this.checked)">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <p class="settings-desc">Sorteia um país/confederação e restringe o sorteio só àquele tema nessa partida.</p>
+      </div>
+    </div>
+
+    <div class="ms-grid ms-grid-five">
       <div class="ms-card ms-champions" onclick="selectMode('champions')">
         <div class="ms-emblem">🏆</div>
         <div class="ms-name">CHAMPIONS LEAGUE</div>
@@ -238,6 +318,45 @@
         <p class="ms-desc">Seleções históricas de 1930 a 2022. Fase de grupos (turno único, 3 jogos) + mata-mata desde os 16-avos até a final.</p>
         <div class="ms-tags"><span>Fase de grupos</span><span>Seleções</span></div>
       </div>
+      <div class="ms-card ms-eurocopa" onclick="selectMode('eurocopa')">
+        <div class="ms-emblem">⭐</div>
+        <div class="ms-name">EUROCOPA</div>
+        <p class="ms-desc">Seleções históricas da Eurocopa, de 1960 a 2024. Fase de grupos (turno único, 3 jogos) + mata-mata até a final.</p>
+        <div class="ms-tags"><span>Fase de grupos</span><span>Seleções</span></div>
+      </div>
+    </div>
+
+    <div class="fp-divider"></div>
+
+    <div class="free-mode-block">
+      <div class="ms-card ms-livre" onclick="openFreeModeSetup()">
+        <div class="ms-emblem">🎮</div>
+        <div class="ms-name">MODO LIVRE</div>
+        <p class="ms-desc">Escolha você mesmo quais times entram no sorteio pra montar seu elenco. No torneio, você enfrenta adversários aleatórios entre TODOS os times do jogo — não só os que você escolheu. Não gera conquistas nem entra pro histórico — é só diversão, sem regras.</p>
+        <div class="ms-tags"><span>Elenco à sua escolha</span><span>Adversários aleatórios</span><span>Não conta no histórico</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SELEÇÃO DE TIMES DO MODO LIVRE -->
+<div id="pageFreeModeSetup" class="page">
+  <div class="mode-pick-layout">
+    <div class="fp-title">MODO LIVRE — ESCOLHA OS TIMES</div>
+    <p class="fp-desc">Marque quais times você quer no sorteio pra montar SEU time. Precisa de pelo menos 8 times marcados. Os adversários do torneio são sorteados entre TODOS os times do jogo, não só os que você marcar aqui — assim você sempre encara algo diferente.</p>
+    <div class="free-mode-toolbar">
+      <input type="text" id="freeModeSearch" placeholder="Buscar time..." oninput="renderFreeModeList()">
+      <div class="free-mode-source-tabs" id="freeModeSourceTabs"></div>
+      <div class="free-mode-actions">
+        <button class="btn-secondary" onclick="freeModeSelectAll(true)">Marcar todos (filtro)</button>
+        <button class="btn-secondary" onclick="freeModeSelectAll(false)">Desmarcar todos</button>
+      </div>
+    </div>
+    <div class="free-mode-count"><span id="freeModeCount">0</span> times selecionados</div>
+    <div class="free-mode-list" id="freeModeList"></div>
+    <div class="free-mode-footer">
+      <button class="btn-secondary" onclick="showPage('pageModeSelect')">Voltar</button>
+      <button class="btn-primary" id="btnFreeModeConfirm" onclick="confirmFreeModeTeams()" disabled>Continuar →</button>
     </div>
   </div>
 </div>
@@ -483,6 +602,8 @@
 <div id="pageMpResult" class="page"></div>
 
 <script src="data.js"></script>
+<script src="eurocopa_teams.js"></script>
+<script src="progression.js"></script>
 <script src="game.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>

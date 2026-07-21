@@ -1,4 +1,26 @@
 // ═══════════════════════════════════════════
+// RNG SEEDÁVEL — usado só pelo Desafio Diário, pra todo mundo jogar
+// com os mesmos sorteios base no mesmo dia. Fora do desafio diário,
+// rng() cai pra Math.random() normalmente.
+// ═══════════════════════════════════════════
+let _rngState = null;
+function _mulberry32(seed) {
+  return function () {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function rng() { return _rngState ? _rngState() : Math.random(); }
+function seedRngFromString(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  _rngState = _mulberry32(h);
+}
+function clearRngSeed() { _rngState = null; }
+
+// ═══════════════════════════════════════════
 // CONFIGURAÇÕES (velocidade, avanço entre partidas, sons)
 // ═══════════════════════════════════════════
 const SETTINGS_KEY = "futdraft_settings_v1";
@@ -9,7 +31,14 @@ const SETTINGS_DEFAULTS = {
   soundGol: true,
   soundApito: true,
   soundAmbiente: true,
+  goalEffects: true,     // confete/efeitos visuais em gol e título
+  hardcoreMode: false,   // esconde os overalls e desativa o re-sorteio
+  themeRestriction: false, // restringe o sorteio a times de um mesmo país/confederação
 };
+
+// ── Hardcore: esconde os overalls e impede re-sorteio ──
+function hc() { return !!settings.hardcoreMode; }
+function maskOvr(n) { return hc() ? "?" : n; }
 
 function loadSettings() {
   try {
@@ -51,6 +80,11 @@ function syncSettingsUI() {
   if (gol) gol.checked = settings.soundGol;
   if (apito) apito.checked = settings.soundApito;
   if (ambiente) ambiente.checked = settings.soundAmbiente;
+  const hardcore = document.getElementById("chkHardcore");
+  if (hardcore) hardcore.checked = settings.hardcoreMode;
+  const theme = document.getElementById("chkThemeRestriction");
+  if (theme) theme.checked = settings.themeRestriction;
+  syncModeToggles();
   const sub = document.getElementById("soundSubOptions");
   if (sub) {
     sub.classList.toggle("disabled", !settings.soundsEnabled);
@@ -64,6 +98,19 @@ function toggleSoundsMaster(v) {
   if (!v) stopAmbiente();
   saveSettings();
   syncSettingsUI();
+}
+function toggleHardcore(v) { settings.hardcoreMode = v; saveSettings(); syncSettingsUI(); }
+function toggleThemeRestriction(v) { settings.themeRestriction = v; saveSettings(); syncSettingsUI(); }
+
+// Toggles de Hardcore/Restrição Temática vivem tanto na tela de configurações
+// quanto na tela de escolha de modo (pra ficarem visíveis ANTES do torneio
+// começar). As duas leem/escrevem o mesmo `settings`, então essa função só
+// mantém os checkboxes da tela de modo espelhados ao estado atual.
+function syncModeToggles() {
+  const h = document.getElementById("msChkHardcore");
+  if (h) h.checked = settings.hardcoreMode;
+  const t = document.getElementById("msChkThemeRestriction");
+  if (t) t.checked = settings.themeRestriction;
 }
 function toggleSoundCategory(key, v) {
   settings[key] = v;
@@ -125,8 +172,12 @@ let state = {
   squad: [],
   phase: "landing",
   pickCount: 0,
-  mode: "champions",  // "champions" | "brasil" | "libertadores" | "copadomundo"
+  mode: "champions",  // "champions" | "brasil" | "libertadores" | "copadomundo" | "eurocopa" | "livre"
+  freeModeTeams: [],  // pool de times escolhido manualmente no Modo Livre
 };
+
+// Modo Livre não gera conquistas nem entra no histórico do jogador — é só lazer.
+function isProgressionDisabled() { return state.mode === "livre"; }
 
 // IDs dos times brasileiros que participam do modo Libertadores (conforme lista oficial)
 const LIBERTADORES_BR_IDS = new Set([
@@ -162,16 +213,77 @@ const LIBERTADORES_BR_IDS = new Set([
   "br_internacional_lib_1980",
 ]);
 
+// Todos os times do jogo, de todas as competições — usado no "Todos" do
+// Modo Livre e como pool de adversários do Modo Livre (ver getOpponentPool).
+function allTeamsList() {
+  return [...TEAMS, ...BRAZIL_TEAMS, ...LIBERTADORES_TEAMS, ...WORLD_CUP_TEAMS, ...EUROCOPA_TEAMS];
+}
+
 // Retorna o pool de times do modo atualmente selecionado
 function getTeamPool() {
   if (state.mode === "brasil") return BRAZIL_TEAMS;
   if (state.mode === "copadomundo") return WORLD_CUP_TEAMS;
+  if (state.mode === "eurocopa") return EUROCOPA_TEAMS;
+  if (state.mode === "livre") return state.freeModeTeams || [];
   if (state.mode === "libertadores") {
     const brFiltered = BRAZIL_TEAMS.filter(t => LIBERTADORES_BR_IDS.has(t.id));
     return LIBERTADORES_TEAMS.concat(brFiltered);
   }
   return TEAMS;
 }
+
+// Pool de ADVERSÁRIOS do torneio. Igual ao pool de sorteio (getTeamPool) em
+// todo modo, EXCETO no Modo Livre: lá o sorteio dos SEUS jogadores continua
+// restrito aos times que você escolheu, mas os adversários do torneio vêm de
+// qualquer time do jogo — senão você só enfrentaria os mesmos times que
+// escolheu pra si mesmo, o que tira a graça de encarar o inesperado.
+function getOpponentPool() {
+  if (state.mode === "livre") return allTeamsList();
+  return getTeamPool();
+}
+
+// Mesma ideia de getRestrictedTeamPool(), mas para o pool de adversários.
+function getRestrictedOpponentPool() {
+  const base = getOpponentPool();
+  if (!settings.themeRestriction || !state.themeCountry) return base;
+  const filtered = base.filter(t => t.country === state.themeCountry);
+  return filtered.length >= THEME_RESTRICTION_MIN_TEAMS ? filtered : base;
+}
+
+// Tamanho mínimo de pool pra restrição temática valer a pena (senão o
+// sorteio fica repetitivo demais). Se o país sorteado não tiver times
+// suficientes, a restrição é ignorada silenciosamente nessa partida.
+const THEME_RESTRICTION_MIN_TEAMS = 8;
+
+// Sorteia um país/confederação com times suficientes no pool atual e devolve
+// seu código (ex: "BR", "ES"), ou null se a restrição não puder ser aplicada.
+function pickThemeCountry(pool) {
+  const counts = {};
+  pool.forEach(t => { counts[t.country] = (counts[t.country] || 0) + 1; });
+  const eligible = Object.keys(counts).filter(c => counts[c] >= THEME_RESTRICTION_MIN_TEAMS);
+  if (!eligible.length) return null;
+  return eligible[Math.floor(Math.random() * eligible.length)];
+}
+
+// Pool de times já considerando a restrição temática ativa (se houver).
+function getRestrictedTeamPool() {
+  const base = getTeamPool();
+  if (!settings.themeRestriction || !state.themeCountry) return base;
+  const filtered = base.filter(t => t.country === state.themeCountry);
+  return filtered.length >= THEME_RESTRICTION_MIN_TEAMS ? filtered : base;
+}
+
+// Metadados de exibição por modo — nome do título, emblema, textos, etc.
+// Centraliza tudo que antes era espalhado em vários ternários pelo arquivo.
+const MODE_META = {
+  champions:    { title: "CHAMPIONS LEAGUE", short: "A CHAMPIONS",     logo: "🏆", waiting: "A Champions começa em breve...",      seasonPrefix: "Copa " },
+  libertadores: { title: "COPA LIBERTADORES", short: "A LIBERTADORES", logo: "🌎", waiting: "A Libertadores começa em breve...",   seasonPrefix: "" },
+  brasil:       { title: "COPA DO BRASIL",    short: "A COPA DO BRASIL", logo: "🇧🇷", waiting: "A Copa do Brasil começa em breve...", seasonPrefix: "" },
+  copadomundo:  { title: "COPA DO MUNDO",     short: "A COPA DO MUNDO", logo: "🌍", waiting: "A Copa do Mundo começa em breve...", seasonPrefix: "Copa do Mundo " },
+  eurocopa:     { title: "EUROCOPA",          short: "A EUROCOPA",     logo: "⭐", waiting: "A Eurocopa começa em breve...",       seasonPrefix: "Eurocopa " },
+  livre:        { title: "MODO LIVRE",        short: "A SIMULAÇÃO",    logo: "🎮", waiting: "A simulação começa em breve...",      seasonPrefix: "" },
+};
+function modeMeta() { return MODE_META[state.mode] || MODE_META.champions; }
 
 // Posições reais no data.js: GK RB LB CB CM AM RM LM RW LW ST CF RWB LWB
 // Mapeadas via POS_LABELS para: GOL LD LE ZAG MC MEI MD ME PD PE CA CA LD LE
@@ -263,6 +375,91 @@ for (const k of new Set([...Object.keys(ATTACK_WEIGHTS), ...Object.keys(DEFENSE_
 // ═══════════════════════════════════════════
 function startGame() {
   showPage("pageModeSelect");
+  syncModeToggles();
+}
+
+// ═══════════════════════════════════════════
+// MODO LIVRE — escolha manual dos times do sorteio
+// ═══════════════════════════════════════════
+const FREE_MODE_SOURCES = [
+  { id: "todos", label: "Todos", teams: () => allTeamsList() },
+  { id: "champions", label: "Champions", teams: () => TEAMS },
+  { id: "brasil", label: "Brasil", teams: () => BRAZIL_TEAMS },
+  { id: "libertadores", label: "Libertadores", teams: () => LIBERTADORES_TEAMS },
+  { id: "copadomundo", label: "Copa do Mundo", teams: () => WORLD_CUP_TEAMS },
+  { id: "eurocopa", label: "Eurocopa", teams: () => EUROCOPA_TEAMS },
+];
+const FREE_MODE_MIN_TEAMS = 8;
+let freeModeSelected = new Set();  // guarda os ids dos times marcados
+let freeModeActiveTab = "todos";
+
+function openFreeModeSetup() {
+  showPage("pageFreeModeSetup");
+  const tabs = document.getElementById("freeModeSourceTabs");
+  if (tabs && !tabs.dataset.built) {
+    tabs.dataset.built = "1";
+    tabs.innerHTML = FREE_MODE_SOURCES.map(s =>
+      `<button class="${s.id === freeModeActiveTab ? "active" : ""}" onclick="setFreeModeTab('${s.id}')">${s.label}</button>`
+    ).join("");
+  }
+  renderFreeModeList();
+}
+
+function setFreeModeTab(id) {
+  freeModeActiveTab = id;
+  document.querySelectorAll("#freeModeSourceTabs button").forEach((b, i) => {
+    b.classList.toggle("active", FREE_MODE_SOURCES[i].id === id);
+  });
+  renderFreeModeList();
+}
+
+function renderFreeModeList() {
+  const source = FREE_MODE_SOURCES.find(s => s.id === freeModeActiveTab) || FREE_MODE_SOURCES[0];
+  const query = (document.getElementById("freeModeSearch")?.value || "").trim().toLowerCase();
+  let teams = source.teams();
+  if (query) teams = teams.filter(t => t.name.toLowerCase().includes(query) || String(t.season).toLowerCase().includes(query));
+
+  const list = document.getElementById("freeModeList");
+  list.innerHTML = teams.map(t => {
+    const checked = freeModeSelected.has(t.id);
+    return `<div class="free-mode-item${checked ? " checked" : ""}" onclick="toggleFreeModeTeam('${t.id}')">
+      <input type="checkbox" ${checked ? "checked" : ""}>
+      <span class="fmi-flag">${t.flag}</span>
+      <span class="fmi-name">${t.name}</span>
+      <span class="fmi-season">${t.season}</span>
+    </div>`;
+  }).join("") || `<p class="fp-desc">Nenhum time encontrado.</p>`;
+
+  updateFreeModeCount();
+}
+
+function toggleFreeModeTeam(id) {
+  if (freeModeSelected.has(id)) freeModeSelected.delete(id);
+  else freeModeSelected.add(id);
+  renderFreeModeList();
+}
+
+function freeModeSelectAll(shouldSelect) {
+  const source = FREE_MODE_SOURCES.find(s => s.id === freeModeActiveTab) || FREE_MODE_SOURCES[0];
+  const query = (document.getElementById("freeModeSearch")?.value || "").trim().toLowerCase();
+  let teams = source.teams();
+  if (query) teams = teams.filter(t => t.name.toLowerCase().includes(query) || String(t.season).toLowerCase().includes(query));
+  teams.forEach(t => { if (shouldSelect) freeModeSelected.add(t.id); else freeModeSelected.delete(t.id); });
+  renderFreeModeList();
+}
+
+function updateFreeModeCount() {
+  const countEl = document.getElementById("freeModeCount");
+  if (countEl) countEl.textContent = freeModeSelected.size;
+  const btn = document.getElementById("btnFreeModeConfirm");
+  if (btn) btn.disabled = freeModeSelected.size < FREE_MODE_MIN_TEAMS;
+}
+
+function confirmFreeModeTeams() {
+  if (freeModeSelected.size < FREE_MODE_MIN_TEAMS) return;
+  const all = allTeamsList();
+  state.freeModeTeams = all.filter(t => freeModeSelected.has(t.id));
+  selectMode("livre");
 }
 
 function selectMode(mode) {
@@ -309,9 +506,16 @@ function chooseFormation(fm) {
   state.formation = fm;
   state.squad = [];
   state.pickCount = 0;
-  state.rerollsLeft = 3;
+  state.rerollsLeft = hc() ? 0 : 3;
+  state.rerollsUsed = 0;
   state.currentTeam = null;
   state.phase = "roll";
+  state.themeCountry = settings.themeRestriction ? pickThemeCountry(getTeamPool()) : null;
+  state.themeFlag = null;
+  if (state.themeCountry) {
+    const rep = getTeamPool().find(t => t.country === state.themeCountry);
+    state.themeFlag = rep ? rep.flag : "";
+  }
   showPage("pageGame");
   buildScoreList();
   renderPitch();
@@ -339,17 +543,26 @@ function showRollStep() {
   showPanel("stepRoll");
   const turn = state.pickCount + 1;
   const rollDesc = document.getElementById("rollDesc");
-  if (rollDesc) rollDesc.textContent = turn === 1
+  const theme = state.themeCountry ? ` · restrição temática: só times ${state.themeFlag || ""} ${state.themeCountry}` : "";
+  if (rollDesc) rollDesc.textContent = (turn === 1
     ? "Role para sortear seu primeiro time histórico"
-    : `Jogador ${turn}/11 — role para sortear um novo time`;
+    : `Jogador ${turn}/11 — role para sortear um novo time`) + theme;
   document.getElementById("rollCta").style.display = "flex";
   document.getElementById("rolledTeamDisplay").style.display = "none";
   const reel = document.getElementById("rollReel");
   if (reel) reel.style.display = "none";
   // rerollsLeft NÃO é resetado aqui — são 3 tentativas pra PARTIDA INTEIRA,
-  // não por jogador. O valor é setado uma única vez em chooseFormation().
-  document.getElementById("rerollCount").textContent = state.rerollsLeft;
-  document.getElementById("btnReroll").disabled = state.rerollsLeft === 0;
+  // não por jogador (exceto no hardcore, onde não existe re-sorteio).
+  // O valor é setado uma única vez em chooseFormation().
+  const rerollBtn = document.getElementById("btnReroll");
+  const rerollBox = document.getElementById("rerollCount")?.closest(".reroll-box") || rerollBtn;
+  if (hc()) {
+    if (rerollBtn) { rerollBtn.style.display = "none"; rerollBtn.disabled = true; }
+  } else {
+    if (rerollBtn) rerollBtn.style.display = "";
+    document.getElementById("rerollCount").textContent = state.rerollsLeft;
+    if (rerollBtn) rerollBtn.disabled = state.rerollsLeft === 0;
+  }
 }
 
 // Sorteia um time que tenha pelo menos um jogador elegível pra algum slot
@@ -368,7 +581,7 @@ function pickEligibleTeam() {
     return !usedNames.has(p.name) && (slotsRemaining[pos] || 0) > 0;
   });
 
-  const teamPool = getTeamPool();
+  const teamPool = getRestrictedTeamPool();
   const candidates = teamPool.filter(hasEligiblePlayer);
   const pool = candidates.length ? candidates : teamPool; // fallback de segurança
   return pool[Math.floor(Math.random() * pool.length)];
@@ -383,6 +596,7 @@ function rollDice() {
 function rerollTeam() {
   if (state.rerollsLeft <= 0) return;
   state.rerollsLeft--;
+  state.rerollsUsed = (state.rerollsUsed || 0) + 1;
   document.getElementById("rerollCount").textContent = state.rerollsLeft;
   document.getElementById("btnReroll").disabled = state.rerollsLeft === 0;
   rollDice();
@@ -431,7 +645,7 @@ function playRollAnimation(finalTeam) {
 
   for (let i = 0; i < spins; i++) {
     setTimeout(() => {
-      const t = i === spins - 1 ? finalTeam : (() => { const p = getTeamPool(); return p[Math.floor(Math.random() * p.length)]; })();
+      const t = i === spins - 1 ? finalTeam : (() => { const p = getRestrictedTeamPool(); return p[Math.floor(Math.random() * p.length)]; })();
       flagEl.textContent = t.flag;
       nameEl.textContent = t.name;
       seasonEl.textContent = t.season;
@@ -455,7 +669,7 @@ function displayRolledTeam(team) {
   document.getElementById("rolledTeamDisplay").style.display = "block";
   document.getElementById("rolledFlag").textContent = team.flag;
   document.getElementById("rolledName").textContent = team.name;
-  document.getElementById("rolledSeason").textContent = state.mode === "champions" ? "Copa " + team.season : state.mode === "copadomundo" ? "Copa do Mundo " + team.season : team.season;
+  document.getElementById("rolledSeason").textContent = modeMeta().seasonPrefix + team.season;
   document.getElementById("rerollCount").textContent = state.rerollsLeft;
   document.getElementById("btnReroll").disabled = state.rerollsLeft === 0;
   renderPlayerList(team);
@@ -483,7 +697,7 @@ function renderPlayerList(team) {
       ${blocked ? "" : `onclick="pickPlayer(${originalIdx})"`}>
       <span class="pr-pos">${pos}</span>
       <span class="pr-name">${p.name}</span>
-      <span class="pr-ovr ${elite}">${p.overall}</span>
+      <span class="pr-ovr ${elite}">${maskOvr(p.overall)}</span>
       ${tag ? `<span class="pr-tag">${tag}</span>` : ""}
     </div>`;
   }).join("");
@@ -540,11 +754,11 @@ function showCompletePanel() {
       <span class="fill-count">11/11</span>
     </div>
     <div class="overall-inline">
-      <span class="oi-score">${ovr}</span>
+      <span class="oi-score">${maskOvr(ovr)}</span>
       <span class="oi-detail">${atk} atq · ${def} def</span>
     </div>
     <button class="btn-primary simulate-btn" onclick="startSimulation()">
-      SIMULAR ${state.mode === "brasil" ? "A COPA DO BRASIL" : state.mode === "libertadores" ? "A LIBERTADORES" : state.mode === "copadomundo" ? "A COPA DO MUNDO" : "A CHAMPIONS"} →
+      SIMULAR ${modeMeta().short} →
     </button>
   `;
   document.getElementById("overallBadge").style.display = "none";
@@ -622,7 +836,7 @@ function renderPitch() {
       nameEl.className = "pd-name";
       if (inSquad) {
         circle.className = `pd-circle filled role-${role}${inSquad.isHighlight ? " highlight" : ""}`;
-        circle.textContent = inSquad.overall;
+        circle.textContent = maskOvr(inSquad.overall);
         nameEl.textContent = inSquad.name.split(" ").pop();
       } else {
         circle.className = `pd-circle empty role-${role}`;
@@ -648,7 +862,7 @@ function buildScoreList() {
     return `<div class="score-row">
       <span class="sr-pos role-${role}">${slot.pos}</span>
       <span class="sr-name${p ? "" : " empty"}">${p ? p.name : "—"}</span>
-      <span class="sr-ovr${cls ? " "+cls : ""}">${p ? p.overall : "—"}</span>
+      <span class="sr-ovr${cls ? " "+cls : ""}">${p ? maskOvr(p.overall) : "—"}</span>
     </div>`;
   }).join("");
   updateOverallBadge();
@@ -660,7 +874,7 @@ function updateOverallBadge() {
   if (!state.squad.length) { badge.style.display = "none"; return; }
   const atk = calcAtk(), def = calcDef(), ovr = calcOverall();
   badge.style.display = "block";
-  document.getElementById("obScore").textContent = ovr;
+  document.getElementById("obScore").textContent = maskOvr(ovr);
   document.getElementById("obBreakdown").textContent = `OVERALL · ${state.squad.length}/11 escalados`;
   let extra = badge.querySelector(".ob-extra");
   if (!extra) {
@@ -730,6 +944,107 @@ function pickScorers(players, count) {
   });
 }
 
+// ═══════════════════════════════════════════
+// EVENTOS EXTRAS DA PARTIDA (cartões, pênalti perdido, gol anulado)
+// Puramente narrativo/cosmético — não mudam o placar. Servem pra simulação
+// parecer mais viva, tipo os comentários automáticos do Desafio Diário do
+// Football Manager: cada partida ganha uns 0-5 eventos assim, sorteados,
+// além dos gols em si.
+// ═══════════════════════════════════════════
+const ATTACKISH_RAW_POS = new Set(["ST","CF","RW","LW","AM"]);
+
+const YELLOW_PHRASES = [
+  "entra duro e recebe cartão amarelo.",
+  "é advertido pelo árbitro após reclamação.",
+  "comete falta tática e leva amarelo.",
+  "atrasa o jogo e é advertido.",
+];
+const RED_PHRASES = [
+  "vê o cartão vermelho direto após entrada perigosa!",
+  "recebe o segundo amarelo e é expulso!",
+  "empurra o adversário e é expulso de campo!",
+];
+const MISSED_PEN_PHRASES = [
+  "manda a cobrança pra fora!",
+  "bate no meio do gol e o goleiro defende!",
+  "acerta a trave e desperdiça a chance!",
+  "amassa a bola e chuta bem por cima do gol!",
+];
+const DISALLOWED_PHRASES = [
+  "impedimento milimétrico anula o gol.",
+  "o VAR encontra falta no início do lance.",
+  "toque de mão anula a comemoração.",
+  "árbitro anula após checar o lance no monitor.",
+];
+
+function randomPick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// Pega um jogador aleatório de um elenco. `rawField` indica onde está a
+// posição real do jogador: "rawPos" pro seu elenco (state.squad), "pos" pros
+// adversários sorteados (players do data.js).
+function randomPlayerName(players, rawField, onlyAttackers) {
+  if (!players || !players.length) return "um jogador";
+  let pool = players;
+  if (onlyAttackers) {
+    const atk = players.filter(p => ATTACKISH_RAW_POS.has(p[rawField]));
+    if (atk.length) pool = atk;
+  }
+  return randomPick(pool).name;
+}
+
+// Gera os eventos extras de UMA partida. mySquad = state.squad (rawPos),
+// oppPlayers = opp.players (pos = posição real já no formato do data.js).
+function buildFlavorEvents(mySquad, oppPlayers) {
+  const events = [];
+
+  // Cartões amarelos: 0 a ~3 no total da partida, distribuídos entre os dois lados
+  const yellowCount = Math.min(3, poissonSample(1.6));
+  for (let i = 0; i < yellowCount; i++) {
+    const mine = Math.random() < 0.5;
+    const player = randomPlayerName(mine ? mySquad : oppPlayers, mine ? "rawPos" : "pos", false);
+    events.push({
+      minute: 3 + Math.floor(Math.random() * 87),
+      type: "yellow", mine, player,
+      phrase: randomPick(YELLOW_PHRASES),
+    });
+  }
+
+  // Cartão vermelho: raro, no máximo 1 por partida
+  if (Math.random() < 0.07) {
+    const mine = Math.random() < 0.5;
+    const player = randomPlayerName(mine ? mySquad : oppPlayers, mine ? "rawPos" : "pos", false);
+    events.push({
+      minute: 15 + Math.floor(Math.random() * 75),
+      type: "red", mine, player,
+      phrase: randomPick(RED_PHRASES),
+    });
+  }
+
+  // Pênalti perdido: raro, no máximo 1 por partida
+  if (Math.random() < 0.13) {
+    const mine = Math.random() < 0.5;
+    const player = randomPlayerName(mine ? mySquad : oppPlayers, mine ? "rawPos" : "pos", true);
+    events.push({
+      minute: 1 + Math.floor(Math.random() * 90),
+      type: "missedPen", mine, player,
+      phrase: randomPick(MISSED_PEN_PHRASES),
+    });
+  }
+
+  // Gol anulado: raro, no máximo 1 por partida
+  if (Math.random() < 0.11) {
+    const mine = Math.random() < 0.5;
+    const player = randomPlayerName(mine ? mySquad : oppPlayers, mine ? "rawPos" : "pos", true);
+    events.push({
+      minute: 1 + Math.floor(Math.random() * 90),
+      type: "disallowed", mine, player,
+      phrase: randomPick(DISALLOWED_PHRASES),
+    });
+  }
+
+  return events;
+}
+
 function distributeMinutes(count) {
   const used = new Set();
   return Array.from({length:count}, () => {
@@ -747,8 +1062,12 @@ function runSimulation() {
   const isBrasil = state.mode === "brasil";
   const isLibertadores = state.mode === "libertadores";
   const isWorldCup = state.mode === "copadomundo";
-  const hasGroups = !isBrasil; // Champions, Libertadores e Copa do Mundo têm fase de grupos
-  const allOpponents = [...getTeamPool()].sort(()=>Math.random()-0.5);
+  const isEurocopa = state.mode === "eurocopa";
+  const isFreeMode = state.mode === "livre";
+  const hasGroups = !isBrasil; // Champions, Libertadores, Copa do Mundo, Eurocopa e Livre têm fase de grupos
+  const allOpponents = [...getRestrictedOpponentPool()].sort(()=>Math.random()-0.5);
+  // turno único (sem jogo de volta) na fase de grupos — vale pra seleções
+  const isSingleRoundGroup = isWorldCup || isEurocopa;
 
   let groupOpponents = [];
   let knockoutOpponents;
@@ -758,15 +1077,15 @@ function runSimulation() {
     knockoutOpponents = allOpponents.slice(0, 4)
       .sort((a, b) => teamOverall(a.players) - teamOverall(b.players));
     stages = ["OITAVAS","QUARTAS","SEMI","FINAL"];
-  } else if (isWorldCup) {
-    // Copa do Mundo: 3 adversários de grupo (turno único, sem volta) + 5 do
+  } else if (isWorldCup || isEurocopa) {
+    // Copa do Mundo / Eurocopa: 3 adversários de grupo (turno único, sem volta) + 5 do
     // mata-mata (dezesseis-avos -> oitavas -> quartas -> semi -> final)
     groupOpponents = allOpponents.slice(0, 3);
     knockoutOpponents = allOpponents.slice(3, 8)
       .sort((a, b) => teamOverall(a.players) - teamOverall(b.players));
     stages = ["16-AVOS","OITAVAS","QUARTAS","SEMI","FINAL"];
   } else {
-    // Champions / Libertadores: 3 adversários de grupo (ida e volta) + 4 do mata-mata
+    // Champions / Libertadores / Modo Livre: 3 adversários de grupo (ida e volta) + 4 do mata-mata
     groupOpponents = allOpponents.slice(0, 3);
     knockoutOpponents = allOpponents.slice(3, 7)
       .sort((a, b) => teamOverall(a.players) - teamOverall(b.players));
@@ -806,7 +1125,7 @@ function runSimulation() {
         groupMatches.push([groupTeams[i], groupTeams[j]]); // ida
         // Copa do Mundo: turno único (3 jogos por time). Champions/Libertadores
         // mantêm ida e volta (6 jogos por time).
-        if (!isWorldCup) groupMatches.push([groupTeams[j], groupTeams[i]]); // volta
+        if (!isSingleRoundGroup) groupMatches.push([groupTeams[j], groupTeams[i]]); // volta
       }
     }
     groupMatches.sort(() => Math.random() - 0.5);
@@ -833,6 +1152,7 @@ function runSimulation() {
           conceded: pickScorers(oppTeamRef.players, oppG),
           myMinutes: distributeMinutes(myG),
           theirMinutes: distributeMinutes(oppG),
+          flavorEvents: buildFlavorEvents(state.squad, oppTeamRef.players),
         });
       }
     }
@@ -876,10 +1196,61 @@ function runSimulation() {
         conceded: pickScorers(opp.players, theirGoals),
         myMinutes: distributeMinutes(myGoals),
         theirMinutes: distributeMinutes(theirGoals),
+        flavorEvents: buildFlavorEvents(state.squad, opp.players),
       });
       if (outcome === "lose") { eliminated = true; break; }
     }
   }
+
+  if (!isProgressionDisabled()) {
+    const lastResult = results[results.length - 1];
+    const champion = !eliminated && lastResult && lastResult.round === "FINAL" && lastResult.outcome === "win";
+    const reachedFinal = !!lastResult && lastResult.round === "FINAL";
+    const eliminatedAtGroup = hasGroups && myGroupPos >= 2;
+    const eliminatedAtFinal = reachedFinal && !champion;
+
+    // Maior goleada dessa partida específica (maior margem numa vitória)
+    let marginWin = 0, biggestWinGoals = null;
+    results.forEach(r => {
+      if (r.outcome === "win") {
+        const margin = r.myGoals - r.theirGoals;
+        if (margin > marginWin) {
+          marginWin = margin;
+          biggestWinGoals = { mine: r.myGoals, theirs: r.theirGoals, opponent: r.opponent.name };
+        }
+      }
+    });
+
+    // Gols marcados pelo MEU elenco nessa partida, agregados por nome
+    const scorersThisMatch = {};
+    results.forEach(r => (r.scorers || []).forEach(name => {
+      scorersThisMatch[name] = (scorersThisMatch[name] || 0) + 1;
+    }));
+
+    const summary = {
+      mode: state.mode, formation: state.formation, overall, goalsFor, goalsAgainst,
+      wins, draws, losses, champion, reachedFinal, eliminatedAtGroup, eliminatedAtFinal,
+      stageReached: lastResult ? lastResult.round : "—",
+      marginWin, biggestWinGoals, scorersThisMatch,
+      squad: state.squad.map(p => ({ name: p.name, overall: p.overall })),
+      hardcore: hc(), themeRestriction: !!state.themeCountry,
+      usedAllRerolls: !hc() && (state.rerollsUsed || 0) >= 3,
+    };
+    const newlyUnlocked = recordMatchAndCheckAchievements(summary);
+    showAchievementToasts(newlyUnlocked);
+  }
+
+  // Guardado à parte da lógica de conquistas (que é pulada no Modo Livre),
+  // porque compartilhar resultado deve funcionar em qualquer modo.
+  const lastResult = results[results.length - 1];
+  window._lastResults = results;
+  window._lastSummary = {
+    mode: state.mode,
+    champion: !eliminated && !!lastResult && lastResult.round === "FINAL" && lastResult.outcome === "win",
+    eliminated,
+    stageReached: lastResult ? lastResult.round : "—",
+    wins, draws, losses, goalsFor, goalsAgainst, overall,
+  };
 
   renderTimelapse(results, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, groupTable, myGroupPos);
 }
@@ -892,9 +1263,11 @@ function renderTimelapse(results, eliminated, goalsFor, goalsAgainst, wins, draw
   const isBrasil = state.mode === "brasil";
   const isLibertadores = state.mode === "libertadores";
   const isWorldCup = state.mode === "copadomundo";
-  const simTitle = isBrasil ? "COPA DO BRASIL" : isLibertadores ? "COPA LIBERTADORES" : isWorldCup ? "COPA DO MUNDO" : "CHAMPIONS LEAGUE";
-  const simLogo = isBrasil ? "🇧🇷" : isLibertadores ? "🌎" : isWorldCup ? "🌍" : "🏆";
-  const simWaiting = isBrasil ? "A Copa do Brasil começa em breve..." : isLibertadores ? "A Libertadores começa em breve..." : isWorldCup ? "A Copa do Mundo começa em breve..." : "A Champions começa em breve...";
+  const isEurocopa = state.mode === "eurocopa";
+  const isFreeMode = state.mode === "livre";
+  const simTitle = modeMeta().title;
+  const simLogo = modeMeta().logo;
+  const simWaiting = modeMeta().waiting;
   container.innerHTML = `
     <div class="timelapse-layout">
       <div class="timelapse-left">
@@ -1017,19 +1390,32 @@ function updateMatchInList(r, idx) {
   // Mostra gols e quem sofreu abaixo do placar
   const scorersLine = r.scorers.length ? `<span class="tl-entry-scorers">⚽ ${r.scorers.join(", ")}</span>` : "";
   const concededLine = r.conceded.length ? `<span class="tl-entry-conceded">· sofreu: ${r.conceded.join(", ")}</span>` : "";
-  if (scorersLine || concededLine) {
+  const flavorIcons = { yellow: "🟨", red: "🟥", missedPen: "❌", disallowed: "🚫" };
+  const flavorLine = (r.flavorEvents || []).length
+    ? `<span class="tl-entry-flavor">${r.flavorEvents.map(e => flavorIcons[e.type] || "").join(" ")}</span>`
+    : "";
+  if (scorersLine || concededLine || flavorLine) {
     const sub = document.createElement("div");
     sub.className = "tl-entry-sub";
-    sub.innerHTML = scorersLine + concededLine;
+    sub.innerHTML = scorersLine + concededLine + flavorLine;
     entry.appendChild(sub);
   }
+
+  // Botão pra compartilhar só essa partida específica
+  const shareBtn = document.createElement("button");
+  shareBtn.className = "tl-share-btn";
+  shareBtn.title = "Compartilhar esse resultado";
+  shareBtn.textContent = "📤";
+  shareBtn.onclick = (ev) => { ev.stopPropagation(); shareMatchResult(idx); };
+  entry.appendChild(shareBtn);
 }
 
 function runMatchTimelapse(r, onDone) {
   const box = document.getElementById("tlCurrentMatch");
   const events = [
-    ...r.myMinutes.map((m,i)=>({minute:m, type:"goal", scorer:r.scorers[i]||"?"})),
-    ...r.theirMinutes.map((m,i)=>({minute:m, type:"concede", scorer:r.conceded[i]||"?"})),
+    ...r.myMinutes.map((m,i)=>({minute:m, type:"goal", mine:true, scorer:r.scorers[i]||"?"})),
+    ...r.theirMinutes.map((m,i)=>({minute:m, type:"concede", mine:false, scorer:r.conceded[i]||"?"})),
+    ...(r.flavorEvents||[]).map(e=>({minute:e.minute, type:e.type, mine:e.mine, scorer:e.player, phrase:e.phrase})),
   ].sort((a,b)=>a.minute-b.minute);
 
   let myScore=0, theirScore=0, evtIdx=0, minute=0;
@@ -1067,14 +1453,15 @@ function runMatchTimelapse(r, onDone) {
     while (evtIdx < events.length && events[evtIdx].minute <= minute) {
       const evt = events[evtIdx++];
       window._matchEvtIdx = evtIdx;
-      if (evt.type==="goal") { myScore++; addTimelapseEvent("goal",evt.scorer,evt.minute); bump("tlScoreMy",myScore); playSound("golTorcida","gol"); }
-      else { theirScore++; addTimelapseEvent("concede",evt.scorer,evt.minute); bump("tlScoreTheir",theirScore); }
+      if (evt.type==="goal") { myScore++; addTimelapseEvent(evt, r); bump("tlScoreMy",myScore); playSound("golTorcida","gol"); }
+      else if (evt.type==="concede") { theirScore++; addTimelapseEvent(evt, r); bump("tlScoreTheir",theirScore); }
+      else { addTimelapseEvent(evt, r); }
     }
 
     if (minute >= 90) {
       clearInterval(window._currentMatchInterval);
       window._matchDoneCallback = onDone;
-      addTimelapseEvent("whistle","",90);
+      addTimelapseEvent({type:"whistle"}, r);
       stopAmbiente();
       playSound("apitoFim", "apito");
       setTimeout(onDone, Math.round(700 * speedMul()));
@@ -1098,10 +1485,12 @@ function skipMatch() {
   const thEl = document.getElementById("tlScoreTheir");
   let myScore = parseInt(myEl?.textContent||0);
   let thScore = parseInt(thEl?.textContent||0);
+  const r = window._matchR;
   for (let i = startIdx; i < events.length; i++) {
     const evt = events[i];
-    if (evt.type==="goal") { myScore++; addTimelapseEvent("goal",evt.scorer,evt.minute); }
-    else if (evt.type==="concede") { thScore++; addTimelapseEvent("concede",evt.scorer,evt.minute); }
+    if (evt.type==="goal") { myScore++; addTimelapseEvent(evt, r); }
+    else if (evt.type==="concede") { thScore++; addTimelapseEvent(evt, r); }
+    else { addTimelapseEvent(evt, r); }
   }
   if (myEl) myEl.textContent = myScore;
   if (thEl) thEl.textContent = thScore;
@@ -1124,16 +1513,104 @@ function bump(id, val) {
   setTimeout(()=>el.classList.remove("score-bump"),400);
 }
 
-function addTimelapseEvent(type, scorer, minute) {
+// `evt` = {type, minute, scorer, mine, phrase}; `r` = objeto da partida atual
+// (usado só pra saber o nome do adversário nos eventos que não são gol).
+function addTimelapseEvent(evt, r) {
   const list = document.getElementById("tlEventsList");
   if (!list) return;
+  const { type, scorer, minute, phrase } = evt;
+  const oppName = (r && r.opponent && r.opponent.name) || "adversário";
   const div = document.createElement("div");
   div.className = `tl-event ${type}`;
-  if (type==="goal")         div.innerHTML=`<span class="tl-evt-icon">⚽</span><strong>${minute}'</strong> ${scorer} <span class="tl-evt-label gol">GOL!</span>`;
-  else if (type==="concede") div.innerHTML=`<span class="tl-evt-icon">🔴</span><strong>${minute}'</strong> ${scorer} <span class="tl-evt-label sof">Sofreu</span>`;
-  else                       div.innerHTML=`<span class="tl-evt-icon">🔔</span><strong>Apito Final</strong>`;
+
+  if (type === "goal") {
+    div.innerHTML = `<span class="tl-evt-icon">⚽</span><strong>${minute}'</strong> ${scorer} <span class="tl-evt-label gol">GOL!</span>`;
+  } else if (type === "concede") {
+    div.innerHTML = `<span class="tl-evt-icon">🔴</span><strong>${minute}'</strong> ${scorer} <span class="tl-evt-label sof">Sofreu</span>`;
+  } else if (type === "yellow") {
+    const who = evt.mine ? scorer : `${scorer} (${oppName})`;
+    div.innerHTML = `<span class="tl-evt-icon">🟨</span><strong>${minute}'</strong> ${who} ${phrase || "recebe cartão amarelo."} <span class="tl-evt-label card">Amarelo</span>`;
+  } else if (type === "red") {
+    const who = evt.mine ? scorer : `${scorer} (${oppName})`;
+    div.innerHTML = `<span class="tl-evt-icon">🟥</span><strong>${minute}'</strong> ${who} ${phrase || "é expulso!"} <span class="tl-evt-label card-red">EXPULSO</span>`;
+  } else if (type === "missedPen") {
+    const who = evt.mine ? scorer : `${scorer} (${oppName})`;
+    div.innerHTML = `<span class="tl-evt-icon">❌</span><strong>${minute}'</strong> Pênalti! ${who} ${phrase || "perde a cobrança!"} <span class="tl-evt-label miss">Perdeu!</span>`;
+  } else if (type === "disallowed") {
+    const who = evt.mine ? scorer : `${scorer} (${oppName})`;
+    div.innerHTML = `<span class="tl-evt-icon">🚫</span><strong>${minute}'</strong> Gol anulado de ${who} — ${phrase || "o lance é anulado."} <span class="tl-evt-label voided">ANULADO</span>`;
+  } else {
+    div.innerHTML = `<span class="tl-evt-icon">🔔</span><strong>Apito Final</strong>`;
+  }
   list.appendChild(div);
   list.scrollTop = list.scrollHeight;
+}
+
+// ═══════════════════════════════════════════
+// COMPARTILHAR RESULTADOS (partida específica ou torneio inteiro)
+// ═══════════════════════════════════════════
+function buildMatchShareText(r) {
+  const scoreLine = r.penalties
+    ? `${r.myGoals}-${r.theirGoals} (${r.penalties.mine}-${r.penalties.theirs} pên.)`
+    : `${r.myGoals}-${r.theirGoals}`;
+  const resultWord = r.outcome === "win" ? "Vitória" : r.outcome === "lose" ? "Derrota" : "Empate";
+  let text = `⚽ FutDraft — ${modeMeta().short}\n`;
+  text += `${r.round}: ${resultWord} · Seu Time ${scoreLine} ${r.opponent.flag || ""} ${r.opponent.name} ${r.opponent.season}\n`;
+  if (r.scorers && r.scorers.length) text += `Gols: ${r.scorers.join(", ")}\n`;
+  const cards = (r.flavorEvents || []).filter(e => e.type === "yellow" || e.type === "red");
+  if (cards.length) text += `Cartões: ${cards.map(c => c.type === "red" ? "🟥" : "🟨").join(" ")}\n`;
+  text += `#FutDraft`;
+  return text;
+}
+
+function buildTournamentShareText() {
+  const s = window._lastSummary;
+  if (!s) return "FutDraft";
+  const modeShort = MODE_META[s.mode] ? MODE_META[s.mode].short : "FUTDRAFT";
+  const headline = s.champion ? "🏆 CAMPEÃO!" : s.eliminated ? `Eliminado — ${s.stageReached}` : s.stageReached;
+  let text = `⚽ FutDraft — ${modeShort}\n${headline}\n`;
+  text += `${s.wins}V ${s.draws}E ${s.losses}D · ${s.goalsFor}-${s.goalsAgainst} gols\n`;
+  text += `Overall do time: ${maskOvr(s.overall)}\n#FutDraft`;
+  return text;
+}
+
+async function shareText(text) {
+  if (navigator.share) {
+    try { await navigator.share({ text }); return; }
+    catch (e) { /* usuário cancelou o share nativo ou não é suportado — cai no fallback abaixo */ }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    showShareToast("Resultado copiado! Cole onde quiser compartilhar.");
+  } catch (e) {
+    showShareToast("Não foi possível compartilhar automaticamente.");
+  }
+}
+
+function shareMatchResult(idx) {
+  const r = (window._lastResults || [])[idx];
+  if (!r) return;
+  shareText(buildMatchShareText(r));
+}
+
+function shareTournamentResult() {
+  shareText(buildTournamentShareText());
+}
+
+function showShareToast(msg) {
+  let el = document.getElementById("shareToast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "shareToast";
+    el.className = "share-toast";
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.remove("show");
+  void el.offsetWidth;
+  el.classList.add("show");
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => el.classList.remove("show"), 2600);
 }
 
 // ═══════════════════════════════════════════
@@ -1165,7 +1642,7 @@ function renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draw
       <div class="fc-stat"><span class="fc-stat-num">${goalsFor}</span><span class="fc-stat-label">Gols pró</span></div>
       <div class="fc-stat"><span class="fc-stat-num">${goalsAgainst}</span><span class="fc-stat-label">Sofridos</span></div>
     </div>
-    <div class="fc-squad-header">ELENCO · OVERALL ${overall}</div>
+    <div class="fc-squad-header">ELENCO · OVERALL ${maskOvr(overall)}</div>
     <div class="fc-squad">${state.squad.map(p=>`
       <div class="fc-player">
         <div class="fc-player-left">
@@ -1174,10 +1651,11 @@ function renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draw
         </div>
         <div class="fc-player-right">
           <span class="fc-player-team">${p.team} ${p.season}</span>
-          <span class="fc-player-num">${p.overall}</span>
+          <span class="fc-player-num">${maskOvr(p.overall)}</span>
         </div>
       </div>`).join("")}
     </div>
+    <button class="btn-share-result" onclick="shareTournamentResult()">📤 COMPARTILHAR RESULTADO</button>
     <button class="btn-new-game" onclick="resetGame()">↺ NOVA PARTIDA</button>
     <div class="fc-site">FutDraft</div>`;
 }
@@ -1338,7 +1816,7 @@ function openVitrineDetail(filterKey, teamId) {
         <div class="vt-squad-row">
           <span class="vt-squad-pos role-${POS_ROLE[POS_LABELS[p.pos]] || "mid"}">${POS_LABELS[p.pos] || p.pos}</span>
           <span class="vt-squad-name">${p.name}</span>
-          <span class="vt-squad-ovr">${p.overall}</span>
+          <span class="vt-squad-ovr">${maskOvr(p.overall)}</span>
         </div>`).join("")}
     </div>
   `;
