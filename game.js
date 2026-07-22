@@ -34,6 +34,7 @@ const SETTINGS_DEFAULTS = {
   goalEffects: true,     // confete/efeitos visuais em gol e título
   hardcoreMode: false,   // esconde os overalls e desativa o re-sorteio
   themeRestriction: false, // restringe o sorteio a times de um mesmo país/confederação
+  darkMode: false,       // tema escuro da interface
 };
 
 // ── Hardcore: esconde os overalls e impede re-sorteio ──
@@ -52,6 +53,7 @@ function saveSettings() {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {}
 }
 let settings = loadSettings();
+applyDarkMode();
 
 // Multiplicador de duração aplicado aos tempos da simulação. >1 = mais lento, <1 = mais rápido.
 const SPEED_MULTIPLIERS = { slow: 2, normal: 1, fast: 0.5 };
@@ -84,6 +86,8 @@ function syncSettingsUI() {
   if (hardcore) hardcore.checked = settings.hardcoreMode;
   const theme = document.getElementById("chkThemeRestriction");
   if (theme) theme.checked = settings.themeRestriction;
+  const dark = document.getElementById("chkDarkMode");
+  if (dark) dark.checked = settings.darkMode;
   syncModeToggles();
   const sub = document.getElementById("soundSubOptions");
   if (sub) {
@@ -101,6 +105,18 @@ function toggleSoundsMaster(v) {
 }
 function toggleHardcore(v) { settings.hardcoreMode = v; saveSettings(); syncSettingsUI(); }
 function toggleThemeRestriction(v) { settings.themeRestriction = v; saveSettings(); syncSettingsUI(); }
+
+// ── Modo escuro ──
+function applyDarkMode() {
+  document.documentElement.classList.toggle("dark-mode", !!settings.darkMode);
+  if (document.body) document.body.classList.toggle("dark-mode", !!settings.darkMode);
+}
+function toggleDarkMode(v) {
+  settings.darkMode = v;
+  saveSettings();
+  applyDarkMode();
+  syncSettingsUI();
+}
 
 // Toggles de Hardcore/Restrição Temática vivem tanto na tela de configurações
 // quanto na tela de escolha de modo (pra ficarem visíveis ANTES do torneio
@@ -172,7 +188,7 @@ let state = {
   squad: [],
   phase: "landing",
   pickCount: 0,
-  mode: "champions",  // "champions" | "brasil" | "libertadores" | "copadomundo" | "eurocopa" | "copaamerica" | "livre"
+  mode: "champions",  // "champions" | "brasil" | "libertadores" | "copadomundo" | "eurocopa" | "copaamerica" | "mundial" | "livre"
   freeModeTeams: [],  // pool de times escolhido manualmente no Modo Livre
   captain: null,      // nome do capitão (dá pequeno bônus no time)
   pkTaker: null,      // cobrador de pênalti escolhido
@@ -223,7 +239,7 @@ const LIBERTADORES_BR_IDS = new Set([
 // Todos os times do jogo, de todas as competições — usado no "Todos" do
 // Modo Livre e como pool de adversários do Modo Livre (ver getOpponentPool).
 function allTeamsList() {
-  return [...TEAMS, ...BRAZIL_TEAMS, ...LIBERTADORES_TEAMS, ...WORLD_CUP_TEAMS, ...EUROCOPA_TEAMS, ...COPA_AMERICA_TEAMS];
+  return [...TEAMS, ...BRAZIL_TEAMS, ...LIBERTADORES_TEAMS, ...WORLD_CUP_TEAMS, ...EUROCOPA_TEAMS, ...COPA_AMERICA_TEAMS, ...MUNDIAL_TEAMS];
 }
 
 // Retorna o pool de times do modo atualmente selecionado
@@ -232,6 +248,7 @@ function getTeamPool() {
   if (state.mode === "copadomundo") return WORLD_CUP_TEAMS;
   if (state.mode === "eurocopa") return EUROCOPA_TEAMS;
   if (state.mode === "copaamerica") return COPA_AMERICA_TEAMS;
+  if (state.mode === "mundial") return MUNDIAL_TEAMS;
   if (state.mode === "livre") return state.freeModeTeams || [];
   if (state.mode === "libertadores") {
     const brFiltered = BRAZIL_TEAMS.filter(t => LIBERTADORES_BR_IDS.has(t.id));
@@ -290,6 +307,7 @@ const MODE_META = {
   copadomundo:  { title: "COPA DO MUNDO",     short: "A COPA DO MUNDO", logo: "🌍", waiting: "A Copa do Mundo começa em breve...", seasonPrefix: "Copa do Mundo " },
   eurocopa:     { title: "EUROCOPA",          short: "A EUROCOPA",     logo: "⭐", waiting: "A Eurocopa começa em breve...",       seasonPrefix: "Eurocopa " },
   copaamerica:  { title: "COPA AMÉRICA",      short: "A COPA AMÉRICA", logo: "🥇", waiting: "A Copa América começa em breve...",  seasonPrefix: "Copa América " },
+  mundial:      { title: "MUNDIAL DE CLUBES", short: "O MUNDIAL",      logo: "🌐", waiting: "O Mundial de Clubes começa em breve...", seasonPrefix: "Mundial " },
   livre:        { title: "MODO LIVRE",        short: "A SIMULAÇÃO",    logo: "🎮", waiting: "A simulação começa em breve...",      seasonPrefix: "" },
 };
 function modeMeta() { return MODE_META[state.mode] || MODE_META.champions; }
@@ -347,6 +365,30 @@ const FORMATIONS = {
     rows: [["PE", "CA", "CA", "PD"], ["MC", "MC"], ["LE", "ZAG", "ZAG", "LD"], ["GOL"]],
     tags: ["Retrô", "All-out attack"],
   },
+  "2-3-5": {
+    rows: [["PE", "CA", "CA", "CA", "PD"], ["ME", "MC", "MD"], ["LE", "LD"], ["GOL"]],
+    tags: ["Histórica", "Pirâmide clássica"],
+  },
+  "3-2-2-3": {
+    rows: [["PE", "CA", "PD"], ["MEI", "MEI"], ["ME", "MD"], ["LE", "ZAG", "LD"], ["GOL"]],
+    tags: ["Histórica", "Sistema WM"],
+  },
+  "4-4-1-1": {
+    rows: [["CA"], ["MEI"], ["PE", "MC", "MC", "PD"], ["LE", "ZAG", "ZAG", "LD"], ["GOL"]],
+    tags: ["Moderno", "Falso 9 recuado"],
+  },
+  "4-5-1": {
+    rows: [["CA"], ["PE", "MC", "MC", "MC", "PD"], ["LE", "ZAG", "ZAG", "LD"], ["GOL"]],
+    tags: ["Defensivo", "Meio-campo forte"],
+  },
+  "3-4-1-2": {
+    rows: [["CA", "CA"], ["MEI"], ["LE", "MC", "MC", "LD"], ["ZAG", "ZAG", "ZAG"], ["GOL"]],
+    tags: ["Moderno", "Estilo brasileiro"],
+  },
+  "4-2-2-2": {
+    rows: [["CA", "CA"], ["ME", "MD"], ["MC", "MC"], ["LE", "ZAG", "ZAG", "LD"], ["GOL"]],
+    tags: ["Moderno", "Meio em caixote"],
+  },
 };
 
 // Grupo (role) de cada posição mapeada, usado para cor e para o cálculo de balanço visual
@@ -398,6 +440,7 @@ const FREE_MODE_SOURCES = [
   { id: "copadomundo", label: "Copa do Mundo", teams: () => WORLD_CUP_TEAMS },
   { id: "eurocopa", label: "Eurocopa", teams: () => EUROCOPA_TEAMS },
   { id: "copaamerica", label: "Copa América", teams: () => COPA_AMERICA_TEAMS },
+  { id: "mundial", label: "Mundial de Clubes", teams: () => MUNDIAL_TEAMS },
 ];
 const FREE_MODE_MIN_TEAMS = 8;
 let freeModeSelected = new Set();  // guarda os ids dos times marcados
@@ -1262,11 +1305,12 @@ function runSimulation() {
   const isWorldCup = state.mode === "copadomundo";
   const isEurocopa = state.mode === "eurocopa";
   const isCopaAmerica = state.mode === "copaamerica";
+  const isMundial = state.mode === "mundial";
   const isFreeMode = state.mode === "livre";
-  const hasGroups = !isBrasil; // Champions, Libertadores, Copa do Mundo, Eurocopa, Copa América e Livre têm fase de grupos
+  const hasGroups = !isBrasil; // Champions, Libertadores, Copa do Mundo, Eurocopa, Copa América, Mundial de Clubes e Livre têm fase de grupos
   const allOpponents = [...getRestrictedOpponentPool()].sort(()=>Math.random()-0.5);
-  // turno único (sem jogo de volta) na fase de grupos — vale pra seleções
-  const isSingleRoundGroup = isWorldCup || isEurocopa || isCopaAmerica;
+  // turno único (sem jogo de volta) na fase de grupos — vale pra seleções e pro Mundial de Clubes
+  const isSingleRoundGroup = isWorldCup || isEurocopa || isCopaAmerica || isMundial;
 
   let groupOpponents = [];
   let knockoutOpponents;
@@ -1292,6 +1336,15 @@ function runSimulation() {
     knockoutOpponents = allOpponents.slice(3, 8)
       .sort((a, b) => teamOverall(a.players) - teamOverall(b.players));
     stages = ["16-AVOS","OITAVAS","QUARTAS","SEMI","FINAL"];
+  } else if (isMundial) {
+    // Mundial de Clubes — formato do novo Mundial de Clubes FIFA (2025): grupos
+    // de 4 times em turno único (3 jogos), e a partir daí é mata-mata direto
+    // desde as oitavas de final (sem 16-avos) até a final: oitavas, quartas,
+    // semi, final — 4 rodadas de mata-mata, igual Champions/Libertadores.
+    groupOpponents = allOpponents.slice(0, 3);
+    knockoutOpponents = allOpponents.slice(3, 7)
+      .sort((a, b) => teamOverall(a.players) - teamOverall(b.players));
+    stages = ["OITAVAS","QUARTAS","SEMI","FINAL"];
   } else {
     // Champions / Libertadores / Modo Livre: 3 adversários de grupo (ida e volta) + 4 do mata-mata
     groupOpponents = allOpponents.slice(0, 3);
@@ -1301,7 +1354,7 @@ function runSimulation() {
   }
   const results = [];
   let wins=0, draws=0, losses=0, goalsFor=0, goalsAgainst=0, eliminated=false;
-  let groupTable = null, myGroupPos = -1;
+  let groupTable = null, myGroupPos = -1, myGroupWDL = null;
 
   // ===== FASE DE GRUPOS (todos contra todos, ida e volta, 4 times) =====
   // Existe no modo Champions e Libertadores. Copa do Brasil é só mata-mata.
@@ -1369,6 +1422,8 @@ function runSimulation() {
     groupTeams.sort((a,b) => (b.pts - a.pts) || ((b.gf-b.ga) - (a.gf-a.ga)) || (b.gf - a.gf));
     myGroupPos = groupTeams.findIndex(t => t.isMe);
     groupTable = groupTeams; // guardado para exibir depois
+    const meGroup = groupTeams.find(t => t.isMe);
+    if (meGroup) myGroupWDL = { w: meGroup.w, d: meGroup.d, l: meGroup.l };
 
     // Top 2 do grupo avancam (posicoes 0 e 1)
     if (myGroupPos >= 2) {
@@ -1419,6 +1474,8 @@ function runSimulation() {
 
     // Maior goleada dessa partida específica (maior margem numa vitória)
     let marginWin = 0, biggestWinGoals = null;
+    // Maior sufoco dessa partida específica (maior margem numa derrota)
+    let marginLoss = 0, biggestLossGoals = null;
     results.forEach(r => {
       if (r.outcome === "win") {
         const margin = r.myGoals - r.theirGoals;
@@ -1426,8 +1483,17 @@ function runSimulation() {
           marginWin = margin;
           biggestWinGoals = { mine: r.myGoals, theirs: r.theirGoals, opponent: r.opponent.name };
         }
+      } else if (r.outcome === "lose") {
+        const margin = r.theirGoals - r.myGoals;
+        if (margin > marginLoss) {
+          marginLoss = margin;
+          biggestLossGoals = { mine: r.myGoals, theirs: r.theirGoals, opponent: r.opponent.name };
+        }
       }
     });
+
+    // Fase de grupos 100% aproveitada (só vitórias, sem empate nem derrota)
+    const perfectGroup = hasGroups && !!myGroupWDL && myGroupWDL.l === 0 && myGroupWDL.d === 0 && myGroupWDL.w > 0;
 
     // Gols marcados pelo MEU elenco nessa partida, agregados por nome
     const scorersThisMatch = {};
@@ -1439,13 +1505,20 @@ function runSimulation() {
       mode: state.mode, formation: state.formation, overall, goalsFor, goalsAgainst,
       wins, draws, losses, champion, reachedFinal, eliminatedAtGroup, eliminatedAtFinal,
       stageReached: lastResult ? lastResult.round : "—",
-      marginWin, biggestWinGoals, scorersThisMatch,
-      squad: state.squad.map(p => ({ name: p.name, overall: p.overall })),
+      marginWin, biggestWinGoals, marginLoss, biggestLossGoals, perfectGroup, scorersThisMatch,
+      squad: state.squad.map(p => ({
+        name: p.name, overall: p.overall, pos: p.pos, rawPos: p.rawPos,
+        team: p.team, season: p.season, slotId: p.slotId,
+      })),
       hardcore: hc(), themeRestriction: !!state.themeCountry,
       usedAllRerolls: !hc() && (state.rerollsUsed || 0) >= 3,
+      usedNoRerolls: !hc() && (state.rerollsUsed || 0) === 0,
     };
-    const newlyUnlocked = recordMatchAndCheckAchievements(summary);
-    showAchievementToasts(newlyUnlocked);
+    // Não dispara as conquistas aqui — isso rodaria antes do jogador ver o
+    // replay partida a partida, e um toast de "campeão" na primeira tela já
+    // entregaria o resultado da campanha. Guarda o resumo e só processa as
+    // conquistas em renderFinalCard(), quando o replay inteiro já terminou.
+    window._pendingAchievementSummary = summary;
   }
 
   // Guardado à parte da lógica de conquistas (que é pulada no Modo Livre),
@@ -1764,7 +1837,20 @@ function confirmSub() {
   // desses lances a partir de agora.
   for (let i = ms.evtIdx; i < ms.events.length; i++) {
     const evt = ms.events[i];
-    if (evt.mine && evt.scorer === outName) evt.scorer = inName;
+    if (evt.mine && evt.scorer === outName) {
+      evt.scorer = inName;
+      // IMPORTANTE: o array de eventos usado no timelapse é uma CÓPIA
+      // construída a partir de r.myMinutes/r.scorers — reatribuir o gol só
+      // nessa cópia não bastava, porque o resumo pós-jogo e as estatísticas
+      // da temporada (artilheiros, etc.) leem r.scorers diretamente. Sem
+      // sincronizar os dois, o jogo mostrava o substituto marcando o gol
+      // durante a partida, mas o jogador que saiu continuava recebendo o
+      // gol nas telas seguintes. Aqui mantemos os dois em sincronia.
+      if (evt.type === "goal" && ms.r && ms.r.myMinutes && ms.r.scorers) {
+        const gi = ms.r.myMinutes.findIndex((min, idx) => min === evt.minute && ms.r.scorers[idx] === outName);
+        if (gi !== -1) ms.r.scorers[gi] = inName;
+      }
+    }
   }
 
   addTimelapseEvent({ type: "sub", minute: ms.minute, scorer: `${outName} sai, entra ${inName}` }, ms.r);
@@ -1951,6 +2037,16 @@ function renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draw
   if (!card) return;
   card.style.display = "block";
 
+  // Só agora, com o replay inteiro já exibido, é que checamos e mostramos
+  // as conquistas — assim nenhum toast entrega o resultado da campanha
+  // antes da hora (ex.: "campeão" pipocando lá na primeira partida).
+  if (window._pendingAchievementSummary) {
+    const summary = window._pendingAchievementSummary;
+    window._pendingAchievementSummary = null;
+    const newlyUnlocked = recordMatchAndCheckAchievements(summary);
+    showAchievementToasts(newlyUnlocked);
+  }
+
   const last = results[results.length-1];
   const won = !eliminated && last.round === "FINAL" && last.outcome === "win";
   const saldo = goalsFor - goalsAgainst;
@@ -2010,6 +2106,7 @@ function resetGame() {
   window._matchState = null;
   stopAmbiente();
   window._tlContinueCallback = null;
+  window._pendingAchievementSummary = null;
   state = { currentTeam:null, rerollsLeft:3, formation:null, squad:[], phase:"landing", pickCount:0, mode:"champions", freeModeTeams:[], captain:null, pkTaker:null, fkTaker:null, tacticStyle:"equilibrado", bench:[], benchChoices:{}, benchGroups:[] };
   showPage("pageLanding");
 }
@@ -2056,6 +2153,7 @@ const VITRINE_FILTERS = [
   { key: "copadomundo",  label: "🌍 Copa do Mundo",   teams: () => WORLD_CUP_TEAMS },
   { key: "eurocopa",     label: "🏴 Eurocopa",         teams: () => EUROCOPA_TEAMS },
   { key: "copaamerica",  label: "🥇 Copa América",     teams: () => COPA_AMERICA_TEAMS },
+  { key: "mundial",      label: "🌐 Mundial de Clubes", teams: () => MUNDIAL_TEAMS },
 ];
 
 let vitrineActiveFilter = "champions";

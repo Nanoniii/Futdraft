@@ -19,6 +19,7 @@
 function getTeamPoolFor(mode) {
   if (mode === "brasil") return BRAZIL_TEAMS;
   if (mode === "copadomundo") return WORLD_CUP_TEAMS;
+  if (mode === "mundial") return MUNDIAL_TEAMS;
   if (mode === "libertadores") {
     const brFiltered = BRAZIL_TEAMS.filter(t => LIBERTADORES_BR_IDS.has(t.id));
     return LIBERTADORES_TEAMS.concat(brFiltered);
@@ -569,6 +570,7 @@ function runSoloCampaignFor(squad, mode) {
   const { atk: myAtk, def: myDef, ovr: overall } = squadStats(squad);
   const isBrasil = mode === "brasil";
   const isWorldCup = mode === "copadomundo";
+  const isMundial = mode === "mundial";
   const hasGroups = !isBrasil;
   const pool = getTeamPoolFor(mode);
   const allOpponents = [...pool].sort(() => Math.random() - 0.5);
@@ -608,7 +610,7 @@ function runSoloCampaignFor(squad, mode) {
     for (let i = 0; i < groupTeams.length; i++) {
       for (let j = i+1; j < groupTeams.length; j++) {
         matches.push([groupTeams[i], groupTeams[j]]);
-        if (!isWorldCup) matches.push([groupTeams[j], groupTeams[i]]);
+        if (!isWorldCup && !isMundial) matches.push([groupTeams[j], groupTeams[i]]);
       }
     }
     matches.sort(() => Math.random() - 0.5);

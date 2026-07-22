@@ -20,6 +20,26 @@
   --role-atk: #d83b3b;
 }
 
+/* ──────────────────────────────────────────
+   MODO ESCURO — ativado via body.dark-mode.
+   Só sobrescreve as variáveis de cor; o resto do CSS já usa var(--...)
+   em praticamente tudo, então a troca de tema é automática.
+────────────────────────────────────────── */
+body.dark-mode {
+  --bg: #16181c;
+  --bg-dark: #0b0c0e;
+  --pitch-green: #1f5c2b;
+  --pitch-light: #257035;
+  --gold: #d9b657;
+  --red: #e05c4d;
+  --text: #ecebe7;
+  --text-muted: #9a9a95;
+  --border: #33363c;
+  --white: #f5f4f0;
+  --panel-bg: #1e2126;
+  --card-bg: #24272d;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -28,6 +48,7 @@ body {
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 /* ──────────────────────────────────────────
@@ -77,6 +98,39 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+@media (max-width: 760px) {
+  .site-header {
+    height: auto;
+    min-height: 56px;
+    padding: 10px 14px;
+  }
+  .header-inner {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+  .brand { gap: 10px; }
+  .brand-score { font-size: 1.4rem; }
+  .brand-title { font-size: 0.75rem; letter-spacing: 2px; }
+  .brand-sub { display: none; }
+  .header-right {
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    gap: 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .header-right::-webkit-scrollbar { display: none; }
+  .header-right button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 0.62rem;
+    padding: 6px 10px;
+    margin-right: 0 !important;
+  }
 }
 
 /* ──────────────────────────────────────────
@@ -2173,6 +2227,7 @@ body {
 }
 .ms-card.ms-eurocopa:hover { border-color: #4361ee; }
 .ms-card.ms-copaamerica:hover { border-color: #f2a900; }
+.ms-card.ms-mundial:hover { border-color: #00bcd4; }
 .ms-card.ms-livre:hover { border-color: #2d7a3a; }
 @media (max-width: 900px) {
   .ms-grid-six { grid-template-columns: 1fr 1fr; }
@@ -3107,6 +3162,86 @@ body {
 }
 .hist-hl-label { font-size: 0.68rem; color: var(--text-muted); margin-bottom: 4px; }
 .hist-hl-value { font-size: 0.92rem; font-weight: 600; color: var(--text); }
+
+/* ── Top 3 artilheiros ── */
+.hist-top-scorers { margin: 14px 0; }
+.hist-scorers-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+.hist-scorer-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+.hist-scorer-row:last-child { border-bottom: none; }
+.hsr-medal { font-size: 1rem; text-align: center; }
+.hsr-name { color: var(--text); font-weight: 600; }
+.hsr-goals { color: var(--text-muted); font-size: 0.72rem; white-space: nowrap; }
+
+/* ── Aba TIMES: Time dos Sonhos / Melhor Elenco Real ── */
+.hist-team-block {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.hist-team-block:last-child { margin-bottom: 0; }
+.hist-team-title { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.5px; color: var(--text); }
+.hist-team-sub { font-size: 0.7rem; color: var(--text-muted); margin: 4px 0 10px; line-height: 1.4; }
+.hist-team-meta { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+.hist-mini-pitch {
+  background: linear-gradient(
+    180deg,
+    #2d7a3a 0%, #2d7a3a 9%,
+    #339444 9%, #339444 18%,
+    #2d7a3a 18%, #2d7a3a 27%,
+    #339444 27%, #339444 36%,
+    #2d7a3a 36%, #2d7a3a 45%,
+    #339444 45%, #339444 54%,
+    #2d7a3a 54%, #2d7a3a 63%,
+    #339444 63%, #339444 72%,
+    #2d7a3a 72%, #2d7a3a 81%,
+    #339444 81%, #339444 90%,
+    #2d7a3a 90%, #2d7a3a 100%
+  );
+  border-radius: 6px;
+  padding: 14px 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  gap: 6px;
+  min-height: 280px;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.hist-mini-pitch .pd-circle { width: 30px; height: 30px; font-size: 0.62rem; }
+.hist-mini-pitch .pd-name { font-size: 0.52rem; max-width: 54px; }
+.hist-team-list { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; }
+.hist-team-list-row {
+  display: grid;
+  grid-template-columns: 36px 1.4fr 1.3fr auto;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.68rem;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+.hist-team-list-row:nth-child(odd) { background: var(--panel-bg); }
+.htlr-pos { color: var(--gold); font-weight: 700; }
+.htlr-name { color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.htlr-club { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.htlr-ovr { color: var(--text); font-weight: 700; }
 
 .ach-grid {
   display: grid;

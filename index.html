@@ -52,7 +52,18 @@
     </div>
 
     <div class="cl-version current">
-      <div class="cl-ver-badge">v1.4 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-badge">v1.5 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-date">Julho 2026</div>
+      <ul class="cl-items">
+        <li>🌐 Modo Mundial de Clubes — 180 times campeões e finalistas do Intercontinental e do Mundial de Clubes FIFA, de 1960 a 2025</li>
+        <li>⚔️ Formato de Copa do Mundo: fase de grupos (turno único, 4 times) + mata-mata desde as oitavas até a final</li>
+        <li>📋 Times do Mundial de Clubes agora aparecem na Vitrine</li>
+        <li>📱 Correção no cabeçalho no celular, que ficava sobreposto/cortado em telas pequenas</li>
+      </ul>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-ver-badge">v1.4</div>
       <div class="cl-ver-date">Julho 2026</div>
       <ul class="cl-items">
         <li>🥇 Modo Copa América — 70 seleções históricas, de 1916 a 2024</li>
@@ -172,6 +183,17 @@
 
     <div class="settings-section">
       <div class="settings-label-row">
+        <span class="settings-label">MODO ESCURO</span>
+        <label class="switch">
+          <input type="checkbox" id="chkDarkMode" onchange="toggleDarkMode(this.checked)">
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+      <p class="settings-desc">Troca o visual do jogo pro tema escuro.</p>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label-row">
         <span class="settings-label">MODO HARDCORE</span>
         <label class="switch">
           <input type="checkbox" id="chkHardcore" onchange="toggleHardcore(this.checked)">
@@ -203,10 +225,12 @@
     <div class="credits-title">HISTÓRICO & CONQUISTAS</div>
     <div class="history-tabs">
       <button class="history-tab active" data-tab="stats" onclick="setHistoryTab('stats')">RESUMO</button>
+      <button class="history-tab" data-tab="teams" onclick="setHistoryTab('teams')">TIMES</button>
       <button class="history-tab" data-tab="achievements" onclick="setHistoryTab('achievements')">CONQUISTAS <span id="achCountBadge"></span></button>
       <button class="history-tab" data-tab="matches" onclick="setHistoryTab('matches')">ÚLTIMAS PARTIDAS</button>
     </div>
     <div class="history-panel" id="historyPanelStats"></div>
+    <div class="history-panel" id="historyPanelTeams" style="display:none"></div>
     <div class="history-panel" id="historyPanelAchievements" style="display:none"></div>
     <div class="history-panel" id="historyPanelMatches" style="display:none"></div>
     <p class="settings-footnote">O Modo Livre não conta pro histórico nem gera conquistas.</p>
@@ -341,6 +365,12 @@
         <div class="ms-name">COPA AMÉRICA</div>
         <p class="ms-desc">Seleções históricas da Copa América, de 1916 a 2024. Fase de grupos (turno único, 3 jogos) e direto pras quartas de final — sem oitavas, como no torneio de verdade.</p>
         <div class="ms-tags"><span>Formato real</span><span>Seleções</span></div>
+      </div>
+      <div class="ms-card ms-mundial" onclick="selectMode('mundial')">
+        <div class="ms-emblem">🌐</div>
+        <div class="ms-name">MUNDIAL DE CLUBES</div>
+        <p class="ms-desc">Clubes campeões e finalistas do Intercontinental e do Mundial de Clubes FIFA, de 1960 a 2025. Fase de grupos (turno único, 4 times) + mata-mata desde as oitavas até a final.</p>
+        <div class="ms-tags"><span>Fase de grupos</span><span>Clubes</span></div>
       </div>
     </div>
 
@@ -541,6 +571,12 @@
         <p class="ms-desc">Seleções históricas de 1930 a 2022.</p>
         <div class="ms-tags"><span>Seleções</span></div>
       </div>
+      <div class="ms-card ms-mundial" onclick="mpSelectMode('mundial')">
+        <div class="ms-emblem">🌐</div>
+        <div class="ms-name">MUNDIAL DE CLUBES</div>
+        <p class="ms-desc">Clubes campeões do Intercontinental e do Mundial de Clubes FIFA.</p>
+        <div class="ms-tags"><span>Clubes</span></div>
+      </div>
     </div>
   </div>
 </div>
@@ -666,6 +702,7 @@
 <script src="data.js"></script>
 <script src="eurocopa_teams.js"></script>
 <script src="copa_america_teams.js"></script>
+<script src="mundial_teams.js"></script>
 <script src="progression.js"></script>
 <script src="game.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
