@@ -20,6 +20,7 @@
       </div>
     </div>
     <div class="header-right" id="headerRight">
+      <button class="dp-badge" onclick="openDraftPointsInfo()" title="Pontos de Draft">💎 <span id="dpAmount">0</span></button>
       <button class="btn-vitrine" onclick="openVitrine()">📋 VITRINE</button>
       <button class="btn-vitrine" onclick="openHistory()">🏆 HISTÓRICO</button>
       <button class="btn-settings" onclick="openSettings()">⚙ CONFIGURAÇÕES</button>
@@ -52,7 +53,33 @@
     </div>
 
     <div class="cl-version current">
-      <div class="cl-ver-badge">v1.5 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-badge">v1.7 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-date">Julho 2026</div>
+      <ul class="cl-items">
+        <li>🏆 HISTÓRICO virou uma página de verdade, não mais um pop-up pequeno — com aba nova de HALL DA FAMA mostrando todos os times que você já foi campeão, além do pódio (top 3) de artilheiros e de assistentes da carreira</li>
+        <li>🎯 Assistências agora entram pro histórico permanente, com 2 conquistas novas (Garçom e Rei do Passe)</li>
+        <li>📋 Aba ÚLTIMAS CAMPANHAS redesenhada — cabeçalho explicando as colunas, selo de CAMPEÃO/VICE e deixa claro que o placar é o total da campanha inteira, não de uma partida isolada</li>
+        <li>🔁 Modo Livre: opção pra permitir repetir times no sorteio (seu e dos adversários)</li>
+        <li>🧩 Jogadores com mais de uma posição na vida real agora podem preencher qualquer posição compatível no seu time, com escolha manual quando há mais de uma vaga aberta — lista de craques multi-posicionais bem maior</li>
+        <li>📤 Compartilhamento melhorado: agora leva o link do site (nanoniii.github.io/Futdraft) e gera uma imagem do resultado pra anexar junto (ou baixar, se o app não aceitar anexo automático)</li>
+        <li>🐛 Corrigido bug feio: escolher a posição de um jogador multi-posicional não escalava ele no time e travava a escolha de posição pro resto da partida</li>
+      </ul>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-ver-badge">v1.6</div>
+      <div class="cl-ver-date">Julho 2026</div>
+      <ul class="cl-items">
+        <li>💎 Pontos de Draft — ganhe jogando campanhas e gaste em re-rolls extras ou pra garantir qual time sai no seu primeiro sorteio (preço sobe com o overall do time)</li>
+        <li>🩹 Cartões e lesões agora afetam o jogo de verdade: vermelho pesa no ataque/defesa na hora e deixa suspensão pra próxima partida; lesão tira o titular (reserva entra se houver)</li>
+        <li>🎯 Simulação mais realista: favoritos dominam mais times fracos, mas a zebra continua existindo — só que mais rara, como no futebol de verdade</li>
+        <li>🎚️ Tática pesa mais: retranca segura o resultado quando você é zebra, ofensivo abre o jogo quando é favorito</li>
+        <li>🌍 Copa do Mundo 2026 — Espanha (campeã), Argentina (vice), Inglaterra, França, Cabo Verde e Noruega</li>
+      </ul>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-ver-badge">v1.5</div>
       <div class="cl-ver-date">Julho 2026</div>
       <ul class="cl-items">
         <li>🌐 Modo Mundial de Clubes — 180 times campeões e finalistas do Intercontinental e do Mundial de Clubes FIFA, de 1960 a 2025</li>
@@ -128,6 +155,16 @@
       <span class="credits-value">PHDanoni</span>
     </div>
     <p class="credits-footer">Feito por fãs do futebol, sem fins comerciais.</p>
+  </div>
+</div>
+
+<!-- ESCOLHA DE POSIÇÃO (jogador multi-posicional) -->
+<div id="posChoiceOverlay" class="credits-overlay">
+  <div class="credits-modal pos-choice-modal">
+    <button class="credits-close" onclick="closePosChoice()">✕</button>
+    <div class="credits-title" id="posChoiceTitle">ESCOLHA A POSIÇÃO</div>
+    <p class="credits-text" id="posChoiceDesc">Esse jogador pode entrar em mais de uma posição livre no seu time. Escolha onde ele vai jogar:</p>
+    <div class="pos-choice-list" id="posChoiceList"></div>
   </div>
 </div>
 
@@ -218,18 +255,23 @@
   </div>
 </div>
 
-<!-- HISTÓRICO & CONQUISTAS (modal) -->
-<div id="historyOverlay" class="credits-overlay">
-  <div class="credits-modal history-modal">
-    <button class="credits-close" onclick="closeHistory()">✕</button>
-    <div class="credits-title">HISTÓRICO & CONQUISTAS</div>
-    <div class="history-tabs">
-      <button class="history-tab active" data-tab="stats" onclick="setHistoryTab('stats')">RESUMO</button>
-      <button class="history-tab" data-tab="teams" onclick="setHistoryTab('teams')">TIMES</button>
-      <button class="history-tab" data-tab="achievements" onclick="setHistoryTab('achievements')">CONQUISTAS <span id="achCountBadge"></span></button>
-      <button class="history-tab" data-tab="matches" onclick="setHistoryTab('matches')">ÚLTIMAS PARTIDAS</button>
-    </div>
+<!-- HISTÓRICO & CONQUISTAS (página cheia, não é mais um pop-up) -->
+<div id="historyOverlay" class="history-page">
+  <div class="history-page-header">
+    <button class="history-back-btn" onclick="closeHistory()">← VOLTAR</button>
+    <div class="history-page-title">HISTÓRICO & CONQUISTAS</div>
+    <div class="history-page-spacer"></div>
+  </div>
+  <div class="history-tabs">
+    <button class="history-tab active" data-tab="stats" onclick="setHistoryTab('stats')">RESUMO</button>
+    <button class="history-tab" data-tab="hall" onclick="setHistoryTab('hall')">🏆 HALL DA FAMA</button>
+    <button class="history-tab" data-tab="teams" onclick="setHistoryTab('teams')">TIMES</button>
+    <button class="history-tab" data-tab="achievements" onclick="setHistoryTab('achievements')">CONQUISTAS <span id="achCountBadge"></span></button>
+    <button class="history-tab" data-tab="matches" onclick="setHistoryTab('matches')">ÚLTIMAS CAMPANHAS</button>
+  </div>
+  <div class="history-page-content">
     <div class="history-panel" id="historyPanelStats"></div>
+    <div class="history-panel" id="historyPanelHall" style="display:none"></div>
     <div class="history-panel" id="historyPanelTeams" style="display:none"></div>
     <div class="history-panel" id="historyPanelAchievements" style="display:none"></div>
     <div class="history-panel" id="historyPanelMatches" style="display:none"></div>
@@ -253,6 +295,43 @@
     </div>
 
     <div class="vitrine-body" id="vitrineBody"></div>
+  </div>
+</div>
+
+<!-- GARANTIR TIME (Pontos de Draft) -->
+<div id="guaranteeOverlay" class="credits-overlay vitrine-overlay">
+  <div class="credits-modal vitrine-modal">
+    <button class="credits-close vitrine-close" onclick="closeGuaranteeModal()">✕</button>
+
+    <div class="vitrine-head">
+      <div class="vitrine-title">🔒 GARANTIR MEU PRIMEIRO TIME</div>
+      <p class="vitrine-sub">Gaste Pontos de Draft pra travar qual time sai no seu primeiro sorteio — quanto maior o overall do time, mais caro. Seu saldo: <strong>💎 <span id="guaranteeBalance">0</span></strong></p>
+      <div class="vitrine-search">
+        <input type="text" id="guaranteeSearch" placeholder="Buscar por nome do time..." oninput="renderGuaranteeGrid()">
+      </div>
+      <div class="vitrine-count" id="guaranteeCount"></div>
+    </div>
+
+    <div class="vitrine-body" id="guaranteeBody"></div>
+  </div>
+</div>
+
+<!-- INFO DOS PONTOS DE DRAFT -->
+<div id="dpInfoOverlay" class="credits-overlay">
+  <div class="credits-modal dp-info-modal">
+    <button class="credits-close" onclick="closeDraftPointsInfo()">✕</button>
+    <div class="dp-info-title">💎 PONTOS DE DRAFT</div>
+    <div class="dp-info-balance">Seu saldo: <strong id="dpInfoBalance">0</strong></div>
+    <p class="dp-info-text">
+      Você ganha Pontos de Draft ao terminar qualquer campanha (fora do Modo Livre): mais por vitória do que por empate ou derrota, e um bônus grande por título ou vice. No Hardcore o prêmio é ainda maior.
+    </p>
+    <p class="dp-info-text">
+      Gaste os pontos de dois jeitos, direto na tela de sorteio:
+    </p>
+    <ul class="dp-info-list">
+      <li><strong>Comprar re-roll</strong> — um re-sorteio extra além dos 3 grátis da partida. O preço sobe a cada compra na mesma campanha.</li>
+      <li><strong>Garantir o primeiro time</strong> — escolha exatamente qual time vai sair no seu primeiro sorteio. Quanto maior o overall do time, mais caro (times lendários custam uma fortuna).</li>
+    </ul>
   </div>
 </div>
 
@@ -391,7 +470,11 @@
 <div id="pageFreeModeSetup" class="page">
   <div class="mode-pick-layout">
     <div class="fp-title">MODO LIVRE — ESCOLHA OS TIMES</div>
-    <p class="fp-desc">Marque quais times você quer no sorteio pra montar SEU time. Precisa de pelo menos 8 times marcados. Os adversários do torneio são sorteados entre TODOS os times do jogo, não só os que você marcar aqui — assim você sempre encara algo diferente.</p>
+    <p class="fp-desc" id="freeModeMinDesc">Marque quais times você quer no sorteio pra montar SEU time. Precisa de pelo menos 8 times marcados. Os adversários do torneio são sorteados entre TODOS os times do jogo, não só os que você marcar aqui — assim você sempre encara algo diferente.</p>
+    <label class="free-mode-repeat-toggle">
+      <input type="checkbox" id="freeModeRepeatTeamsToggle" onchange="toggleFreeModeRepeatTeams(this.checked)">
+      🔁 Permitir repetir times (o mesmo time pode sair mais de uma vez, tanto no seu sorteio quanto entre os adversários)
+    </label>
     <div class="free-mode-toolbar">
       <input type="text" id="freeModeSearch" placeholder="Buscar time..." oninput="renderFreeModeList()">
       <div class="free-mode-source-tabs" id="freeModeSourceTabs"></div>
@@ -429,10 +512,11 @@
           <div class="rolled-flag" id="rolledFlag"></div>
           <div class="rolled-name" id="rolledName"></div>
           <div class="rolled-season" id="rolledSeason"></div>
-          <div class="reroll-area">
+          <div class="reroll-area" id="rerollArea">
             <div class="reroll-label">NÃO CURTIU? RE-SORTEIE · <span id="rerollCount">3</span> RESTANTES NA PARTIDA</div>
             <div class="reroll-buttons">
               <button class="btn-reroll" onclick="rerollTeam()" id="btnReroll">↺ OUTRO TIME</button>
+              <button class="btn-reroll btn-reroll-buy" onclick="buyReroll()" id="btnBuyReroll">💎 COMPRAR RE-ROLL</button>
             </div>
           </div>
           <div class="pick-label">ESCOLHA UM JOGADOR</div>
@@ -440,7 +524,14 @@
         </div>
         <div class="roll-cta" id="rollCta">
           <p class="roll-desc" id="rollDesc">Role para sortear um time histórico</p>
-          <button class="btn-roll" onclick="rollDice()">ROLAR <span class="dice-icon">⚄</span></button>
+          <div class="dp-guarantee-cta" id="guaranteeCta" style="display:none">
+            <button class="btn-guarantee" onclick="openGuaranteeModal()">🔒 GARANTIR MEU PRIMEIRO TIME</button>
+          </div>
+          <div class="dp-guaranteed-badge" id="guaranteedBadge" style="display:none">
+            <span id="guaranteedBadgeText"></span>
+            <button class="btn-cancel-guarantee" onclick="cancelGuaranteedTeam()">cancelar · reembolso</button>
+          </div>
+          <button class="btn-roll" onclick="rollDice()"><span id="rollBtnLabel">ROLAR</span> <span class="dice-icon">⚄</span></button>
         </div>
       </div>
       <!-- Step 2: Complete -->
@@ -699,14 +790,21 @@
 <!-- MULTIPLAYER — RESULTADO (preenchido via JS, local e online) -->
 <div id="pageMpResult" class="page"></div>
 
+<!-- Usada só pra tirar o "print" do card de compartilhamento (ver captureShareCardBlob em game.js). Se falhar
+     em carregar (ex.: sem internet), o jogo cai de volta pro card simples desenhado no canvas. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="data.js"></script>
 <script src="eurocopa_teams.js"></script>
 <script src="copa_america_teams.js"></script>
 <script src="mundial_teams.js"></script>
+<script src="alt_positions.js"></script>
 <script src="progression.js"></script>
 <script src="game.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="multiplayer.js"></script>
+<!-- Palco invisível onde o card de compartilhamento é montado e fotografado
+     (html2canvas) antes de virar imagem — ver captureShareCardBlob() em game.js. -->
+<div id="shareCardStage" class="final-card share-card-shell"></div>
 </body>
 </html>

@@ -35,6 +35,7 @@ const SETTINGS_DEFAULTS = {
   hardcoreMode: false,   // esconde os overalls e desativa o re-sorteio
   themeRestriction: false, // restringe o sorteio a times de um mesmo país/confederação
   darkMode: false,       // tema escuro da interface
+  freeModeRepeatTeams: false, // Modo Livre: permite o mesmo time sair mais de uma vez no sorteio (seu e dos adversários)
 };
 
 // ── Hardcore: esconde os overalls e impede re-sorteio ──
@@ -58,6 +59,77 @@ applyDarkMode();
 // Multiplicador de duração aplicado aos tempos da simulação. >1 = mais lento, <1 = mais rápido.
 const SPEED_MULTIPLIERS = { slow: 2, normal: 1, fast: 0.5 };
 function speedMul() { return SPEED_MULTIPLIERS[settings.speed] || 1; }
+
+// ═══════════════════════════════════════════
+// PONTOS DE DRAFT — moeda persistente (localStorage) ganha jogando
+// campanhas (não rola no Modo Livre). Gasta em:
+//   1) Re-rolls extras além dos 3 grátis da partida.
+//   2) Garantir qual time sai no PRIMEIRO sorteio da escalação (turno 1).
+// Preço da garantia sobe com o overall do time (exponencial — times
+// lendários custam MUITO mais que times medianos).
+// ═══════════════════════════════════════════
+const DRAFT_POINTS_KEY = "futdraft_draftpoints_v1";
+
+function loadDraftPoints() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DRAFT_POINTS_KEY));
+    return (saved && typeof saved.points === "number") ? saved.points : 0;
+  } catch (e) { return 0; }
+}
+function saveDraftPoints(n) {
+  try { localStorage.setItem(DRAFT_POINTS_KEY, JSON.stringify({ points: n })); } catch (e) {}
+}
+let draftPoints = loadDraftPoints();
+
+function getDraftPoints() { return draftPoints; }
+function addDraftPoints(n) {
+  if (!n) return;
+  draftPoints = Math.max(0, draftPoints + n);
+  saveDraftPoints(draftPoints);
+  updateDraftPointsBadge();
+}
+// Tenta gastar `cost` pontos. Devolve true se conseguiu (e já debita); false se não tinha saldo.
+function spendDraftPoints(cost) {
+  if (draftPoints < cost) return false;
+  draftPoints -= cost;
+  saveDraftPoints(draftPoints);
+  updateDraftPointsBadge();
+  return true;
+}
+function updateDraftPointsBadge() {
+  const el = document.getElementById("dpAmount");
+  if (el) el.textContent = draftPoints;
+}
+
+// Quantos pontos uma campanha rende — chamado uma vez ao fim de cada
+// campanha (fora do Modo Livre). Vitória/empate/derrota rendem pouco cada,
+// títulos e vice rendem um bônus bem maior, e o Hardcore paga mais (já que
+// lá não dá pra comprar nada mesmo, então é um "prêmio de coragem").
+function computeDraftPointsEarned(summary) {
+  let pts = (summary.wins || 0) * 8 + (summary.draws || 0) * 3 + (summary.losses || 0) * 2;
+  if (summary.champion) pts += 50;
+  else if (summary.reachedFinal) pts += 20;
+  else if (summary.eliminatedAtGroup) pts += 3;
+  if (summary.hardcore) pts = Math.round(pts * 1.4);
+  return Math.max(pts, 4);
+}
+
+// Custo pra comprar um re-roll extra nessa partida — sobe a cada compra
+// (pra não virar reroll infinito só acumulando pontos numa run só).
+const REROLL_BUY_BASE_COST = 15;
+const REROLL_BUY_STEP = 12;
+function rerollBuyCost() {
+  return REROLL_BUY_BASE_COST + (state.rerollsBoughtThisDraft || 0) * REROLL_BUY_STEP;
+}
+
+// Custo pra garantir um time específico no sorteio — cresce exponencialmente
+// com o overall do time (teamOverall(), a mesma nota usada na Vitrine).
+// ~65 de overall custa pouco (~20), ~90+ custa uma fortuna (~300+).
+function guaranteeTeamCost(team) {
+  const ovr = teamOverall(team.players);
+  const boosted = Math.max(0, ovr - 60);
+  return Math.max(15, Math.round(10 + Math.pow(boosted, 1.9) * 0.5));
+}
 
 // ── Modal de configurações ──
 function openSettings() {
@@ -197,6 +269,7 @@ let state = {
   bench: [],          // banco de reservas escolhido manualmente (não faz parte do draft)
   benchChoices: {},   // { [categoria]: nomeDoJogador } — escolha do jogador por posição
   benchGroups: [],    // categorias de banco disponíveis pra formação atual, com opções
+  usedTeamIds: null,  // Modo Livre: ids dos times já sorteados nesse draft (evita repetição)
 };
 
 // Modo Livre não gera conquistas nem entra no histórico do jogador — é só lazer.
@@ -311,6 +384,40 @@ const MODE_META = {
   livre:        { title: "MODO LIVRE",        short: "A SIMULAÇÃO",    logo: "🎮", waiting: "A simulação começa em breve...",      seasonPrefix: "" },
 };
 function modeMeta() { return MODE_META[state.mode] || MODE_META.champions; }
+
+// Artilheiro, garçom e goleadas (feita e sofrida) da campanha — calculado
+// direto de `results` (funciona em qualquer modo, inclusive Modo Livre, que
+// não passa pelo resumo de conquistas). Usado tanto no card final quanto
+// no compartilhamento (texto e imagem) — ver renderFinalCard() e
+// buildTournamentShareText().
+function computeCampaignHighlights(results) {
+  const scorerTotals = {};
+  const assistTotals = {};
+  let biggestWin = null, biggestWinMargin = -1;
+  let biggestLoss = null, biggestLossMargin = -1;
+
+  (results || []).forEach(r => {
+    (r.scorers || []).forEach(name => { scorerTotals[name] = (scorerTotals[name] || 0) + 1; });
+    (r.assists || []).forEach(name => { if (name) assistTotals[name] = (assistTotals[name] || 0) + 1; });
+
+    if (r.outcome === "win") {
+      const margin = r.myGoals - r.theirGoals;
+      if (margin > biggestWinMargin) { biggestWinMargin = margin; biggestWin = r; }
+    } else if (r.outcome === "lose") {
+      const margin = r.theirGoals - r.myGoals;
+      if (margin > biggestLossMargin) { biggestLossMargin = margin; biggestLoss = r; }
+    }
+  });
+
+  const topScorerEntry = Object.entries(scorerTotals).sort((a, b) => b[1] - a[1])[0];
+  const topAssistEntry = Object.entries(assistTotals).sort((a, b) => b[1] - a[1])[0];
+
+  return {
+    topScorer: topScorerEntry ? { name: topScorerEntry[0], goals: topScorerEntry[1] } : null,
+    topAssist: topAssistEntry ? { name: topAssistEntry[0], assists: topAssistEntry[1] } : null,
+    biggestWin, biggestLoss,
+  };
+}
 
 // Posições reais no data.js: GK RB LB CB CM AM RM LM RW LW ST CF RWB LWB
 // Mapeadas via POS_LABELS para: GOL LD LE ZAG MC MEI MD ME PD PE CA CA LD LE
@@ -455,7 +562,33 @@ function openFreeModeSetup() {
       `<button class="${s.id === freeModeActiveTab ? "active" : ""}" onclick="setFreeModeTab('${s.id}')">${s.label}</button>`
     ).join("");
   }
+  const repeatToggle = document.getElementById("freeModeRepeatTeamsToggle");
+  if (repeatToggle) repeatToggle.checked = !!settings.freeModeRepeatTeams;
+  updateFreeModeMinDesc();
   renderFreeModeList();
+}
+
+function toggleFreeModeRepeatTeams(checked) {
+  settings.freeModeRepeatTeams = !!checked;
+  saveSettings();
+  updateFreeModeMinDesc();
+  updateFreeModeCount(); // reavalia o botão "Continuar" na hora — o mínimo muda com o toggle
+}
+
+// Com "permitir repetir" ligado, 1 time marcado já basta (ele preenche o
+// resto do elenco se repetindo) — sem isso, continua exigindo o mínimo
+// padrão pra garantir jogadores suficientes sem repetição.
+function freeModeMinTeams() {
+  return settings.freeModeRepeatTeams ? 1 : FREE_MODE_MIN_TEAMS;
+}
+
+function updateFreeModeMinDesc() {
+  const el = document.getElementById("freeModeMinDesc");
+  if (!el) return;
+  const minText = settings.freeModeRepeatTeams
+    ? "Com \"repetir times\" ligado, basta marcar 1 time — ele pode se repetir até completar seu elenco."
+    : `Precisa de pelo menos ${FREE_MODE_MIN_TEAMS} times marcados.`;
+  el.textContent = `Marque quais times você quer no sorteio pra montar SEU time. ${minText} Os adversários do torneio são sorteados entre TODOS os times do jogo, não só os que você marcar aqui — assim você sempre encara algo diferente.`;
 }
 
 function setFreeModeTab(id) {
@@ -505,11 +638,11 @@ function updateFreeModeCount() {
   const countEl = document.getElementById("freeModeCount");
   if (countEl) countEl.textContent = freeModeSelected.size;
   const btn = document.getElementById("btnFreeModeConfirm");
-  if (btn) btn.disabled = freeModeSelected.size < FREE_MODE_MIN_TEAMS;
+  if (btn) btn.disabled = freeModeSelected.size < freeModeMinTeams();
 }
 
 function confirmFreeModeTeams() {
-  if (freeModeSelected.size < FREE_MODE_MIN_TEAMS) return;
+  if (freeModeSelected.size < freeModeMinTeams()) return;
   const all = allTeamsList();
   state.freeModeTeams = all.filter(t => freeModeSelected.has(t.id));
   selectMode("livre");
@@ -561,7 +694,10 @@ function chooseFormation(fm) {
   state.pickCount = 0;
   state.rerollsLeft = hc() ? 0 : 3;
   state.rerollsUsed = 0;
+  state.rerollsBoughtThisDraft = 0;
+  state.draftGuaranteedTeamId = null;
   state.currentTeam = null;
+  state.usedTeamIds = new Set(); // zera o controle de "já sorteado" a cada novo draft
   state.phase = "roll";
   state.themeCountry = settings.themeRestriction ? pickThemeCountry(getTeamPool()) : null;
   state.themeFlag = null;
@@ -592,37 +728,86 @@ function showPanel(id) {
 // ═══════════════════════════════════════════
 // ROLL
 // ═══════════════════════════════════════════
+function currentGuaranteedTeam() {
+  if (!state.draftGuaranteedTeamId) return null;
+  return getRestrictedTeamPool().find(t => t.id === state.draftGuaranteedTeamId)
+    || getTeamPool().find(t => t.id === state.draftGuaranteedTeamId)
+    || null;
+}
+
 function showRollStep() {
   showPanel("stepRoll");
   const turn = state.pickCount + 1;
+  const guaranteed = turn === 1 ? currentGuaranteedTeam() : null;
   const rollDesc = document.getElementById("rollDesc");
   const theme = state.themeCountry ? ` · restrição temática: só times ${state.themeFlag || ""} ${state.themeCountry}` : "";
-  if (rollDesc) rollDesc.textContent = (turn === 1
-    ? "Role para sortear seu primeiro time histórico"
-    : `Jogador ${turn}/11 — role para sortear um novo time`) + theme;
+  if (rollDesc) {
+    rollDesc.textContent = guaranteed
+      ? `Time garantido pra esse sorteio: ${guaranteed.flag} ${guaranteed.name} ${guaranteed.season} — é só rolar pra confirmar.`
+      : (turn === 1 ? "Role para sortear seu primeiro time histórico" : `Jogador ${turn}/11 — role para sortear um novo time`) + theme;
+  }
+  const rollLabel = document.getElementById("rollBtnLabel");
+  if (rollLabel) rollLabel.textContent = guaranteed ? "REVELAR TIME" : "ROLAR";
   document.getElementById("rollCta").style.display = "flex";
   document.getElementById("rolledTeamDisplay").style.display = "none";
   const reel = document.getElementById("rollReel");
   if (reel) reel.style.display = "none";
-  // rerollsLeft NÃO é resetado aqui — são 3 tentativas pra PARTIDA INTEIRA,
-  // não por jogador (exceto no hardcore, onde não existe re-sorteio).
-  // O valor é setado uma única vez em chooseFormation().
+
+  // CTA de garantir time / badge de garantia — só existe antes do PRIMEIRO
+  // sorteio da campanha inteira (não por jogador) e some no Hardcore.
+  const guaranteeCta = document.getElementById("guaranteeCta");
+  const guaranteedBadge = document.getElementById("guaranteedBadge");
+  if (guaranteeCta) guaranteeCta.style.display = (turn === 1 && !hc() && !guaranteed) ? "flex" : "none";
+  if (guaranteedBadge) {
+    if (guaranteed) {
+      guaranteedBadge.style.display = "flex";
+      const txt = document.getElementById("guaranteedBadgeText");
+      if (txt) txt.textContent = `🔒 ${guaranteed.flag} ${guaranteed.name} garantido`;
+    } else {
+      guaranteedBadge.style.display = "none";
+    }
+  }
+
+  updateRerollUI();
+}
+
+// Mostra/esconde a área de re-roll (grátis + comprado) de acordo com o
+// estado atual: some inteira no Hardcore e enquanto um time garantido
+// ainda não foi consumido (rerollar não mudaria nada nesse caso).
+function updateRerollUI() {
+  const guaranteedActive = turnIsFirstPick() && !!state.draftGuaranteedTeamId;
+  const rerollArea = document.getElementById("rerollArea");
+  if (hc() || guaranteedActive) {
+    if (rerollArea) rerollArea.style.display = "none";
+    return;
+  }
+  if (rerollArea) rerollArea.style.display = "";
   const rerollBtn = document.getElementById("btnReroll");
-  const rerollBox = document.getElementById("rerollCount")?.closest(".reroll-box") || rerollBtn;
-  if (hc()) {
-    if (rerollBtn) { rerollBtn.style.display = "none"; rerollBtn.disabled = true; }
-  } else {
-    if (rerollBtn) rerollBtn.style.display = "";
-    document.getElementById("rerollCount").textContent = state.rerollsLeft;
-    if (rerollBtn) rerollBtn.disabled = state.rerollsLeft === 0;
+  const rerollCountEl = document.getElementById("rerollCount");
+  if (rerollCountEl) rerollCountEl.textContent = state.rerollsLeft;
+  if (rerollBtn) rerollBtn.disabled = state.rerollsLeft === 0;
+
+  const buyBtn = document.getElementById("btnBuyReroll");
+  if (buyBtn) {
+    const cost = rerollBuyCost();
+    buyBtn.textContent = `💎 COMPRAR RE-ROLL (${cost})`;
+    buyBtn.disabled = draftPoints < cost;
   }
 }
+function turnIsFirstPick() { return state.pickCount === 0; }
 
 // Sorteia um time que tenha pelo menos um jogador elegível pra algum slot
 // vazio da formação (não usado, com vaga livre na posição). Se o time sorteado
 // não tiver ninguém aproveitável, sorteia outro automaticamente até achar um
 // que sirva — assim o jogador nunca cai numa tela sem ninguém pra escolher.
 function pickEligibleTeam() {
+  // Se um time foi garantido (comprado com Pontos de Draft), ele sai
+  // direto — sem sortear nada — até o jogador escolher um jogador dele
+  // (pickPlayer limpa a garantia depois de consumida).
+  if (turnIsFirstPick() && state.draftGuaranteedTeamId) {
+    const guaranteed = currentGuaranteedTeam();
+    if (guaranteed) return guaranteed;
+  }
   const slots = getFormationSlots(state.formation);
   const usedNames = new Set(state.squad.map(s => s.name));
   const slotsRemaining = {};
@@ -630,12 +815,22 @@ function pickEligibleTeam() {
   state.squad.forEach(s => { if (slotsRemaining[s.pos] != null) slotsRemaining[s.pos]--; });
 
   const hasEligiblePlayer = (team) => team.players.some(p => {
-    const pos = POS_LABELS[p.pos] || p.pos;
-    return !usedNames.has(p.name) && (slotsRemaining[pos] || 0) > 0;
+    if (usedNames.has(p.name)) return false;
+    return getAllPosLabels(p).some(pos => (slotsRemaining[pos] || 0) > 0);
   });
 
   const teamPool = getRestrictedTeamPool();
-  const candidates = teamPool.filter(hasEligiblePlayer);
+  let candidates = teamPool.filter(hasEligiblePlayer);
+
+  // Modo Livre: com "repetir times" desativado (padrão), tira do sorteio os
+  // times que já forneceram um jogador nesse draft — só volta a permitir
+  // repetição se isso zerar as opções (pool pequeno demais pra completar o
+  // time sem repetir nenhum).
+  if (state.mode === "livre" && !settings.freeModeRepeatTeams && state.usedTeamIds && state.usedTeamIds.size) {
+    const fresh = candidates.filter(t => !state.usedTeamIds.has(t.id));
+    if (fresh.length) candidates = fresh;
+  }
+
   const pool = candidates.length ? candidates : teamPool; // fallback de segurança
   return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -650,9 +845,20 @@ function rerollTeam() {
   if (state.rerollsLeft <= 0) return;
   state.rerollsLeft--;
   state.rerollsUsed = (state.rerollsUsed || 0) + 1;
-  document.getElementById("rerollCount").textContent = state.rerollsLeft;
-  document.getElementById("btnReroll").disabled = state.rerollsLeft === 0;
+  updateRerollUI();
   rollDice();
+}
+
+// Compra um re-roll extra com Pontos de Draft (além dos 3 grátis da
+// partida) e já usa ele na hora, re-sorteando o time atual.
+function buyReroll() {
+  if (hc()) return;
+  const cost = rerollBuyCost();
+  if (draftPoints < cost) return;
+  if (!spendDraftPoints(cost)) return;
+  state.rerollsBoughtThisDraft = (state.rerollsBoughtThisDraft || 0) + 1;
+  state.rerollsLeft++;
+  rerollTeam();
 }
 
 // Animação de sorteio: mostra uma sequência rápida de times passando (efeito
@@ -687,6 +893,9 @@ function playRollAnimation(finalTeam) {
 
   // Sequência de times aleatórios "passando" antes de parar no sorteado de
   // verdade. Desacelera progressivamente, como uma roleta perdendo embalo.
+  // Funciona igual mesmo com time garantido: a roleta gira por times
+  // aleatórios normalmente e só trava no time garantido no final — reforça
+  // a sensação de "sorte grande" mesmo sabendo o resultado.
   const spins = 14;
   const delays = [];
   let total = 0;
@@ -723,9 +932,100 @@ function displayRolledTeam(team) {
   document.getElementById("rolledFlag").textContent = team.flag;
   document.getElementById("rolledName").textContent = team.name;
   document.getElementById("rolledSeason").textContent = modeMeta().seasonPrefix + team.season;
-  document.getElementById("rerollCount").textContent = state.rerollsLeft;
-  document.getElementById("btnReroll").disabled = state.rerollsLeft === 0;
+  updateRerollUI();
   renderPlayerList(team);
+}
+
+// ═══════════════════════════════════════════
+// GARANTIR TIME — gasta Pontos de Draft pra travar qual time sai no
+// PRIMEIRO sorteio da escalação (turno 1 apenas). Reaproveita o visual
+// da Vitrine (vt-grid/vt-card) pra listar os times com preço.
+// ═══════════════════════════════════════════
+function openGuaranteeModal() {
+  if (hc() || !turnIsFirstPick() || state.currentTeam) return;
+  const ov = document.getElementById("guaranteeOverlay");
+  if (!ov) return;
+  ov.classList.add("open");
+  const search = document.getElementById("guaranteeSearch");
+  if (search) search.value = "";
+  const bal = document.getElementById("guaranteeBalance");
+  if (bal) bal.textContent = draftPoints;
+  renderGuaranteeGrid();
+}
+function closeGuaranteeModal() {
+  const ov = document.getElementById("guaranteeOverlay");
+  if (ov) ov.classList.remove("open");
+}
+
+function renderGuaranteeGrid() {
+  const query = (document.getElementById("guaranteeSearch")?.value || "").trim().toLowerCase();
+  let teams = getRestrictedTeamPool();
+  if (query) teams = teams.filter(t => t.name.toLowerCase().includes(query) || String(t.season).toLowerCase().includes(query));
+  teams = [...teams].sort((a, b) => teamOverall(b.players) - teamOverall(a.players));
+
+  const countEl = document.getElementById("guaranteeCount");
+  if (countEl) countEl.textContent = `${teams.length} TIME${teams.length === 1 ? "" : "S"}`;
+
+  const body = document.getElementById("guaranteeBody");
+  if (!body) return;
+  if (!teams.length) {
+    body.innerHTML = `<div class="vt-empty">Nenhum time encontrado com essa busca.</div>`;
+    return;
+  }
+  body.innerHTML = `<div class="vt-grid">${teams.map(t => {
+    const ovr = Math.round(teamOverall(t.players));
+    const cost = guaranteeTeamCost(t);
+    const afford = draftPoints >= cost;
+    return `<div class="vt-card gt-card${afford ? "" : " gt-locked"}" ${afford ? `onclick="chooseGuaranteedTeam('${t.id}')"` : ""}>
+      <div class="vt-card-top">
+        <span class="vt-flag">${t.flag || "⭐"}</span>
+        <div>
+          <div class="vt-name">${t.name}</div>
+          <div class="vt-season">${vitrineSubtitle(t)}</div>
+        </div>
+      </div>
+      <div class="vt-card-foot">
+        <span class="vt-formation-tag">OVR ${ovr}</span>
+        <span class="gt-price">💎 ${cost}</span>
+      </div>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function chooseGuaranteedTeam(teamId) {
+  if (hc() || !turnIsFirstPick() || state.currentTeam) return;
+  const team = getRestrictedTeamPool().find(t => t.id === teamId) || getTeamPool().find(t => t.id === teamId);
+  if (!team) return;
+  const cost = guaranteeTeamCost(team);
+  if (!spendDraftPoints(cost)) return;
+  state.draftGuaranteedTeamId = teamId;
+  state.draftGuaranteedCost = cost;
+  closeGuaranteeModal();
+  showRollStep();
+}
+
+// Cancela a garantia comprada (antes de rolar) e devolve os pontos gastos.
+function cancelGuaranteedTeam() {
+  if (!state.draftGuaranteedTeamId) return;
+  addDraftPoints(state.draftGuaranteedCost || 0);
+  state.draftGuaranteedTeamId = null;
+  state.draftGuaranteedCost = 0;
+  showRollStep();
+}
+
+// ═══════════════════════════════════════════
+// INFO DOS PONTOS DE DRAFT — modal simples aberto pelo badge do header
+// ═══════════════════════════════════════════
+function openDraftPointsInfo() {
+  const ov = document.getElementById("dpInfoOverlay");
+  if (!ov) return;
+  const bal = document.getElementById("dpInfoBalance");
+  if (bal) bal.textContent = draftPoints;
+  ov.classList.add("open");
+}
+function closeDraftPointsInfo() {
+  const ov = document.getElementById("dpInfoOverlay");
+  if (ov) ov.classList.remove("open");
 }
 
 function renderPlayerList(team) {
@@ -735,13 +1035,17 @@ function renderPlayerList(team) {
   const sorted = [...team.players].sort((a, b) => b.overall - a.overall);
 
   list.innerHTML = sorted.map((p) => {
-    const pos = POS_LABELS[p.pos] || p.pos;
+    const allLabels = getAllPosLabels(p);
+    const pos = allLabels.join("/"); // ex: "CA/PD/MEI" pra jogador multi-posicional
     const elite = p.overall >= 90 ? "elite" : "";
     const used = usedNames.has(p.name);
-    const slotsForPos = slots.filter(s => s.pos === pos).length;
-    const takenForPos = state.squad.filter(s => s.pos === pos).length;
-    const slotFull = takenForPos >= slotsForPos;
-    const noSlot = slotsForPos === 0; // posição não existe nessa formação
+    const noSlot = !allLabels.some(l => slots.some(s => s.pos === l));
+    const hasOpenSlot = allLabels.some(l => {
+      const slotsForPos = slots.filter(s => s.pos === l).length;
+      const takenForPos = state.squad.filter(s => s.pos === l).length;
+      return takenForPos < slotsForPos;
+    });
+    const slotFull = !noSlot && !hasOpenSlot;
     const blocked = used || slotFull || noSlot;
     const tag = noSlot ? "sem slot" : slotFull ? "slot cheio" : used ? "já no time" : "";
     const originalIdx = team.players.indexOf(p);
@@ -758,26 +1062,54 @@ function renderPlayerList(team) {
 
 function pickPlayer(idx) {
   const p = state.currentTeam.players[idx];
-  const pos = POS_LABELS[p.pos] || p.pos;
+  const slots = getFormationSlots(state.formation);
+  const takenSlots = new Set(state.squad.map(s => s.slotId));
+
+  // Jogador multi-posicional: se ele tiver mais de uma posição com slot
+  // livre no momento, deixa o JOGADOR escolher onde quer escalar — só
+  // preenche automático quando só existe uma opção possível.
+  const allLabels = getAllPosLabels(p);
+  const openLabels = allLabels.filter(label => slots.some(slot => slot.pos === label && !takenSlots.has(slot.id)));
+  if (!openLabels.length) return;
+
+  if (openLabels.length === 1) {
+    commitPickPlayer(idx, openLabels[0]);
+    return;
+  }
+  openPosChoice(p, openLabels, (label) => commitPickPlayer(idx, label));
+}
+
+function commitPickPlayer(idx, chosenLabel) {
+  const p = state.currentTeam.players[idx];
   const slots = getFormationSlots(state.formation);
   const takenSlots = new Set(state.squad.map(s => s.slotId));
 
   let slotId = null;
   for (const slot of slots) {
-    if (slot.pos === pos && !takenSlots.has(slot.id)) { slotId = slot.id; break; }
+    if (slot.pos === chosenLabel && !takenSlots.has(slot.id)) { slotId = slot.id; break; }
   }
   if (slotId === null) return;
 
+  // Se o slot preenchido não é a posição original do jogador, usa o raw
+  // representativo daquele label pros pesos de ataque/defesa (ex: Messi
+  // cadastrado como "RW" mas escalado no slot "MEI" pesa como "AM").
+  const allLabels = getAllPosLabels(p);
+  const rawPos = (POS_LABELS[p.pos] === chosenLabel) ? p.pos : rawForLabel(chosenLabel);
+
   state.squad.push({
     ...p,
-    pos,                 // label mapeado (ex: "CA") usado no slot/exibição
-    rawPos: p.pos,        // posição real original (ex: "ST") usada nos cálculos
+    pos: chosenLabel,     // label do slot realmente preenchido (ex: "CA")
+    rawPos,                // posição real usada nos cálculos de ataque/defesa
+    altLabels: allLabels.length > 1 ? allLabels : null, // todas as posições possíveis, pra exibição
     slotId,
     team: state.currentTeam.name,
     season: state.currentTeam.season,
     isHighlight: state.pickCount === 0,
   });
   state.pickCount++;
+  state.draftGuaranteedTeamId = null; // garantia (se houver) só vale pro time recém-escolhido
+  if (!state.usedTeamIds) state.usedTeamIds = new Set();
+  state.usedTeamIds.add(state.currentTeam.id); // Modo Livre: não sorteia esse time de novo (se repetir estiver off)
 
   // flash
   const rows = document.querySelectorAll(".player-row");
@@ -792,6 +1124,38 @@ function pickPlayer(idx) {
     if (state.pickCount >= 11) showCompletePanel();
     else showRollStep();
   }, 500);
+}
+
+// ═══════════════════════════════════════════
+// SELETOR DE POSIÇÃO — usado quando um jogador multi-posicional (ver
+// alt_positions.js) tem mais de uma posição com slot livre disponível ao
+// mesmo tempo. Reaproveitado pelo modo solo, multiplayer local e online.
+// ═══════════════════════════════════════════
+let posChoiceCallback = null;
+function openPosChoice(p, labels, onChoose) {
+  posChoiceCallback = onChoose;
+  const ov = document.getElementById("posChoiceOverlay");
+  const list = document.getElementById("posChoiceList");
+  const title = document.getElementById("posChoiceTitle");
+  if (title) title.textContent = `${p.name} — ESCOLHA A POSIÇÃO`;
+  if (list) {
+    list.innerHTML = labels.map(l => `
+      <button class="pos-choice-btn" onclick="confirmPosChoice('${l}')">
+        <span class="pcb-label">${l}</span>
+        <span class="pcb-tag">${(POS_ROLE[l] || "").toUpperCase()}</span>
+      </button>`).join("");
+  }
+  if (ov) ov.classList.add("open");
+}
+function confirmPosChoice(label) {
+  const cb = posChoiceCallback;
+  closePosChoice();
+  if (cb) cb(label);
+}
+function closePosChoice() {
+  const ov = document.getElementById("posChoiceOverlay");
+  if (ov) ov.classList.remove("open");
+  posChoiceCallback = null;
 }
 
 // ═══════════════════════════════════════════
@@ -890,6 +1254,7 @@ function renderPitch() {
       if (inSquad) {
         circle.className = `pd-circle filled role-${role}${inSquad.isHighlight ? " highlight" : ""}`;
         circle.textContent = maskOvr(inSquad.overall);
+        if (inSquad.altLabels) dot.title = `Também joga de: ${inSquad.altLabels.join(", ")}`;
         nameEl.textContent = inSquad.name.split(" ").pop() + (state.captain === inSquad.name ? " (C)" : "");
       } else {
         circle.className = `pd-circle empty role-${role}`;
@@ -1009,7 +1374,7 @@ function getBenchGroups() {
     .filter(g => g.labels.some(l => fmLabels.has(l)))
     .map(g => {
       const allowedRaws = g.raws.filter(r => fmLabels.has(RAW_TO_LABEL[r]));
-      const matches = candidates.filter(p => allowedRaws.includes(p.pos));
+      const matches = candidates.filter(p => getAllRawPositions(p).some(r => allowedRaws.includes(r)));
       // Sorteia até 5 opções pra essa categoria — o jogador escolhe uma
       // delas (ou nenhuma), mas não visualiza o elenco inteiro disponível.
       const shuffled = [...matches].sort(() => Math.random() - 0.5);
@@ -1148,6 +1513,24 @@ function pickScorers(players, count) {
     let r = Math.random() * totalW, cum = 0;
     for (const p of pool) { cum += p.overall||75; if (r<=cum) return p.name; }
     return pool[0].name;
+  });
+}
+
+// Sorteia quem deu a assistência de cada gol marcado (usado só pro seu
+// time — os adversários não têm assistências individualizadas). Pênaltis
+// nunca têm assistência; jogadas de bola parada e ~28% dos gols de jogo
+// também saem sem assistência (finalização individual, contra, etc.).
+// Nunca sorteia o próprio artilheiro do gol como o assistente dele mesmo.
+function pickAssists(players, scorers) {
+  return scorers.map(scorerName => {
+    if (scorerName.includes("(pên.)")) return null;
+    if (Math.random() > 0.72) return null;
+    const candidates = players.filter(p => p.name !== scorerName);
+    if (!candidates.length) return null;
+    const totalW = candidates.reduce((s,p)=>s+(p.overall||75),0);
+    let r = Math.random() * totalW, cum = 0;
+    for (const p of candidates) { cum += p.overall||75; if (r<=cum) return p.name; }
+    return candidates[0].name;
   });
 }
 
@@ -1308,7 +1691,18 @@ function runSimulation() {
   const isMundial = state.mode === "mundial";
   const isFreeMode = state.mode === "livre";
   const hasGroups = !isBrasil; // Champions, Libertadores, Copa do Mundo, Eurocopa, Copa América, Mundial de Clubes e Livre têm fase de grupos
-  const allOpponents = [...getRestrictedOpponentPool()].sort(()=>Math.random()-0.5);
+  // No Modo Livre, se "permitir repetir times" estiver ativo, os adversários
+  // são sorteados COM reposição (o mesmo time pode aparecer mais de uma vez
+  // no mesmo torneio) — em vez do sorteio padrão sem repetição.
+  const needOpponents = 8; // suficiente pro maior formato (grupo + mata-mata)
+  const allOpponents = (isFreeMode && settings.freeModeRepeatTeams)
+    ? (() => {
+        const src = getRestrictedOpponentPool();
+        const out = [];
+        for (let i = 0; i < needOpponents; i++) out.push(src[Math.floor(Math.random() * src.length)]);
+        return out;
+      })()
+    : [...getRestrictedOpponentPool()].sort(()=>Math.random()-0.5);
   // turno único (sem jogo de volta) na fase de grupos — vale pra seleções e pro Mundial de Clubes
   const isSingleRoundGroup = isWorldCup || isEurocopa || isCopaAmerica || isMundial;
 
@@ -1407,9 +1801,11 @@ function runSimulation() {
         const myOutcome = myG>oppG?"win":myG<oppG?"lose":"draw";
         goalsFor += myG; goalsAgainst += oppG;
         if (myOutcome==="win") wins++; else if (myOutcome==="draw") draws++; else losses++;
+        const myScorers = applyPenaltyBias(pickScorers(state.squad, myG));
         results.push({
           round: "GRUPOS", opponent: oppTeamRef, myGoals: myG, theirGoals: oppG, outcome: myOutcome,
-          scorers: applyPenaltyBias(pickScorers(state.squad, myG)),
+          scorers: myScorers,
+          assists: pickAssists(state.squad, myScorers),
           conceded: pickScorers(oppTeamRef.players, oppG),
           myMinutes: distributeMinutes(myG),
           theirMinutes: distributeMinutes(oppG),
@@ -1453,9 +1849,11 @@ function runSimulation() {
       }
       goalsFor += myGoals; goalsAgainst += theirGoals;
       if (outcome==="win") wins++; else losses++;
+      const myScorersKo = applyPenaltyBias(pickScorers(state.squad, myGoals));
       results.push({
         round: stages[i], opponent: opp, myGoals, theirGoals, outcome, penalties,
-        scorers: applyPenaltyBias(pickScorers(state.squad, myGoals)),
+        scorers: myScorersKo,
+        assists: pickAssists(state.squad, myScorersKo),
         conceded: pickScorers(opp.players, theirGoals),
         myMinutes: distributeMinutes(myGoals),
         theirMinutes: distributeMinutes(theirGoals),
@@ -1465,6 +1863,7 @@ function runSimulation() {
     }
   }
 
+  let draftPointsEarned = 0;
   if (!isProgressionDisabled()) {
     const lastResult = results[results.length - 1];
     const champion = !eliminated && lastResult && lastResult.round === "FINAL" && lastResult.outcome === "win";
@@ -1501,11 +1900,29 @@ function runSimulation() {
       scorersThisMatch[name] = (scorersThisMatch[name] || 0) + 1;
     }));
 
+    // Assistências dadas pelo MEU elenco nessa partida, agregadas por nome
+    const assistsThisMatch = {};
+    results.forEach(r => (r.assists || []).forEach(name => {
+      if (!name) return;
+      assistsThisMatch[name] = (assistsThisMatch[name] || 0) + 1;
+    }));
+
+    // Detalhe jogo a jogo da campanha inteira, em formato condensado (sem
+    // scorers/assistências/minutos/eventos — isso já entra em scorersThisMatch/
+    // assistsThisMatch acima) — guardado pro Histórico poder reabrir "todos os
+    // jogos do campeonato" depois, e não só o placar agregado.
+    const games = results.map(r => ({
+      round: r.round, outcome: r.outcome, myGoals: r.myGoals, theirGoals: r.theirGoals,
+      penalties: r.penalties || null,
+      opponent: { name: r.opponent.name, flag: r.opponent.flag, season: r.opponent.season },
+    }));
+
     const summary = {
       mode: state.mode, formation: state.formation, overall, goalsFor, goalsAgainst,
       wins, draws, losses, champion, reachedFinal, eliminatedAtGroup, eliminatedAtFinal,
       stageReached: lastResult ? lastResult.round : "—",
-      marginWin, biggestWinGoals, marginLoss, biggestLossGoals, perfectGroup, scorersThisMatch,
+      marginWin, biggestWinGoals, marginLoss, biggestLossGoals, perfectGroup, scorersThisMatch, assistsThisMatch,
+      games,
       squad: state.squad.map(p => ({
         name: p.name, overall: p.overall, pos: p.pos, rawPos: p.rawPos,
         team: p.team, season: p.season, slotId: p.slotId,
@@ -1514,6 +1931,11 @@ function runSimulation() {
       usedAllRerolls: !hc() && (state.rerollsUsed || 0) >= 3,
       usedNoRerolls: !hc() && (state.rerollsUsed || 0) === 0,
     };
+    // Pontos de Draft ganhos nessa campanha — calculados aqui mas só somados
+    // ao saldo em renderFinalCard() (mesmo motivo das conquistas: não pode
+    // entregar "campeão"/resultado antes do replay partida a partida).
+    draftPointsEarned = computeDraftPointsEarned(summary);
+    summary.draftPointsEarned = draftPointsEarned;
     // Não dispara as conquistas aqui — isso rodaria antes do jogador ver o
     // replay partida a partida, e um toast de "campeão" na primeira tela já
     // entregaria o resultado da campanha. Guarda o resumo e só processa as
@@ -1531,6 +1953,8 @@ function runSimulation() {
     eliminated,
     stageReached: lastResult ? lastResult.round : "—",
     wins, draws, losses, goalsFor, goalsAgainst, overall,
+    draftPointsEarned,
+    highlights: computeCampaignHighlights(results),
   };
 
   renderTimelapse(results, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, groupTable, myGroupPos);
@@ -1669,8 +2093,12 @@ function updateMatchInList(r, idx) {
   if (pill) { pill.innerHTML=`${r.myGoals}–${r.theirGoals}${pkText}`; pill.className=`tl-score-pill ${r.outcome}`; }
   if (entry) entry.className=`tl-match-entry ${r.outcome}`;
 
-  // Mostra gols e quem sofreu abaixo do placar
-  const scorersLine = r.scorers.length ? `<span class="tl-entry-scorers">⚽ ${r.scorers.join(", ")}</span>` : "";
+  // Mostra gols (com assistência quando houver) e quem sofreu abaixo do placar
+  const goalTexts = r.scorers.map((name, i) => {
+    const assist = (r.assists || [])[i];
+    return assist ? `${name} (assist. ${assist})` : name;
+  });
+  const scorersLine = goalTexts.length ? `<span class="tl-entry-scorers">⚽ ${goalTexts.join(", ")}</span>` : "";
   const concededLine = r.conceded.length ? `<span class="tl-entry-conceded">· sofreu: ${r.conceded.join(", ")}</span>` : "";
   const flavorIcons = { yellow: "🟨", red: "🟥", missedPen: "❌", disallowed: "🚫", freekick: "🎯" };
   const flavorLine = (r.flavorEvents || []).length
@@ -1942,7 +2370,14 @@ function addTimelapseEvent(evt, r) {
 
 // ═══════════════════════════════════════════
 // COMPARTILHAR RESULTADOS (partida específica ou torneio inteiro)
+// Agora leva o link do site e, quando o navegador suporta (Web Share API
+// nível 2, com `files`), uma imagem de resultado gerada na hora (card com
+// o placar/resultado) anexada junto do texto. Onde não dá pra anexar
+// arquivo no share nativo, a imagem é baixada como fallback pro jogador
+// poder colar ela manualmente onde quiser.
 // ═══════════════════════════════════════════
+const SHARE_SITE_URL = "https://nanoniii.github.io/Futdraft";
+
 function buildMatchShareText(r) {
   const scoreLine = r.penalties
     ? `${r.myGoals}x${r.theirGoals} (${r.penalties.mine}x${r.penalties.theirs} nos pênaltis)`
@@ -1952,25 +2387,41 @@ function buildMatchShareText(r) {
   text += `${resultWord} na ${r.round}!\n`;
   text += `Meu Time ${scoreLine} ${r.opponent.flag || ""} ${r.opponent.name} ${r.opponent.season}\n`;
   if (r.scorers && r.scorers.length) text += `\n⚽ Gols: ${r.scorers.join(", ")}\n`;
+  if (r.conceded && r.conceded.length) text += `🥅 Sofreu de: ${r.conceded.join(", ")}\n`;
   const cards = (r.flavorEvents || []).filter(e => e.type === "yellow" || e.type === "red");
   if (cards.length) text += `Cartões: ${cards.map(c => c.type === "red" ? "🟥" : "🟨").join(" ")}\n`;
-  text += `\nJoga também: monte seu time dos sonhos no FutDraft ⚔️\n#FutDraft`;
+  text += `\nMonta o seu time dos sonhos também: ${SHARE_SITE_URL}\n#FutDraft`;
   return text;
 }
 
 function buildTournamentShareText() {
   const s = window._lastSummary;
   if (!s) return "FutDraft";
+  const isLivre = s.mode === "livre";
   const modeShort = MODE_META[s.mode] ? MODE_META[s.mode].short : "FUTDRAFT";
-  const headline = s.champion
-    ? "🏆 FUI CAMPEÃO!"
-    : s.eliminated
-      ? `Caí ${s.stageReached && s.stageReached !== "—" ? "na " + s.stageReached : "no meio do caminho"}`
-      : `Cheguei até ${s.stageReached}`;
+  const headline = isLivre
+    ? "🎮 Simulei minha campanha!"
+    : s.champion
+      ? "🏆 FUI CAMPEÃO!"
+      : s.eliminated
+        ? `Caí ${s.stageReached && s.stageReached !== "—" ? "na " + s.stageReached : "no meio do caminho"}`
+        : `Cheguei até ${s.stageReached}`;
 
-  let text = `⚽ FutDraft — ${modeShort}\n\n${headline}\n\n`;
+  let text = `⚽ FutDraft — ${modeShort}${isLivre ? " (Modo Livre)" : ""}\n\n${headline}\n\n`;
   text += `📊 ${s.wins}V ${s.draws}E ${s.losses}D  ·  ${s.goalsFor}x${s.goalsAgainst} no total\n`;
   text += `⭐ Overall do meu time: ${maskOvr(s.overall)}\n`;
+
+  const hl = s.highlights;
+  if (hl && (hl.topScorer || hl.topAssist)) {
+    text += `\n`;
+    if (hl.topScorer) text += `🥇 Artilheiro: ${hl.topScorer.name} (${hl.topScorer.goals} gol${hl.topScorer.goals>1?"s":""})\n`;
+    if (hl.topAssist) text += `🎯 Garçom: ${hl.topAssist.name} (${hl.topAssist.assists} assist${hl.topAssist.assists>1?"s":""})\n`;
+  }
+  if (hl && (hl.biggestWin || hl.biggestLoss)) {
+    text += `\n`;
+    if (hl.biggestWin) text += `🔥 Maior goleada feita: ${hl.biggestWin.myGoals}x${hl.biggestWin.theirGoals} vs ${hl.biggestWin.opponent.flag || ""} ${hl.biggestWin.opponent.name} ${hl.biggestWin.opponent.season || ""}\n`;
+    if (hl.biggestLoss) text += `😰 Maior goleada sofrida: ${hl.biggestLoss.theirGoals}x${hl.biggestLoss.myGoals} vs ${hl.biggestLoss.opponent.flag || ""} ${hl.biggestLoss.opponent.name} ${hl.biggestLoss.opponent.season || ""}\n`;
+  }
 
   const results = window._lastResults || [];
   if (results.length) {
@@ -1980,35 +2431,221 @@ function buildTournamentShareText() {
       const score = r.penalties
         ? `${r.myGoals}x${r.theirGoals} (pên. ${r.penalties.mine}x${r.penalties.theirs})`
         : `${r.myGoals}x${r.theirGoals}`;
-      text += `${icon} ${r.round}: ${score} vs ${r.opponent.flag || ""} ${r.opponent.name}\n`;
+      // Ano do time adversário incluso — só o nome sem temporada fica sem
+      // graça pra times com várias versões históricas (ex: Real Madrid).
+      text += `${icon} ${r.round}: ${score} vs ${r.opponent.flag || ""} ${r.opponent.name} ${r.opponent.season || ""}\n`;
     });
   }
 
-  text += `\nMonta o seu time também no FutDraft ⚔️\n#FutDraft`;
+  text += `\nMonta o seu time também: ${SHARE_SITE_URL}\n#FutDraft`;
   return text;
 }
 
-async function shareText(text) {
-  if (navigator.share) {
-    try { await navigator.share({ text }); return; }
-    catch (e) { /* usuário cancelou o share nativo ou não é suportado — cai no fallback abaixo */ }
+// ── Card de imagem compartilhável (canvas 1200x630, padrão de preview de
+// link) — desenhado na hora com as cores do tema, sem depender de nenhuma
+// lib externa nem de tirar print da tela. ──
+function drawShareCard({ eyebrow, title, subtitle, lines }) {
+  return new Promise(resolve => {
+    try {
+      const W = 1200, H = 630;
+      const canvas = document.createElement("canvas");
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext("2d");
+
+      const grad = ctx.createLinearGradient(0, 0, W, H);
+      grad.addColorStop(0, "#12141c");
+      grad.addColorStop(1, "#1c2030");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.strokeStyle = "#ffd54a";
+      ctx.lineWidth = 6;
+      ctx.strokeRect(16, 16, W - 32, H - 32);
+
+      ctx.textAlign = "center";
+
+      ctx.fillStyle = "#ffd54a";
+      ctx.font = "700 30px Arial, sans-serif";
+      ctx.fillText((eyebrow || "").toUpperCase(), W / 2, 110);
+
+      ctx.fillStyle = "#f4f4f6";
+      ctx.font = "800 62px Arial, sans-serif";
+      ctx.fillText(title || "", W / 2, 200);
+
+      if (subtitle) {
+        ctx.fillStyle = "#c9cbd6";
+        ctx.font = "500 30px Arial, sans-serif";
+        ctx.fillText(subtitle, W / 2, 250);
+      }
+
+      ctx.font = "600 32px Arial, sans-serif";
+      ctx.fillStyle = "#e8e9ee";
+      let y = 340;
+      (lines || []).forEach(line => {
+        ctx.fillText(line, W / 2, y);
+        y += 52;
+      });
+
+      ctx.font = "700 30px Arial, sans-serif";
+      ctx.fillStyle = "#ffd54a";
+      ctx.fillText("⚽ FUTDRAFT", W / 2, H - 82);
+      ctx.font = "500 26px Arial, sans-serif";
+      ctx.fillStyle = "#c9cbd6";
+      ctx.fillText(SHARE_SITE_URL, W / 2, H - 44);
+
+      canvas.toBlob(blob => resolve(blob), "image/png");
+    } catch (e) { resolve(null); } // navegador sem suporte a canvas — segue só com texto
+  });
+}
+
+function buildMatchShareImageData(r) {
+  const scoreLine = r.penalties
+    ? `${r.myGoals} x ${r.theirGoals}  (pên. ${r.penalties.mine} x ${r.penalties.theirs})`
+    : `${r.myGoals} x ${r.theirGoals}`;
+  const resultWord = r.outcome === "win" ? "🏆 VITÓRIA" : r.outcome === "lose" ? "😔 DERROTA" : "🤝 EMPATE";
+  const lines = [`Meu Time  ${scoreLine}  ${r.opponent.flag || ""} ${r.opponent.name} ${r.opponent.season}`];
+  if (r.scorers && r.scorers.length) lines.push(`⚽ ${r.scorers.join(", ")}`);
+  if (r.conceded && r.conceded.length) lines.push(`🥅 sofreu de ${r.conceded.join(", ")}`);
+  return { eyebrow: modeMeta().short, title: resultWord, subtitle: r.round, lines };
+}
+
+function buildTournamentShareImageData() {
+  const s = window._lastSummary;
+  if (!s) return null;
+  const isLivre = s.mode === "livre";
+  const modeShort = MODE_META[s.mode] ? MODE_META[s.mode].short : "FUTDRAFT";
+  const title = isLivre
+    ? "🎮 MODO LIVRE"
+    : s.champion
+      ? "🏆 CAMPEÃO!"
+      : s.eliminated
+        ? `ELIMINADO${s.stageReached && s.stageReached !== "—" ? " · " + String(s.stageReached).toUpperCase() : ""}`
+        : `CHEGUEI ATÉ ${String(s.stageReached).toUpperCase()}`;
+  const lines = [`⭐ Overall do time: ${maskOvr(s.overall)}`];
+  const hl = s.highlights;
+  if (hl?.topScorer) lines.push(`🥇 Artilheiro: ${hl.topScorer.name} (${hl.topScorer.goals})`);
+  if (hl?.topAssist) lines.push(`🎯 Garçom: ${hl.topAssist.name} (${hl.topAssist.assists})`);
+  if (hl?.biggestWin) lines.push(`🔥 Goleada feita: ${hl.biggestWin.myGoals}x${hl.biggestWin.theirGoals} vs ${hl.biggestWin.opponent.name}`);
+  if (hl?.biggestLoss) lines.push(`😰 Goleada sofrida: ${hl.biggestLoss.theirGoals}x${hl.biggestLoss.myGoals} vs ${hl.biggestLoss.opponent.name}`);
+  return {
+    eyebrow: modeShort + (isLivre ? " · SIMULAÇÃO" : ""),
+    title,
+    subtitle: `${s.wins}V ${s.draws}E ${s.losses}D  ·  ${s.goalsFor}x${s.goalsAgainst} no total`,
+    lines,
+  };
+}
+
+// ── Card de compartilhamento "de verdade" — em vez de redesenhar um resumo
+// simples num canvas em branco, monta o MESMO visual que aparece na tela
+// (o final-card dourado/escuro, com stats, jogos e elenco — ou um recorte
+// equivalente pra uma partida isolada) dentro do #shareCardStage (fora da
+// tela) e tira uma "foto" dele com html2canvas. Isso dá um card bem mais
+// bonito e fiel do que desenhar formas simples no canvas. Se a lib não
+// carregar (ex.: sem internet no momento do load), cai de volta pro
+// drawShareCard() de canvas puro — ver shareText().
+function buildTournamentShareCardHTML() {
+  const card = document.getElementById("tlFinalCard");
+  if (!card) return null;
+  const clone = card.cloneNode(true);
+  clone.querySelectorAll(".btn-share-result, .btn-new-game").forEach(b => b.remove());
+  return `
+    <div class="share-card-eyebrow">⚽ FUTDRAFT · ${modeMeta().short}</div>
+    ${clone.innerHTML}
+    <div class="share-card-url">${SHARE_SITE_URL}</div>`;
+}
+
+function buildMatchShareCardHTML(r) {
+  const scoreLine = r.penalties
+    ? `${r.myGoals} x ${r.theirGoals} <small>(pên. ${r.penalties.mine} x ${r.penalties.theirs})</small>`
+    : `${r.myGoals} x ${r.theirGoals}`;
+  const resultWord = r.outcome === "win" ? "🏆 VITÓRIA" : r.outcome === "lose" ? "😔 DERROTA" : "🤝 EMPATE";
+  const isLivre = state.mode === "livre";
+  const scorersHtml = (r.scorers && r.scorers.length)
+    ? `<div class="share-card-scorers">⚽ ${r.scorers.join(", ")}</div>` : "";
+  const concededHtml = (r.conceded && r.conceded.length)
+    ? `<div class="share-card-scorers">🥅 sofreu de ${r.conceded.join(", ")}</div>` : "";
+  const cards = (r.flavorEvents || []).filter(e => e.type === "yellow" || e.type === "red");
+  const cardsHtml = cards.length
+    ? `<div class="share-card-cards">${cards.map(c => c.type === "red" ? "🟥" : "🟨").join(" ")}</div>` : "";
+  return `
+    <div class="share-card-eyebrow">⚽ FUTDRAFT · ${modeMeta().short}${isLivre ? " (Modo Livre)" : ""}</div>
+    <div class="fc-result">${resultWord}</div>
+    <div class="share-card-round">${r.round}</div>
+    <div class="share-card-score">${scoreLine}</div>
+    <div class="share-card-opp">${r.opponent.flag || ""} ${r.opponent.name} <small>${r.opponent.season || ""}</small></div>
+    ${scorersHtml}${concededHtml}${cardsHtml}
+    <div class="share-card-url">${SHARE_SITE_URL}</div>`;
+}
+
+// Monta `innerHtml` dentro do palco invisível, espera o layout assentar e
+// tira o print com html2canvas. Retorna null (em vez de lançar) se a lib
+// não estiver disponível ou o snapshot falhar por qualquer motivo — quem
+// chamar deve tratar isso como "sem sorte, usa o fallback".
+async function captureShareCardBlob(innerHtml) {
+  if (typeof html2canvas !== "function" || !innerHtml) return null;
+  const stage = document.getElementById("shareCardStage");
+  if (!stage) return null;
+  stage.innerHTML = innerHtml;
+  // dois frames de espera garantem que o layout (e fontes/emoji) já assentaram antes do print
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  try {
+    const canvas = await html2canvas(stage, { backgroundColor: "#12141c", scale: 2, useCORS: true, logging: false });
+    return await new Promise(resolve => canvas.toBlob(blob => resolve(blob), "image/png"));
+  } catch (e) {
+    return null; // segue pro fallback em drawShareCard()
+  } finally {
+    stage.innerHTML = "";
   }
+}
+
+// Baixa a imagem gerada como fallback, pra quando o compartilhamento
+// nativo não aceita anexar arquivo (ex: a maioria dos navegadores de
+// desktop) — assim o jogador ainda consegue postar a imagem manualmente.
+function downloadShareImage(file) {
+  const url = URL.createObjectURL(file);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = file.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+async function shareText(text, cardHtml, fallbackImageData) {
+  let file = null;
+  let blob = await captureShareCardBlob(cardHtml);
+  if (!blob && fallbackImageData) blob = await drawShareCard(fallbackImageData);
+  if (blob) file = new File([blob], "futdraft-resultado.png", { type: "image/png" });
+
+  if (navigator.share) {
+    try {
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ text, url: SHARE_SITE_URL, files: [file] });
+        return;
+      }
+      await navigator.share({ text, url: SHARE_SITE_URL });
+      return;
+    } catch (e) { /* usuário cancelou o share nativo ou não é suportado — cai no fallback abaixo */ }
+  }
+
   try {
     await navigator.clipboard.writeText(text);
-    showShareToast("Resultado copiado! Cole onde quiser compartilhar.");
+    showShareToast(file ? "Resultado copiado e imagem baixada — é só colar o texto e anexar a imagem!" : "Resultado copiado! Cole onde quiser compartilhar.");
   } catch (e) {
     showShareToast("Não foi possível compartilhar automaticamente.");
   }
+  if (file) downloadShareImage(file);
 }
 
 function shareMatchResult(idx) {
   const r = (window._lastResults || [])[idx];
   if (!r) return;
-  shareText(buildMatchShareText(r));
+  shareText(buildMatchShareText(r), buildMatchShareCardHTML(r), buildMatchShareImageData(r));
 }
 
 function shareTournamentResult() {
-  shareText(buildTournamentShareText());
+  shareText(buildTournamentShareText(), buildTournamentShareCardHTML(), buildTournamentShareImageData());
 }
 
 function showShareToast(msg) {
@@ -2039,17 +2676,25 @@ function renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draw
 
   // Só agora, com o replay inteiro já exibido, é que checamos e mostramos
   // as conquistas — assim nenhum toast entrega o resultado da campanha
-  // antes da hora (ex.: "campeão" pipocando lá na primeira partida).
+  // antes da hora (ex.: "campeão" pipocando lá na primeira partida). Os
+  // Pontos de Draft ganhos na campanha também só entram no saldo aqui, pelo
+  // mesmo motivo.
   if (window._pendingAchievementSummary) {
     const summary = window._pendingAchievementSummary;
     window._pendingAchievementSummary = null;
     const newlyUnlocked = recordMatchAndCheckAchievements(summary);
     showAchievementToasts(newlyUnlocked);
+    if (summary.draftPointsEarned) {
+      addDraftPoints(summary.draftPointsEarned);
+      showDraftPointsToast(summary.draftPointsEarned);
+    }
   }
 
   const last = results[results.length-1];
   const won = !eliminated && last.round === "FINAL" && last.outcome === "win";
   const saldo = goalsFor - goalsAgainst;
+  const isLivre = state.mode === "livre";
+  const mm = modeMeta();
 
   const outcomeIcon = { win: "✅", draw: "➖", lose: "❌" };
   const outcomeLabel = { win: "Vitória", draw: "Empate", lose: "Derrota" };
@@ -2057,16 +2702,36 @@ function renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draw
     const scoreText = r.penalties
       ? `${r.myGoals}–${r.theirGoals} <small>(${r.penalties.mine}-${r.penalties.theirs} pên)</small>`
       : `${r.myGoals}–${r.theirGoals}`;
+    // Mostra quem marcou (meu time) e quem marcou contra (adversário) —
+    // não só o placar seco — em cada jogo da campanha.
+    const scorersBit = (r.scorers && r.scorers.length) ? `⚽ ${r.scorers.join(", ")}` : "";
+    const concededBit = (r.conceded && r.conceded.length) ? `🥅 sofreu de ${r.conceded.join(", ")}` : "";
+    const subBits = [scorersBit, concededBit].filter(Boolean).join("  ·  ");
     return `
-      <div class="fc-match-row fc-match-${r.outcome}" title="${outcomeLabel[r.outcome] || ""}">
-        <span class="fc-match-round">${r.round}</span>
-        <span class="fc-match-opp">${r.opponent.flag || ""} ${r.opponent.name} <small>${r.opponent.season || ""}</small></span>
-        <span class="fc-match-score">${scoreText}</span>
-        <span class="fc-match-icon">${outcomeIcon[r.outcome] || ""}</span>
+      <div class="fc-match-row-wrap">
+        <div class="fc-match-row fc-match-${r.outcome}" title="${outcomeLabel[r.outcome] || ""}">
+          <span class="fc-match-round">${r.round}</span>
+          <span class="fc-match-opp">${r.opponent.flag || ""} ${r.opponent.name} <small>${r.opponent.season || ""}</small></span>
+          <span class="fc-match-score">${scoreText}</span>
+          <span class="fc-match-icon">${outcomeIcon[r.outcome] || ""}</span>
+        </div>
+        ${subBits ? `<div class="fc-match-sub">${subBits}</div>` : ""}
       </div>`;
   }).join("");
 
+  const hl = window._lastSummary?.highlights || computeCampaignHighlights(results);
+  const highlightChips = [];
+  if (hl.topScorer) highlightChips.push(`<div class="fc-highlight-chip"><span class="fc-hl-icon">🥇</span><span class="fc-hl-text"><b>${hl.topScorer.name}</b><small>Artilheiro · ${hl.topScorer.goals} gol${hl.topScorer.goals>1?"s":""}</small></span></div>`);
+  if (hl.topAssist) highlightChips.push(`<div class="fc-highlight-chip"><span class="fc-hl-icon">🎯</span><span class="fc-hl-text"><b>${hl.topAssist.name}</b><small>Garçom · ${hl.topAssist.assists} assist${hl.topAssist.assists>1?"s":""}</small></span></div>`);
+  if (hl.biggestWin) highlightChips.push(`<div class="fc-highlight-chip"><span class="fc-hl-icon">🔥</span><span class="fc-hl-text"><b>${hl.biggestWin.myGoals}–${hl.biggestWin.theirGoals}</b><small>Maior goleada feita · vs ${hl.biggestWin.opponent.name}</small></span></div>`);
+  if (hl.biggestLoss) highlightChips.push(`<div class="fc-highlight-chip"><span class="fc-hl-icon">😰</span><span class="fc-hl-text"><b>${hl.biggestLoss.theirGoals}–${hl.biggestLoss.myGoals}</b><small>Maior goleada sofrida · vs ${hl.biggestLoss.opponent.name}</small></span></div>`);
+  const highlightsHtml = highlightChips.length
+    ? `<div class="fc-highlights">${highlightChips.join("")}</div>`
+    : "";
+
+  const dpEarned = window._lastSummary?.draftPointsEarned || 0;
   card.innerHTML = `
+    <div class="fc-mode-eyebrow${isLivre ? " is-livre" : ""}">${mm.logo} ${mm.title}${isLivre ? " · não conta pro histórico" : ""}</div>
     <div class="fc-result">${won ? "🏆 CAMPEÃO!" : eliminated ? "ELIMINADO" : "FINALISTA"}</div>
     <div class="fc-stats">
       <div class="fc-stat"><span class="fc-stat-num">${wins}</span><span class="fc-stat-label">Vitórias</span></div>
@@ -2075,7 +2740,9 @@ function renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draw
       <div class="fc-stat"><span class="fc-stat-num">${saldo>=0?"+":""}${saldo}</span><span class="fc-stat-label">Saldo</span></div>
       <div class="fc-stat"><span class="fc-stat-num">${goalsFor}</span><span class="fc-stat-label">Gols pró</span></div>
       <div class="fc-stat"><span class="fc-stat-num">${goalsAgainst}</span><span class="fc-stat-label">Sofridos</span></div>
+      ${dpEarned ? `<div class="fc-stat fc-stat-dp"><span class="fc-stat-num">+${dpEarned}</span><span class="fc-stat-label">💎 Pontos de Draft</span></div>` : ""}
     </div>
+    ${highlightsHtml}
     <div class="fc-matches">
       <div class="fc-matches-title">JOGOS DO CAMPEONATO</div>
       ${matchRowsHtml}
@@ -2107,7 +2774,7 @@ function resetGame() {
   stopAmbiente();
   window._tlContinueCallback = null;
   window._pendingAchievementSummary = null;
-  state = { currentTeam:null, rerollsLeft:3, formation:null, squad:[], phase:"landing", pickCount:0, mode:"champions", freeModeTeams:[], captain:null, pkTaker:null, fkTaker:null, tacticStyle:"equilibrado", bench:[], benchChoices:{}, benchGroups:[] };
+  state = { currentTeam:null, rerollsLeft:3, rerollsBoughtThisDraft:0, draftGuaranteedTeamId:null, formation:null, squad:[], phase:"landing", pickCount:0, mode:"champions", freeModeTeams:[], captain:null, pkTaker:null, fkTaker:null, tacticStyle:"equilibrado", bench:[], benchChoices:{}, benchGroups:[], usedTeamIds:null };
   showPage("pageLanding");
 }
 
@@ -2125,6 +2792,7 @@ function closeChangelog() {
 
 document.getElementById("headerRight").insertAdjacentHTML("afterbegin",
   `<span style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.5)">MONTE · SIMULE · FUTDRAFT</span>`);
+updateDraftPointsBadge();
 
 // ═══════════════════════════════════════════
 // CRÉDITOS

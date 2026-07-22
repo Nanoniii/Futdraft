@@ -35,8 +35,8 @@ function pickEligibleTeamFromPool(pool, formation, squad) {
   squad.forEach(s => { if (slotsRemaining[s.pos] != null) slotsRemaining[s.pos]--; });
 
   const hasEligiblePlayer = (team) => team.players.some(p => {
-    const pos = POS_LABELS[p.pos] || p.pos;
-    return !usedNames.has(p.name) && (slotsRemaining[pos] || 0) > 0;
+    if (usedNames.has(p.name)) return false;
+    return getAllPosLabels(p).some(pos => (slotsRemaining[pos] || 0) > 0);
   });
 
   const candidates = pool.filter(hasEligiblePlayer);
@@ -328,13 +328,17 @@ function mpRenderPlayerList(team) {
   const sorted = [...team.players].sort((a, b) => b.overall - a.overall);
 
   list.innerHTML = sorted.map((p) => {
-    const pos = POS_LABELS[p.pos] || p.pos;
+    const allLabels = getAllPosLabels(p);
+    const pos = allLabels.join("/");
     const elite = p.overall >= 90 ? "elite" : "";
     const used = usedNames.has(p.name);
-    const slotsForPos = slots.filter(s => s.pos === pos).length;
-    const takenForPos = squad.filter(s => s.pos === pos).length;
-    const slotFull = takenForPos >= slotsForPos;
-    const noSlot = slotsForPos === 0;
+    const noSlot = !allLabels.some(l => slots.some(s => s.pos === l));
+    const hasOpenSlot = allLabels.some(l => {
+      const slotsForPos = slots.filter(s => s.pos === l).length;
+      const takenForPos = squad.filter(s => s.pos === l).length;
+      return takenForPos < slotsForPos;
+    });
+    const slotFull = !noSlot && !hasOpenSlot;
     const blocked = used || slotFull || noSlot;
     const tag = noSlot ? "sem slot" : slotFull ? "slot cheio" : used ? "já no time" : "";
     const originalIdx = team.players.indexOf(p);
@@ -353,20 +357,41 @@ function mpPickPlayer(idx) {
   const side = MP.local.activeSide;
   const team = MP.local.teams[side];
   const p = team.currentTeam.players[idx];
-  const pos = POS_LABELS[p.pos] || p.pos;
+  const slots = getFormationSlots(MP.formation);
+  const takenSlots = new Set(team.squad.map(s => s.slotId));
+
+  const allLabels = getAllPosLabels(p);
+  const openLabels = allLabels.filter(label => slots.some(slot => slot.pos === label && !takenSlots.has(slot.id)));
+  if (!openLabels.length) return;
+
+  if (openLabels.length === 1) {
+    mpCommitPickPlayer(idx, openLabels[0]);
+    return;
+  }
+  openPosChoice(p, openLabels, (label) => mpCommitPickPlayer(idx, label));
+}
+
+function mpCommitPickPlayer(idx, chosenLabel) {
+  const side = MP.local.activeSide;
+  const team = MP.local.teams[side];
+  const p = team.currentTeam.players[idx];
   const slots = getFormationSlots(MP.formation);
   const takenSlots = new Set(team.squad.map(s => s.slotId));
 
   let slotId = null;
   for (const slot of slots) {
-    if (slot.pos === pos && !takenSlots.has(slot.id)) { slotId = slot.id; break; }
+    if (slot.pos === chosenLabel && !takenSlots.has(slot.id)) { slotId = slot.id; break; }
   }
   if (slotId === null) return;
 
+  const allLabels = getAllPosLabels(p);
+  const rawPos = (POS_LABELS[p.pos] === chosenLabel) ? p.pos : rawForLabel(chosenLabel);
+
   team.squad.push({
     ...p,
-    pos,
-    rawPos: p.pos,
+    pos: chosenLabel,
+    rawPos,
+    altLabels: allLabels.length > 1 ? allLabels : null,
     slotId,
     team: team.currentTeam.name,
     season: team.currentTeam.season,
@@ -1298,13 +1323,17 @@ function onlineRenderPlayerList(team, mySquad) {
   const sorted = [...team.players].sort((a, b) => b.overall - a.overall);
 
   list.innerHTML = sorted.map((p) => {
-    const pos = POS_LABELS[p.pos] || p.pos;
+    const allLabels = getAllPosLabels(p);
+    const pos = allLabels.join("/");
     const elite = p.overall >= 90 ? "elite" : "";
     const used = usedNames.has(p.name);
-    const slotsForPos = slots.filter(s => s.pos === pos).length;
-    const takenForPos = mySquad.filter(s => s.pos === pos).length;
-    const slotFull = takenForPos >= slotsForPos;
-    const noSlot = slotsForPos === 0;
+    const noSlot = !allLabels.some(l => slots.some(s => s.pos === l));
+    const hasOpenSlot = allLabels.some(l => {
+      const slotsForPos = slots.filter(s => s.pos === l).length;
+      const takenForPos = mySquad.filter(s => s.pos === l).length;
+      return takenForPos < slotsForPos;
+    });
+    const slotFull = !noSlot && !hasOpenSlot;
     const blocked = used || slotFull || noSlot;
     const tag = noSlot ? "sem slot" : slotFull ? "slot cheio" : used ? "já no time" : "";
     const originalIdx = team.players.indexOf(p);
@@ -1359,23 +1388,48 @@ async function onlinePickPlayer(idx) {
   const pool = getTeamPoolFor(room.mode);
   const team = pool.find(t => t.id === room.turn.currentTeamId);
   if (!team) return;
-  await onlineCommitPick(room, team, idx);
-}
 
-async function onlineCommitPick(room, team, idx) {
   const p = team.players[idx];
-  const pos = POS_LABELS[p.pos] || p.pos;
   const mySquad = (room[MP.online.myKey] && room[MP.online.myKey].squad) || [];
   const slots = getFormationSlots(room.formation);
   const takenSlots = new Set(mySquad.map(s => s.slotId));
-  let slotId = null;
-  for (const slot of slots) {
-    if (slot.pos === pos && !takenSlots.has(slot.id)) { slotId = slot.id; break; }
+  const allLabels = getAllPosLabels(p);
+  const openLabels = allLabels.filter(label => slots.some(slot => slot.pos === label && !takenSlots.has(slot.id)));
+  if (!openLabels.length) return;
+
+  if (openLabels.length === 1) {
+    await onlineCommitPick(room, team, idx, openLabels[0]);
+    return;
+  }
+  openPosChoice(p, openLabels, async (label) => { await onlineCommitPick(room, team, idx, label); });
+}
+
+async function onlineCommitPick(room, team, idx, forcedLabel) {
+  const p = team.players[idx];
+  const mySquad = (room[MP.online.myKey] && room[MP.online.myKey].squad) || [];
+  const slots = getFormationSlots(room.formation);
+  const takenSlots = new Set(mySquad.map(s => s.slotId));
+  const allLabels = getAllPosLabels(p);
+  let slotId = null, chosenLabel = null;
+  if (forcedLabel) {
+    for (const slot of slots) {
+      if (slot.pos === forcedLabel && !takenSlots.has(slot.id)) { slotId = slot.id; chosenLabel = forcedLabel; break; }
+    }
+  } else {
+    for (const label of allLabels) {
+      for (const slot of slots) {
+        if (slot.pos === label && !takenSlots.has(slot.id)) { slotId = slot.id; chosenLabel = label; break; }
+      }
+      if (slotId !== null) break;
+    }
   }
   if (slotId === null) return;
 
+  const rawPos = (POS_LABELS[p.pos] === chosenLabel) ? p.pos : rawForLabel(chosenLabel);
   const newSquad = [...mySquad, {
-    ...p, pos, rawPos: p.pos, slotId, team: team.name, season: team.season,
+    ...p, pos: chosenLabel, rawPos,
+    altLabels: allLabels.length > 1 ? allLabels : null,
+    slotId, team: team.name, season: team.season,
   }];
   const nextSide = MP.online.myKey === "p1" ? "p2" : "p1";
   const updates = {};
@@ -1416,9 +1470,8 @@ async function onlineHandleTimeout() {
   const usedNames = new Set((myData.squad||[]).map(s => s.name));
   // Jogadores elegíveis (com slot livre e não usados ainda neste squad)
   const eligible = team.players.filter(p => {
-    const pos = POS_LABELS[p.pos] || p.pos;
     if (usedNames.has(p.name)) return false;
-    return slots.some(slot => slot.pos === pos && !takenSlots.has(slot.id));
+    return getAllPosLabels(p).some(pos => slots.some(slot => slot.pos === pos && !takenSlots.has(slot.id)));
   });
   const pickFrom = eligible.length ? eligible : team.players;
   const randomPlayer = pickFrom[Math.floor(Math.random() * pickFrom.length)];

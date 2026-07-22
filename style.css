@@ -876,6 +876,22 @@ body {
   position: sticky;
   top: 20px;
 }
+.fc-mode-eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.fc-mode-eyebrow.is-livre {
+  display: inline-block;
+  color: #1a1a1a;
+  background: var(--gold);
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+}
 .fc-result {
   font-family: var(--font-display);
   font-size: 1rem;
@@ -917,12 +933,41 @@ body {
   margin-bottom: 20px;
   text-align: left;
 }
+.fc-highlights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 14px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+.fc-highlight-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.fc-hl-icon { font-size: 1.2rem; }
+.fc-hl-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fc-hl-text b { font-size: 0.8rem; color: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-hl-text small { font-size: 0.62rem; color: rgba(255,255,255,0.5); letter-spacing: 0.3px; }
+@media (max-width: 480px) { .fc-highlights { grid-template-columns: 1fr; } }
 .fc-matches-title {
   font-family: var(--font-display);
   font-size: 0.7rem;
   letter-spacing: 1.5px;
   color: rgba(255,255,255,0.5);
   margin-bottom: 8px;
+}
+.fc-match-row-wrap { margin-bottom: 8px; }
+.fc-match-sub {
+  font-size: 0.66rem;
+  color: rgba(255,255,255,0.45);
+  padding: 2px 8px 0;
+  line-height: 1.4;
 }
 .fc-match-row {
   display: grid;
@@ -932,7 +977,7 @@ body {
   padding: 6px 8px;
   border-radius: 6px;
   font-size: 0.78rem;
-  margin-bottom: 3px;
+  margin-bottom: 0;
 }
 .fc-match-row.fc-match-win  { background: rgba(46, 160, 90, 0.12); }
 .fc-match-row.fc-match-draw { background: rgba(255,255,255,0.05); }
@@ -995,6 +1040,57 @@ body {
   margin-top: 16px;
   font-size: 0.65rem;
   color: rgba(255,255,255,0.3);
+  letter-spacing: 1px;
+}
+
+/* ── Card de compartilhamento (snapshot via html2canvas) ──
+   #shareCardStage reaproveita o visual do .final-card (fundo escuro,
+   dourado, etc.) mas fica fora da tela — só existe pra ser fotografado. */
+#shareCardStage {
+  position: fixed;
+  top: 0;
+  left: -99999px;
+  z-index: -1;
+  pointer-events: none;
+}
+.share-card-shell {
+  width: 480px;
+  /* o seletor de ID #shareCardStage (mais específico que a classe .final-card)
+     já garante position:fixed acima — isso só define a largura do print */
+}
+.share-card-eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  color: var(--gold);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+.share-card-round {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.share-card-score {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 14px;
+}
+.share-card-score small { font-size: 1.1rem; font-weight: 400; opacity: 0.7; }
+.share-card-opp { font-size: 1rem; color: rgba(255,255,255,0.85); margin-bottom: 18px; }
+.share-card-opp small { display: block; font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 2px; }
+.share-card-scorers, .share-card-cards {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 8px;
+}
+.share-card-url {
+  margin-top: 22px;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.35);
   letter-spacing: 1px;
 }
 
@@ -1958,6 +2054,18 @@ body {
   justify-content: center;
 }
 .credits-overlay.open { display: flex; }
+.pos-choice-modal { max-width: 380px; }
+.pos-choice-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.pos-choice-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-radius: 6px; border: 2px solid var(--gold);
+  background: rgba(255,255,255,0.04); color: var(--text-main);
+  cursor: pointer; font-weight: 700; font-size: 15px; transition: background 0.15s;
+}
+.pos-choice-btn:hover { background: rgba(255,215,0,0.12); }
+.pos-choice-btn .pcb-label { letter-spacing: 0.5px; }
+.pos-choice-btn .pcb-tag { font-size: 12px; opacity: 0.7; font-weight: 400; }
+
 .credits-modal {
   background: var(--panel-bg);
   border: 2px solid var(--gold);
@@ -3103,19 +3211,61 @@ body {
 }
 
 /* ──────────────────────────────────────────
-   HISTÓRICO & CONQUISTAS
+   HISTÓRICO & CONQUISTAS — página cheia (não é mais um pop-up: ocupa a
+   tela inteira, com cabeçalho fixo + abas + conteúdo rolável, como uma
+   tela própria do jogo em vez de um modal centralizado).
 ────────────────────────────────────────── */
-.history-modal {
-  max-width: 640px !important;
-  max-height: 82vh;
-  overflow-y: auto;
+.history-page {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--bg, #0e1015);
+  flex-direction: column;
   text-align: left;
 }
+.history-page.open { display: flex; }
+.history-page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--panel-bg);
+}
+.history-back-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.5px;
+  padding: 8px 14px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.history-back-btn:hover { border-color: var(--gold); color: var(--gold); }
+.history-page-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  letter-spacing: 2px;
+  color: var(--text);
+  flex: 1;
+  text-align: center;
+}
+.history-page-spacer { width: 84px; flex-shrink: 0; }
 .history-tabs {
   display: flex;
   gap: 8px;
-  margin: 18px 0 20px;
+  padding: 14px 20px;
   flex-wrap: wrap;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-bg);
 }
 .history-tab {
   background: var(--card-bg);
@@ -3131,7 +3281,19 @@ body {
   transition: all 0.15s;
 }
 .history-tab.active { border-color: var(--gold); color: var(--gold); }
+.history-page-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
 .history-panel { min-height: 120px; }
+@media (max-width: 600px) {
+  .history-page-title { font-size: 1.02rem; letter-spacing: 1px; }
+  .history-page-spacer { width: 0; }
+}
 
 .hist-grid {
   display: grid;
@@ -3269,21 +3431,118 @@ body {
 .ach-name { font-size: 0.78rem; font-weight: 700; color: var(--text); }
 .ach-desc { font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
 
-.hist-match-list { display: flex; flex-direction: column; gap: 6px; max-height: 55vh; overflow-y: auto; }
-.hist-match-row {
+/* ──────────────────────────────────────────
+   HALL DA FAMA — pódio de artilheiros/assistentes + todos os títulos
+────────────────────────────────────────── */
+.hall-section-title { font-family: var(--font-display); font-size: 1.05rem; letter-spacing: 1px; color: var(--text); margin: 22px 0 4px; }
+.hall-section-title:first-child { margin-top: 0; }
+.hall-section-sub { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 14px; line-height: 1.4; }
+.hall-podiums { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px; }
+.hall-podium-block { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.hall-podium-label { font-size: 0.72rem; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+.hall-podium-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.hall-podium-row:last-child { border-bottom: none; }
+.hall-podium-medal { font-size: 1.1rem; width: 22px; text-align: center; flex-shrink: 0; }
+.hall-podium-name { flex: 1; font-size: 0.78rem; color: var(--text); font-weight: 600; }
+.hall-podium-value { font-size: 0.72rem; color: var(--gold); font-weight: 700; white-space: nowrap; }
+.hall-podium-empty { font-size: 0.72rem; color: var(--text-muted); padding: 6px 0; }
+.hall-mode-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.hall-mode-chip { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 5px 12px; font-size: 0.68rem; font-weight: 700; color: var(--text-muted); }
+.hall-mode-chip .hmc-count { color: var(--gold); }
+.hall-trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.hall-trophy-card { background: var(--card-bg); border: 1px solid var(--gold); border-radius: 8px; padding: 12px; }
+.hall-trophy-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.hall-trophy-icon { font-size: 1.2rem; }
+.hall-trophy-mode { font-size: 0.8rem; font-weight: 700; color: var(--text); flex: 1; }
+.hall-trophy-meta { font-size: 0.66rem; color: var(--text-muted); line-height: 1.5; }
+.hall-empty { font-size: 0.8rem; color: var(--text-muted); padding: 20px 0; }
+@media (max-width: 600px) {
+  .hall-podiums { grid-template-columns: 1fr; }
+}
+
+.hist-matches-note { font-size: 0.72rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
+.hist-match-list { display: flex; flex-direction: column; gap: 6px; }
+.hist-match-header {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 0.7fr 0.7fr 1fr;
+  grid-template-columns: 1.3fr 1.1fr 1fr 0.7fr 1fr 0.3fr;
   gap: 6px;
-  align-items: center;
+  padding: 0 10px 6px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.hist-match-block {
   background: var(--card-bg);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
   border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 0.72rem;
-  color: var(--text-muted);
+  overflow: hidden;
 }
-.hmr-result { font-weight: 700; color: var(--text); }
-.hmr-result.champ { color: var(--gold); }
+.hist-match-block.is-champ { border-left-color: var(--gold); }
+.hist-match-block.is-vice { border-left-color: silver; }
+.hist-match-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1.1fr 1fr 0.7fr 1fr 0.3fr;
+  gap: 6px;
+  align-items: center;
+  padding: 10px;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 0;
+  border: none;
+  border-left: none;
+  background: transparent;
+}
+.hist-match-row:hover { background: rgba(255,255,255,0.03); }
+.hmr-chevron {
+  text-align: center;
+  color: var(--text-muted);
+  transition: transform 0.25s ease;
+  font-size: 0.7rem;
+}
+.hist-match-block.expanded .hmr-chevron { transform: rotate(180deg); }
+.hist-match-games-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s ease;
+}
+.hist-match-block.expanded .hist-match-games-wrap { grid-template-rows: 1fr; }
+.hist-match-games-inner { overflow: hidden; }
+.hist-match-games {
+  padding: 4px 10px 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hist-games-empty { font-size: 0.68rem; color: var(--text-muted); padding-top: 10px; font-style: italic; }
+.hist-games-list { display: flex; flex-direction: column; gap: 4px; padding-top: 8px; }
+.hist-games-list .fc-match-row { border-radius: 5px; }
+.hmr-mode-wrap { display: flex; align-items: center; gap: 6px; color: var(--text); font-weight: 600; }
+.hmr-result-badge {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 0.62rem;
+  letter-spacing: 0.4px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  text-align: center;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: fit-content;
+}
+.hmr-result-badge.champ { color: #1a1a1a; background: var(--gold); border-color: var(--gold); }
+.hmr-result-badge.vice { color: #1a1a1a; background: silver; border-color: silver; }
+.hmr-result-badge.elim { color: var(--text-muted); }
+.hmr-score { font-weight: 700; color: var(--text); }
+.hmr-score-sub { font-size: 0.6rem; color: var(--text-muted); display: block; }
+.hmr-ovr { font-weight: 600; }
+.hmr-date { font-size: 0.66rem; text-align: right; }
 
 /* ──────────────────────────────────────────
    TOASTS DE CONQUISTA DESBLOQUEADA
@@ -3318,6 +3577,131 @@ body {
 .ach-toast-name { font-size: 0.85rem; font-weight: 700; color: var(--text); }
 
 @media (max-width: 600px) {
-  .hist-match-row { grid-template-columns: 1fr 1fr; font-size: 0.66rem; }
+  .hist-match-row { grid-template-columns: 1fr 1fr 0.4fr; font-size: 0.66rem; row-gap: 4px; }
+  .hist-match-row .hmr-date { text-align: left; }
+  .hist-match-row .hmr-chevron { grid-column: 3; grid-row: 1 / span 3; align-self: center; }
+  .hist-match-header { display: none; }
   .hist-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ═══════════════════════════════════════════
+   PONTOS DE DRAFT — badge no header, CTA de garantir
+   time / comprar re-roll na tela de sorteio, e modais
+   de garantia de time + info da moeda.
+   ═══════════════════════════════════════════ */
+.dp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(201,168,76,0.14);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-right: 10px;
+}
+.dp-badge:hover { background: rgba(201,168,76,0.24); }
+
+/* CTA / badge de garantir time — dentro do roll-cta, entre a descrição e o botão ROLAR */
+.dp-guarantee-cta { display: flex; justify-content: center; }
+.btn-guarantee {
+  background: transparent;
+  border: 1px dashed var(--gold);
+  color: var(--gold);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 9px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-guarantee:hover { background: rgba(201,168,76,0.12); border-style: solid; }
+
+.dp-guaranteed-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.btn-cancel-guarantee {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+.btn-cancel-guarantee:hover { color: var(--red); }
+
+/* Botão de comprar re-roll — mesma pegada do reroll grátis, com um tom dourado */
+.btn-reroll-buy {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.btn-reroll-buy:hover { background: rgba(201,168,76,0.12); border-color: var(--gold); }
+.btn-reroll-buy:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Cards de time garantível — reaproveita .vt-card/.vt-grid da Vitrine */
+.gt-card { cursor: pointer; }
+.gt-card.gt-locked { cursor: not-allowed; opacity: 0.45; }
+.gt-price {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--gold);
+}
+
+/* Modal de info dos Pontos de Draft */
+.dp-info-modal { max-width: 420px; padding: 28px 26px; }
+.dp-info-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 1px;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.dp-info-balance {
+  font-size: 0.9rem;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.dp-info-balance strong { color: var(--gold); font-family: var(--font-display); font-size: 1.1rem; }
+.dp-info-text {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.dp-info-list {
+  margin: 0 0 4px;
+  padding-left: 18px;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+.dp-info-list strong { color: var(--text); }
+
+/* Estatística de pontos ganhos no card final da campanha */
+.fc-stat-dp .fc-stat-num { color: var(--gold); }
+
+/* Toast de pontos ganhos — mesma base do ach-toast, borda dourada já herdada */
+.dp-toast .ach-toast-icon { font-size: 1.5rem; }
+
+@media (max-width: 700px) {
+  .dp-badge { margin-right: 4px; padding: 5px 9px; font-size: 0.62rem; }
 }

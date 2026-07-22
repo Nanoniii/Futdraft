@@ -21,6 +21,10 @@ const HISTORY_DEFAULTS = () => ({
   zeroConcededTitles: 0,   // títulos sem sofrer nenhum gol na campanha inteira
   perfectGroupStages: 0,   // fases de grupo com aproveitamento 100% (só vitórias)
   scorers: {},              // nome -> gols acumulados
+  assists: {},              // nome -> assistências acumuladas
+  // Todo título conquistado na carreira (não só o melhor elenco) — usado
+  // no Hall da Fama pra mostrar TODOS os times campeões do jogador.
+  titlesWon: [],
   formationsUsed: [],        // formações já usadas ao menos 1x
   playersUsed: [],           // nomes de jogadores já escalados
   // Snapshot completo de cada jogador diferente já escalado (posição, time,
@@ -103,6 +107,10 @@ const ACHIEVEMENTS = [
   { id:"goals_150", name:"Máquina de Gols", desc:"Marque 150 gols no total.",                             icon:"🥅", check:(m,h)=>totalScored(h)>=150 },
   { id:"scorer_15", name:"Artilheiro Nato", desc:"Um jogador do seu elenco chegue a 15 gols no acumulado.", icon:"⭐", check:(m,h)=>Object.values(h.scorers).some(g=>g>=15) },
   { id:"scorer_30", name:"Rei do Ataque",   desc:"Um jogador do seu elenco chegue a 30 gols no acumulado.", icon:"⭐", check:(m,h)=>Object.values(h.scorers).some(g=>g>=30) },
+
+  // ── Assistências ──
+  { id:"assist_15", name:"Garçom",       desc:"Um jogador do seu elenco chegue a 15 assistências no acumulado.", icon:"🎯", check:(m,h)=>Object.values(h.assists||{}).some(a=>a>=15) },
+  { id:"assist_30", name:"Rei do Passe", desc:"Um jogador do seu elenco chegue a 30 assistências no acumulado.", icon:"🎯", check:(m,h)=>Object.values(h.assists||{}).some(a=>a>=30) },
 
   // ── Goleadas ──
   { id:"rout_4", name:"Goleada",          desc:"Vença uma partida por 4 gols de diferença ou mais.", icon:"💥", check:(m)=>m && m.marginWin>=4 },
@@ -314,6 +322,16 @@ function recordMatchAndCheckAchievements(summary) {
     if (summary.goalsAgainst === 0) h.zeroConcededTitles++;
     if (summary.hardcore) h.hardcoreTitles++;
     if (summary.themeRestriction) h.themeTitles++;
+
+    // Hall da Fama: guarda um snapshot desse time campeão (mais recentes
+    // primeiro), independente de ser ou não o melhor elenco da carreira.
+    h.titlesWon = h.titlesWon || [];
+    h.titlesWon.unshift({
+      mode: summary.mode, formation: summary.formation, overall: summary.overall, date: Date.now(),
+      hardcore: !!summary.hardcore, cleanSheet: summary.losses === 0,
+      players: summary.squad.map(p => ({ name: p.name, pos: p.pos, rawPos: p.rawPos, overall: p.overall, team: p.team, season: p.season })),
+    });
+    if (h.titlesWon.length > 200) h.titlesWon.length = 200;
   } else {
     h.streak = 0;
     if (summary.eliminatedAtGroup) h.eliminatedAtGroup++;
@@ -327,6 +345,11 @@ function recordMatchAndCheckAchievements(summary) {
   // Artilheiros acumulados
   Object.entries(summary.scorersThisMatch || {}).forEach(([name, goals]) => {
     h.scorers[name] = (h.scorers[name] || 0) + goals;
+  });
+
+  // Assistências acumuladas
+  Object.entries(summary.assistsThisMatch || {}).forEach(([name, n]) => {
+    h.assists[name] = (h.assists[name] || 0) + n;
   });
 
   // Formações e jogadores usados (histórico de carreira)
@@ -368,11 +391,18 @@ function recordMatchAndCheckAchievements(summary) {
     };
   }
 
-  // Últimas partidas (mantém as 30 mais recentes)
+  // Últimas partidas (mantém as 30 mais recentes). Cada entrada guarda um
+  // `id` próprio (não o índice do array, que muda conforme campanhas novas
+  // entram no topo) e o detalhe jogo a jogo (`games`), pra dar pra reabrir
+  // "todos os jogos do campeonato" ao clicar na linha no Histórico — ver
+  // renderHistoryMatches(). Campanhas registradas ANTES dessa atualização
+  // não têm `games` (fica undefined) — a renderização trata isso à parte.
   h.matches.unshift({
+    id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     date: Date.now(), mode: summary.mode, formation: summary.formation,
     result: summary.champion ? "campeão" : (summary.reachedFinal ? "vice" : summary.stageReached),
     goalsFor: summary.goalsFor, goalsAgainst: summary.goalsAgainst, overall: summary.overall,
+    games: summary.games || null,
   });
   if (h.matches.length > 30) h.matches.length = 30;
 
@@ -412,65 +442,160 @@ function showAchievementToasts(list) {
   });
 }
 
+// Toast simples pra avisar quanto de Pontos de Draft a campanha rendeu —
+// aparece junto do stack de conquistas, com um pequeno atraso pra não
+// competir visualmente com o primeiro toast de conquista (se houver).
+function showDraftPointsToast(amount) {
+  const stack = document.getElementById("achToastStack");
+  if (!stack || !amount) return;
+  setTimeout(() => {
+    const el = document.createElement("div");
+    el.className = "ach-toast dp-toast";
+    el.innerHTML = `<span class="ach-toast-icon">💎</span>
+      <div class="ach-toast-text"><div class="ach-toast-title">PONTOS DE DRAFT</div>
+      <div class="ach-toast-name">+${amount} pontos ganhos</div></div>`;
+    stack.appendChild(el);
+    requestAnimationFrame(() => el.classList.add("show"));
+    setTimeout(() => {
+      el.classList.remove("show");
+      setTimeout(() => el.remove(), 400);
+    }, 4200);
+  }, 300);
+}
+
 // ═══════════════════════════════════════════
-// UI — MODAL HISTÓRICO / CONQUISTAS
+// UI — PÁGINA HISTÓRICO / CONQUISTAS
+// (era um pop-up pequeno, agora é uma tela cheia própria do jogo)
 // ═══════════════════════════════════════════
 function openHistory() {
   renderHistoryStats();
+  renderHistoryHall();
   renderHistoryAchievements();
   renderHistoryMatches();
   renderHistoryTeams();
   document.getElementById("historyOverlay").classList.add("open");
+  setHistoryTab("stats");
 }
 function closeHistory() {
   document.getElementById("historyOverlay").classList.remove("open");
 }
 function setHistoryTab(tab) {
-  ["stats","achievements","matches","teams"].forEach(t => {
-    document.getElementById(`historyPanel${t[0].toUpperCase()+t.slice(1)}`).style.display = (t===tab) ? "block" : "none";
+  ["stats","hall","achievements","matches","teams"].forEach(t => {
+    const el = document.getElementById(`historyPanel${t[0].toUpperCase()+t.slice(1)}`);
+    if (el) el.style.display = (t===tab) ? "block" : "none";
   });
   document.querySelectorAll(".history-tab").forEach(b => b.classList.toggle("active", b.dataset.tab===tab));
+  const content = document.querySelector(".history-page-content");
+  if (content) content.scrollTop = 0;
 }
 
 const MODE_LABELS_PT = { champions:"Champions", libertadores:"Libertadores", brasil:"Copa do Brasil", copadomundo:"Copa do Mundo", eurocopa:"Eurocopa", copaamerica:"Copa América", mundial:"Mundial de Clubes" };
+const MODE_ICONS_PT = { champions:"🏆", libertadores:"🌎", brasil:"🇧🇷", copadomundo:"🌍", eurocopa:"⭐", copaamerica:"🥇", mundial:"🌐" };
 
 function renderHistoryStats() {
   const h = loadHistory();
   const el = document.getElementById("historyPanelStats");
   if (!el) return;
-  const topScorers = Object.entries(h.scorers).sort((a,b)=>b[1]-a[1]).slice(0, 3);
-  const medals = ["🥇","🥈","🥉"];
-  const topScorersTable = topScorers.length
-    ? `<div class="hist-top-scorers">
-        <div class="hist-hl-label">⭐ Maiores artilheiros</div>
-        <div class="hist-scorers-table">
-          ${topScorers.map(([name, goals], i) => `
-            <div class="hist-scorer-row">
-              <span class="hsr-medal">${medals[i]}</span>
-              <span class="hsr-name">${name}</span>
-              <span class="hsr-goals">${goals} gol${goals===1?"":"s"}</span>
-            </div>`).join("")}
-        </div>
-      </div>`
-    : "";
   el.innerHTML = `
     <div class="hist-grid">
-      <div class="hist-card"><span class="hist-num">${h.played}</span><span class="hist-label">Partidas jogadas</span></div>
+      <div class="hist-card"><span class="hist-num">${h.played}</span><span class="hist-label">Campanhas jogadas</span></div>
       <div class="hist-card"><span class="hist-num">${h.titles}</span><span class="hist-label">Títulos</span></div>
       <div class="hist-card"><span class="hist-num">${h.wins}</span><span class="hist-label">Vitórias</span></div>
       <div class="hist-card"><span class="hist-num">${h.draws}</span><span class="hist-label">Empates</span></div>
       <div class="hist-card"><span class="hist-num">${h.losses}</span><span class="hist-label">Derrotas</span></div>
       <div class="hist-card"><span class="hist-num">${h.bestStreak}</span><span class="hist-label">Melhor sequência de títulos</span></div>
     </div>
-    ${topScorersTable}
     <div class="hist-highlights">
       <div class="hist-hl"><div class="hist-hl-label">💥 Maior goleada</div>
         <div class="hist-hl-value">${h.biggestWin ? `${h.biggestWin.myGoals}–${h.biggestWin.theirGoals} vs ${h.biggestWin.opponent} (${MODE_LABELS_PT[h.biggestWin.mode]||h.biggestWin.mode})` : "—"}</div></div>
       <div class="hist-hl"><div class="hist-hl-label">📈 Melhor time de todos</div>
         <div class="hist-hl-value">${h.bestSquad ? `Overall ${h.bestSquad.overall} · ${h.bestSquad.formation} · ${MODE_LABELS_PT[h.bestSquad.mode]||h.bestSquad.mode}` : "—"}</div></div>
+      <div class="hist-hl"><div class="hist-hl-label">🏆 Times campeões e ranking de artilheiros/assistentes</div>
+        <div class="hist-hl-value"><a href="#" onclick="setHistoryTab('hall');return false;" style="color:var(--gold);">Ver no Hall da Fama →</a></div></div>
     </div>
   `;
 }
+
+// ═══════════════════════════════════════════
+// ABA "HALL DA FAMA" — pódio (top 3) de artilheiros e assistentes da
+// carreira inteira, + a lista de TODOS os times que já foram campeões
+// (não só o melhor elenco — cada título vira um card aqui).
+// ═══════════════════════════════════════════
+function topRanking(obj, n) {
+  return Object.entries(obj || {}).sort((a, b) => b[1] - a[1]).slice(0, n);
+}
+function renderPodiumBlock(label, ranking, unitSingular, unitPlural) {
+  const medals = ["🥇", "🥈", "🥉"];
+  if (!ranking.length) {
+    return `<div class="hall-podium-block">
+      <div class="hall-podium-label">${label}</div>
+      <div class="hall-podium-empty">Ainda não há registros. Jogue algumas campanhas pra aparecer aqui.</div>
+    </div>`;
+  }
+  return `<div class="hall-podium-block">
+    <div class="hall-podium-label">${label}</div>
+    ${ranking.map(([name, count], i) => `
+      <div class="hall-podium-row">
+        <span class="hall-podium-medal">${medals[i]}</span>
+        <span class="hall-podium-name">${name}</span>
+        <span class="hall-podium-value">${count} ${count === 1 ? unitSingular : unitPlural}</span>
+      </div>`).join("")}
+  </div>`;
+}
+
+function renderHistoryHall() {
+  const h = loadHistory();
+  const el = document.getElementById("historyPanelHall");
+  if (!el) return;
+
+  const topScorers = topRanking(h.scorers, 3);
+  const topAssists = topRanking(h.assists, 3);
+  const titles = h.titlesWon || [];
+
+  // Resumo de quantos títulos em cada competição, pra dar uma visão rápida
+  // antes de listar cada time campeão individualmente.
+  const countsByMode = {};
+  titles.forEach(t => { countsByMode[t.mode] = (countsByMode[t.mode] || 0) + 1; });
+  const modeChips = Object.entries(countsByMode)
+    .sort((a, b) => b[1] - a[1])
+    .map(([mode, count]) => `<span class="hall-mode-chip">${MODE_ICONS_PT[mode] || "🏆"} ${MODE_LABELS_PT[mode] || mode}: <span class="hmc-count">${count}</span></span>`)
+    .join("");
+
+  const trophyGrid = titles.length
+    ? `<div class="hall-trophy-grid">
+        ${titles.map(t => {
+          const d = new Date(t.date);
+          const best = (t.players || []).slice().sort((a, b) => b.overall - a.overall)[0];
+          return `<div class="hall-trophy-card">
+            <div class="hall-trophy-top">
+              <span class="hall-trophy-icon">${MODE_ICONS_PT[t.mode] || "🏆"}</span>
+              <span class="hall-trophy-mode">${MODE_LABELS_PT[t.mode] || t.mode}</span>
+            </div>
+            <div class="hall-trophy-meta">
+              Overall ${t.overall} · ${t.formation}${t.hardcore ? " · 🕶️ Hardcore" : ""}${t.cleanSheet ? " · 🧱 Sem derrotas" : ""}<br>
+              ${best ? `Destaque: ${best.name} (${(typeof POS_LABELS !== "undefined" && POS_LABELS[best.pos]) || best.pos}, ${best.overall})<br>` : ""}
+              ${d.toLocaleDateString("pt-BR")}
+            </div>
+          </div>`;
+        }).join("")}
+      </div>`
+    : `<p class="hall-empty">Você ainda não foi campeão em nenhuma campanha. Vença um torneio inteiro pra ele entrar pro Hall da Fama.</p>`;
+
+  el.innerHTML = `
+    <div class="hall-section-title">⭐ Pódio da carreira</div>
+    <p class="hall-section-sub">Os 3 jogadores que mais marcaram gols e os 3 que mais deram assistências, somando todo o seu histórico de campanhas.</p>
+    <div class="hall-podiums">
+      ${renderPodiumBlock("🥅 Maiores artilheiros", topScorers, "gol", "gols")}
+      ${renderPodiumBlock("🎯 Maiores assistentes", topAssists, "assistência", "assistências")}
+    </div>
+
+    <div class="hall-section-title">🏆 Times campeões</div>
+    <p class="hall-section-sub">Todos os times que você já levantou uma taça, um card por título — não só o de maior overall.</p>
+    ${modeChips ? `<div class="hall-mode-summary">${modeChips}</div>` : ""}
+    ${trophyGrid}
+  `;
+}
+
 
 function renderHistoryAchievements() {
   const state = loadAchState();
@@ -488,21 +613,77 @@ function renderHistoryAchievements() {
   }).join("") + `</div>`;
 }
 
+function matchResultBadge(mt) {
+  if (mt.result === "campeão") return { cls: "champ", text: "🏆 CAMPEÃO" };
+  if (mt.result === "vice") return { cls: "vice", text: "🥈 VICE-CAMPEÃO" };
+  return { cls: "elim", text: `Eliminado: ${mt.result}` };
+}
+
+// Detalhe jogo a jogo de uma campanha do Histórico (aba "Últimas partidas"),
+// no painel que abre em accordion ao clicar na linha — ver renderHistoryMatches()
+// e toggleHistoryMatch(). Reaproveita o visual dos fc-match-row (mesmo estilo
+// da tela de resultado final) pra manter consistência.
+function renderHistoryMatchGames(mt) {
+  if (!mt.games || !mt.games.length) {
+    return `<p class="hist-games-empty">Detalhe partida a partida não disponível — essa campanha foi registrada antes dessa função existir.</p>`;
+  }
+  const outcomeIcon = { win: "✅", draw: "➖", lose: "❌" };
+  const rows = mt.games.map(g => {
+    const scoreText = g.penalties
+      ? `${g.myGoals}–${g.theirGoals} <small>(${g.penalties.mine}-${g.penalties.theirs} pên)</small>`
+      : `${g.myGoals}–${g.theirGoals}`;
+    return `
+      <div class="fc-match-row fc-match-${g.outcome}">
+        <span class="fc-match-round">${g.round}</span>
+        <span class="fc-match-opp">${g.opponent.flag || ""} ${g.opponent.name} <small>${g.opponent.season || ""}</small></span>
+        <span class="fc-match-score">${scoreText}</span>
+        <span class="fc-match-icon">${outcomeIcon[g.outcome] || ""}</span>
+      </div>`;
+  }).join("");
+  return `<div class="hist-games-list">${rows}</div>`;
+}
+
+function toggleHistoryMatch(id) {
+  const block = document.getElementById(`histBlock-${id}`);
+  if (!block) return;
+  block.classList.toggle("expanded");
+}
+
 function renderHistoryMatches() {
   const h = loadHistory();
   const el = document.getElementById("historyPanelMatches");
   if (!el) return;
-  if (!h.matches.length) { el.innerHTML = `<p class="fp-desc">Nenhuma partida registrada ainda.</p>`; return; }
-  el.innerHTML = `<div class="hist-match-list">` + h.matches.map(mt => {
+  if (!h.matches.length) { el.innerHTML = `<p class="fp-desc">Nenhuma campanha registrada ainda.</p>`; return; }
+  const rows = h.matches.map(mt => {
     const d = new Date(mt.date);
-    return `<div class="hist-match-row">
-      <span class="hmr-mode">${MODE_LABELS_PT[mt.mode] || mt.mode}</span>
-      <span class="hmr-result ${mt.result==='campeão'?'champ':''}">${mt.result.toUpperCase()}</span>
-      <span class="hmr-score">${mt.goalsFor}-${mt.goalsAgainst}</span>
-      <span class="hmr-ovr">OVR ${mt.overall}</span>
-      <span class="hmr-date">${d.toLocaleDateString("pt-BR")}</span>
+    const badge = matchResultBadge(mt);
+    // Campanhas antigas (antes do id existir) caem de volta pra data+random
+    // só pra ter uma chave única de DOM — não afeta os dados salvos.
+    const rowId = mt.id || `${mt.date}_${Math.random().toString(36).slice(2, 8)}`;
+    return `<div class="hist-match-block ${mt.result==='campeão'?'is-champ':''} ${mt.result==='vice'?'is-vice':''}" id="histBlock-${rowId}">
+      <div class="hist-match-row" onclick="toggleHistoryMatch('${rowId}')" role="button" tabindex="0">
+        <span class="hmr-mode-wrap">${MODE_ICONS_PT[mt.mode] || "🏆"} ${MODE_LABELS_PT[mt.mode] || mt.mode}</span>
+        <span class="hmr-result-badge ${badge.cls}">${badge.text}</span>
+        <span class="hmr-score">${mt.goalsFor}–${mt.goalsAgainst}<span class="hmr-score-sub">gols pró–contra na campanha</span></span>
+        <span class="hmr-ovr">OVR ${mt.overall}</span>
+        <span class="hmr-date">${d.toLocaleDateString("pt-BR")}</span>
+        <span class="hmr-chevron">▾</span>
+      </div>
+      <div class="hist-match-games-wrap">
+        <div class="hist-match-games-inner">
+          <div class="hist-match-games">
+            ${renderHistoryMatchGames(mt)}
+          </div>
+        </div>
+      </div>
     </div>`;
-  }).join("") + `</div>`;
+  }).join("");
+  el.innerHTML = `
+    <p class="hist-matches-note">Cada linha é uma campanha (torneio) completa, do sorteio até a eliminação ou o título — não uma partida isolada. O placar mostra o total de gols marcados e sofridos somando todos os jogos daquela campanha. Clique numa linha pra ver jogo a jogo.</p>
+    <div class="hist-match-header">
+      <span>Competição</span><span>Resultado</span><span>Gols (campanha)</span><span>Overall</span><span style="text-align:right">Data</span><span></span>
+    </div>
+    <div class="hist-match-list">${rows}</div>`;
 }
 
 // ═══════════════════════════════════════════

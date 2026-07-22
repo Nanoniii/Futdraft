@@ -7385,6 +7385,109 @@ const WORLD_CUP_TEAMS = [
       { name: "Mitoma", pos: "LW", overall: 82 },
       { name: "Maeda", pos: "ST", overall: 78 }
     ]
+  },
+  // ───────── 2026 ─────────
+  {
+    id: "wc_es_2026", name: "Espanha", season: "2026", country: "ES", flag: "🇪🇸",
+    formation: "4-3-3",
+    players: [
+      { name: "Unai Simón", pos: "GK", overall: 88 },
+      { name: "Pedro Porro", pos: "RB", overall: 88 },
+      { name: "Laporte", pos: "CB", overall: 87 },
+      { name: "Cubarsí", pos: "CB", overall: 87 },
+      { name: "Cucurella", pos: "LB", overall: 90 },
+      { name: "Rodri", pos: "CM", overall: 90 },
+      { name: "Pedri", pos: "CM", overall: 89 },
+      { name: "Dani Olmo", pos: "CM", overall: 85 },
+      { name: "Lamine Yamal", pos: "RW", overall: 92 },
+      { name: "Nico Williams", pos: "LW", overall: 88 },
+      { name: "Oyarzabal", pos: "ST", overall: 90 }
+    ]
+  },
+  {
+    id: "wc_ar_2026", name: "Argentina", season: "2026", country: "AR", flag: "🇦🇷",
+    formation: "4-3-3",
+    players: [
+      { name: "E. Martínez", pos: "GK", overall: 89 },
+      { name: "Montiel", pos: "RB", overall: 81 },
+      { name: "C. Romero", pos: "CB", overall: 88 },
+      { name: "L. Martínez", pos: "CB", overall: 84 },
+      { name: "Tagliafico", pos: "LB", overall: 80 },
+      { name: "De Paul", pos: "CM", overall: 84 },
+      { name: "E. Fernández", pos: "CM", overall: 85 },
+      { name: "Mac Allister", pos: "CM", overall: 85 },
+      { name: "Messi", pos: "RW", overall: 95 },
+      { name: "N. González", pos: "LW", overall: 81 },
+      { name: "J. Álvarez", pos: "ST", overall: 87 }
+    ]
+  },
+  {
+    id: "wc_eng_2026", name: "Inglaterra", season: "2026", country: "ENG", flag: "🏴",
+    formation: "4-3-3",
+    players: [
+      { name: "Pickford", pos: "GK", overall: 85 },
+      { name: "Reece James", pos: "RB", overall: 82 },
+      { name: "Stones", pos: "CB", overall: 84 },
+      { name: "Guéhi", pos: "CB", overall: 81 },
+      { name: "Djed Spence", pos: "LB", overall: 83 },
+      { name: "Rice", pos: "CM", overall: 88 },
+      { name: "Bellingham", pos: "CM", overall: 92 },
+      { name: "Anthony Gordon", pos: "CM", overall: 85 },
+      { name: "Saka", pos: "RW", overall: 89 },
+      { name: "Foden", pos: "LW", overall: 87 },
+      { name: "Kane", pos: "ST", overall: 91 }
+    ]
+  },
+  {
+    id: "wc_fr_2026", name: "França", season: "2026", country: "FR", flag: "🇫🇷",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Maignan", pos: "GK", overall: 86 },
+      { name: "Koundé", pos: "RB", overall: 84 },
+      { name: "Saliba", pos: "CB", overall: 87 },
+      { name: "Upamecano", pos: "CB", overall: 88 },
+      { name: "Digne", pos: "LB", overall: 85 },
+      { name: "Tchouaméni", pos: "CM", overall: 87 },
+      { name: "Rabiot", pos: "CM", overall: 85 },
+      { name: "Olise", pos: "AM", overall: 88 },
+      { name: "O. Dembélé", pos: "RW", overall: 89 },
+      { name: "Mbappé", pos: "LW", overall: 95 },
+      { name: "Barcola", pos: "ST", overall: 85 }
+    ]
+  },
+  {
+    id: "wc_cv_2026", name: "Cabo Verde", season: "2026", country: "CV", flag: "🇨🇻",
+    formation: "4-2-3-1",
+    players: [
+      { name: "Vozinha", pos: "GK", overall: 85 },
+      { name: "Steven Moreira", pos: "RB", overall: 74 },
+      { name: "Roberto Lopes", pos: "CB", overall: 78 },
+      { name: "Diney Borges", pos: "CB", overall: 74 },
+      { name: "Sidny Lopes Cabral", pos: "LB", overall: 84 },
+      { name: "Kevin Pina", pos: "CM", overall: 73 },
+      { name: "Deroy Duarte", pos: "CM", overall: 79 },
+      { name: "Laros Duarte", pos: "AM", overall: 76 },
+      { name: "Ryan Mendes", pos: "RW", overall: 77 },
+      { name: "Jovane Cabral", pos: "LW", overall: 73 },
+      { name: "Nuno da Costa", pos: "ST", overall: 78 }
+    ]
+  },
+  {
+    id: "wc_no_2026", name: "Noruega", season: "2026", country: "NO", flag: "🇳🇴",
+    formation: "4-3-3",
+    players: [
+      { name: "Nyland", pos: "GK", overall: 84 },
+      { name: "Ryerson", pos: "RB", overall: 79 },
+      { name: "Ajer", pos: "CB", overall: 82 },
+      { name: "Heggem", pos: "CB", overall: 78 },
+      { name: "Wolfe", pos: "LB", overall: 76 },
+      { name: "Berge", pos: "CM", overall: 81 },
+      { name: "Ødegaard", pos: "CM", overall: 89 },
+      { name: "Thorsby", pos: "CM", overall: 77 },
+      { name: "Nusa", pos: "RW", overall: 82 },
+      { name: "A. Sorloth", pos: "LW", overall: 81 },
+      { name: "Haaland", pos: "ST", overall: 92 }
+    ]
   }
 ];
 
