@@ -312,7 +312,7 @@ const LIBERTADORES_BR_IDS = new Set([
 // Todos os times do jogo, de todas as competições — usado no "Todos" do
 // Modo Livre e como pool de adversários do Modo Livre (ver getOpponentPool).
 function allTeamsList() {
-  return [...TEAMS, ...BRAZIL_TEAMS, ...LIBERTADORES_TEAMS, ...WORLD_CUP_TEAMS, ...EUROCOPA_TEAMS, ...COPA_AMERICA_TEAMS, ...MUNDIAL_TEAMS];
+  return [...TEAMS, ...BRAZIL_TEAMS, ...LIBERTADORES_TEAMS, ...WORLD_CUP_TEAMS, ...EUROCOPA_TEAMS, ...COPA_AMERICA_TEAMS, ...MUNDIAL_TEAMS, ...EUROPA_LEAGUE_TEAMS, ...CONFERENCE_LEAGUE_TEAMS];
 }
 
 // Retorna o pool de times do modo atualmente selecionado
@@ -322,6 +322,9 @@ function getTeamPool() {
   if (state.mode === "eurocopa") return EUROCOPA_TEAMS;
   if (state.mode === "copaamerica") return COPA_AMERICA_TEAMS;
   if (state.mode === "mundial") return MUNDIAL_TEAMS;
+  if (state.mode === "europa") return EUROPA_LEAGUE_TEAMS;
+  if (state.mode === "conference") return CONFERENCE_LEAGUE_TEAMS;
+  if (state.mode === "eurocombo") return EUROPA_LEAGUE_TEAMS.concat(CONFERENCE_LEAGUE_TEAMS);
   if (state.mode === "livre") return state.freeModeTeams || [];
   if (state.mode === "libertadores") {
     const brFiltered = BRAZIL_TEAMS.filter(t => LIBERTADORES_BR_IDS.has(t.id));
@@ -380,7 +383,10 @@ const MODE_META = {
   copadomundo:  { title: "COPA DO MUNDO",     short: "A COPA DO MUNDO", logo: "🌍", waiting: "A Copa do Mundo começa em breve...", seasonPrefix: "Copa do Mundo " },
   eurocopa:     { title: "EUROCOPA",          short: "A EUROCOPA",     logo: "⭐", waiting: "A Eurocopa começa em breve...",       seasonPrefix: "Eurocopa " },
   copaamerica:  { title: "COPA AMÉRICA",      short: "A COPA AMÉRICA", logo: "🥇", waiting: "A Copa América começa em breve...",  seasonPrefix: "Copa América " },
-  mundial:      { title: "MUNDIAL DE CLUBES", short: "O MUNDIAL",      logo: "🌐", waiting: "O Mundial de Clubes começa em breve...", seasonPrefix: "Mundial " },
+  mundial:      { title: "MUNDIAL",           short: "O MUNDIAL",      logo: "🌐", waiting: "O Mundial começa em breve...",        seasonPrefix: "Mundial " },
+  europa:       { title: "EUROPA LEAGUE",     short: "A EUROPA LEAGUE", logo: "🟠", waiting: "A Europa League começa em breve...", seasonPrefix: "" },
+  conference:   { title: "CONFERENCE LEAGUE", short: "A CONFERENCE",   logo: "🟢", waiting: "A Conference League começa em breve...", seasonPrefix: "" },
+  eurocombo:    { title: "EUROPA + CONFERENCE", short: "A EUROPA + CONFERENCE", logo: "🇪🇺", waiting: "O torneio começa em breve...", seasonPrefix: "" },
   livre:        { title: "MODO LIVRE",        short: "A SIMULAÇÃO",    logo: "🎮", waiting: "A simulação começa em breve...",      seasonPrefix: "" },
 };
 function modeMeta() { return MODE_META[state.mode] || MODE_META.champions; }
@@ -532,8 +538,56 @@ for (const k of new Set([...Object.keys(ATTACK_WEIGHTS), ...Object.keys(DEFENSE_
 // LANDING — escolher formação antes de tudo
 // ═══════════════════════════════════════════
 function startGame() {
+  showPage("pageCompCategory");
+}
+
+const COMP_CATEGORY_META = {
+  estaduais:          { title: "CAMPEONATOS ESTADUAIS",     desc: "Campeonatos estaduais do futebol brasileiro. Chegando na atualização 2.6." },
+  regionais:          { title: "TORNEIOS REGIONAIS",        desc: "Torneios regionais do futebol brasileiro. Chegando na atualização 2.6." },
+  nacionais:        { title: "COMPETIÇÕES NACIONAIS",        desc: "Competições disputadas dentro de um único país. Em qual você quer montar e simular seu time?" },
+  continentais:      { title: "COMPETIÇÕES CONTINENTAIS",     desc: "Os melhores times e seleções de um continente disputando entre si. Em qual você quer montar e simular seu time?" },
+  intercontinentais:  { title: "COMPETIÇÕES INTERCONTINENTAIS", desc: "Campeões de continentes diferentes se enfrentando pelo título global. Categoria em manutenção no momento." },
+  mundial:            { title: "COMPETIÇÃO MUNDIAL",           desc: "Seleções e clubes disputando o título de melhor do planeta. Em qual você quer montar e simular seu time?" },
+};
+
+// Categorias que ainda não têm modo jogável — o clique nelas mostra um
+// toast de "em breve" em vez de navegar pra tela de escolha de modo.
+const LOCKED_COMP_CATEGORIES = new Set(["estaduais", "regionais", "intercontinentais"]);
+
+// Toast simples de "categoria bloqueada", reaproveitando o stack de toasts
+// já usado pelas conquistas e notícias da campanha (achToastStack).
+function showLockedCategoryToast(cat) {
+  const stack = document.getElementById("achToastStack");
+  if (!stack) return;
+  const meta = COMP_CATEGORY_META[cat];
+  const el = document.createElement("div");
+  el.className = "ach-toast locked-cat-toast";
+  el.innerHTML = `<span class="ach-toast-icon">🔒</span>
+    <div class="ach-toast-text"><div class="ach-toast-title">EM BREVE</div>
+    <div class="ach-toast-name">${meta ? meta.title : "Categoria"} ainda não disponível</div></div>`;
+  stack.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("show"));
+  setTimeout(() => {
+    el.classList.remove("show");
+    setTimeout(() => el.remove(), 400);
+  }, 3200);
+}
+
+// Filtra o grid de pageModeSelect pra mostrar só as competições da
+// categoria escolhida (Nacionais / Continentais / Intercontinentais /
+// Mundial), atualizando título e descrição da tela conforme a categoria.
+function selectCompCategory(cat) {
+  if (LOCKED_COMP_CATEGORIES.has(cat)) { showLockedCategoryToast(cat); return; }
+  state.compCategory = cat;
   showPage("pageModeSelect");
   syncModeToggles();
+  const cards = document.querySelectorAll("#pageModeSelect .ms-grid-six .ms-card");
+  cards.forEach(c => { c.style.display = (c.dataset.cat === cat) ? "" : "none"; });
+  const meta = COMP_CATEGORY_META[cat];
+  const titleEl = document.getElementById("msTitle");
+  const descEl = document.getElementById("msDesc");
+  if (meta && titleEl) titleEl.textContent = meta.title;
+  if (meta && descEl) descEl.textContent = meta.desc;
 }
 
 // ═══════════════════════════════════════════
@@ -547,7 +601,9 @@ const FREE_MODE_SOURCES = [
   { id: "copadomundo", label: "Copa do Mundo", teams: () => WORLD_CUP_TEAMS },
   { id: "eurocopa", label: "Eurocopa", teams: () => EUROCOPA_TEAMS },
   { id: "copaamerica", label: "Copa América", teams: () => COPA_AMERICA_TEAMS },
-  { id: "mundial", label: "Mundial de Clubes", teams: () => MUNDIAL_TEAMS },
+  { id: "mundial", label: "Mundial", teams: () => MUNDIAL_TEAMS },
+  { id: "europa", label: "Europa League", teams: () => EUROPA_LEAGUE_TEAMS },
+  { id: "conference", label: "Conference League", teams: () => CONFERENCE_LEAGUE_TEAMS },
 ];
 const FREE_MODE_MIN_TEAMS = 8;
 let freeModeSelected = new Set();  // guarda os ids dos times marcados
@@ -1233,6 +1289,94 @@ function teamDef(players) { return weightedAvg(players, DEFENSE_WEIGHTS, "pos", 
 function teamOverall(players) { return weightedAvg(players, OVERALL_WEIGHTS, "pos", 75); }
 
 // ═══════════════════════════════════════════
+// LESÕES E MORAL DO ELENCO (v1.8)
+// Roda por cima do elenco escalado no draft, sem alterar state.squad: o
+// draft e a Vitrine continuam mostrando o time "oficial". Só o cálculo de
+// força/simulação e os artilheiros exibidos passam a considerar lesões e
+// moral, partida a partida, ao longo da campanha inteira.
+// ═══════════════════════════════════════════
+const INJURY_CHANCE_PER_MATCH = 0.16; // chance de UM titular se lesionar após cada partida
+const MORALE_MIN = 0.92, MORALE_MAX = 1.08;
+const MORALE_LOW_THRESHOLD = 0.985; // abaixo disso já conta como "moral baixa" pras conquistas
+
+function roleOfRawPos(rawPos) { return POS_ROLE[rawPos] || "mid"; }
+
+// Prepara a cópia de trabalho do elenco (campSquad) e do banco (campBench)
+// usada só durante a simulação da campanha — chamada uma vez no início de
+// runSimulation().
+function initCampaignDynamics() {
+  state.campSquad = state.squad.map(p => ({ ...p }));
+  state.campBench = (state.bench || []).map(p => ({ ...p, used: false }));
+  state.campMorale = 1.0;
+  state.campWinStreak = 0;
+  state.campHadInjury = false;
+}
+
+// Ataque/defesa do MEU time nesse exato momento da campanha, já considerando
+// lesões (elenco desfalcado ou reserva promovida) e moral atual.
+function liveMyAtkDef(tacticMult, captainBonus) {
+  const atk = Math.round((weightedAvg(state.campSquad, ATTACK_WEIGHTS, "rawPos", 70) + captainBonus) * tacticMult.atk * state.campMorale);
+  const def = Math.round((weightedAvg(state.campSquad, DEFENSE_WEIGHTS, "rawPos", 70) + captainBonus) * tacticMult.def * state.campMorale);
+  return { atk, def };
+}
+
+// Sorteia um titular do elenco atual pra se lesionar. Se houver reserva
+// escalada (state.bench, definido nos Ajustes da Partida) na mesma função
+// tática (def/mid/atk) e ainda não usada, ela assume a vaga pro resto da
+// campanha; sem reserva compatível, o time segue em campo desfalcado
+// (o "titular" fica em campo, mas bem abaixo do nível normal).
+function tryTriggerInjury() {
+  const squad = state.campSquad;
+  if (!squad.length) return null;
+  const idx = Math.floor(Math.random() * squad.length);
+  const candidate = squad[idx];
+  const role = roleOfRawPos(candidate.rawPos);
+  const repIdx = state.campBench.findIndex(b => !b.used && roleOfRawPos(b.rawPos) === role);
+  state.campHadInjury = true;
+  if (repIdx >= 0) {
+    const rep = state.campBench[repIdx];
+    rep.used = true;
+    squad[idx] = { ...rep, slotId: candidate.slotId };
+    return { icon: "🩹", text: `${candidate.name} sofreu uma lesão e desfalca o time — ${rep.name} assume a vaga pro resto da campanha.` };
+  }
+  squad[idx] = { ...candidate, overall: Math.max(50, candidate.overall - 9) };
+  return { icon: "🩹", text: `${candidate.name} sofreu uma lesão e não há reserva na posição — o time segue desfalcado.` };
+}
+
+// Chamada logo depois de CADA partida minha já resolvida (grupos ou
+// mata-mata): atualiza a moral do elenco (sobe com sequência de vitórias,
+// cai com goleadas sofridas) e sorteia se rola lesão. Retorna as notícias
+// (0-2 itens) pra mostrar antes da próxima partida da campanha.
+function applyPostMatchDynamics(result) {
+  const margin = result.myGoals - result.theirGoals;
+  const news = [];
+  let moraleDelta;
+  if (result.outcome === "win") {
+    state.campWinStreak++;
+    moraleDelta = 0.012 + (margin >= 3 ? 0.01 : 0);
+    if (state.campWinStreak >= 3) {
+      moraleDelta += 0.018;
+      news.push({ icon: "📈", text: "A sequência de vitórias eleva a moral do elenco." });
+    }
+  } else {
+    state.campWinStreak = 0;
+    if (result.outcome === "lose") {
+      moraleDelta = margin <= -3 ? -0.05 : -0.02;
+      if (margin <= -3) news.push({ icon: "📉", text: "A goleada sofrida derruba a moral do elenco." });
+    } else {
+      moraleDelta = -0.006;
+    }
+  }
+  state.campMorale = Math.max(MORALE_MIN, Math.min(MORALE_MAX, state.campMorale + moraleDelta));
+
+  if (Math.random() < INJURY_CHANCE_PER_MATCH) {
+    const inj = tryTriggerInjury();
+    if (inj) news.push(inj);
+  }
+  return news;
+}
+
+// ═══════════════════════════════════════════
 // PITCH
 // ═══════════════════════════════════════════
 function renderPitch() {
@@ -1680,8 +1824,8 @@ function distributeMinutes(count) {
 function runSimulation() {
   const captainBonus = state.captain ? CAPTAIN_BONUS : 0;
   const tacticMult = TACTIC_STYLE_MULT[state.tacticStyle] || TACTIC_STYLE_MULT.equilibrado;
-  const myAtk = Math.round((calcAtk() + captainBonus) * tacticMult.atk);
-  const myDef = Math.round((calcDef() + captainBonus) * tacticMult.def);
+  initCampaignDynamics(); // v1.8 — reseta moral/lesões pra essa campanha
+  let pendingCampaignNews = []; // notícias (lesão/moral) a exibir antes do próximo jogo
   const overall = calcOverall();
   const isBrasil = state.mode === "brasil";
   const isLibertadores = state.mode === "libertadores";
@@ -1759,7 +1903,7 @@ function runSimulation() {
     ];
 
     function getAtkDef(team) {
-      if (team.isMe) return { atk: myAtk, def: myDef };
+      if (team.isMe) return liveMyAtkDef(tacticMult, captainBonus);
       const t = groupOpponents.find(g => g.id === team.id) || knockoutOpponents.find(g=>g.id===team.id);
       return { atk: teamAtk(t.players), def: teamDef(t.players) };
     }
@@ -1801,16 +1945,21 @@ function runSimulation() {
         const myOutcome = myG>oppG?"win":myG<oppG?"lose":"draw";
         goalsFor += myG; goalsAgainst += oppG;
         if (myOutcome==="win") wins++; else if (myOutcome==="draw") draws++; else losses++;
-        const myScorers = applyPenaltyBias(pickScorers(state.squad, myG));
-        results.push({
+        const myScorers = applyPenaltyBias(pickScorers(state.campSquad, myG));
+        const thisResult = {
           round: "GRUPOS", opponent: oppTeamRef, myGoals: myG, theirGoals: oppG, outcome: myOutcome,
           scorers: myScorers,
-          assists: pickAssists(state.squad, myScorers),
+          assists: pickAssists(state.campSquad, myScorers),
           conceded: pickScorers(oppTeamRef.players, oppG),
           myMinutes: distributeMinutes(myG),
           theirMinutes: distributeMinutes(oppG),
-          flavorEvents: buildFlavorEvents(state.squad, oppTeamRef.players, state.pkTaker, state.fkTaker),
-        });
+          flavorEvents: buildFlavorEvents(state.campSquad, oppTeamRef.players, state.pkTaker, state.fkTaker),
+          moraleAtKickoff: state.campMorale,
+          injuredAtKickoff: state.campHadInjury,
+          campaignNews: pendingCampaignNews,
+        };
+        results.push(thisResult);
+        pendingCampaignNews = applyPostMatchDynamics(thisResult);
       }
     }
 
@@ -1833,6 +1982,7 @@ function runSimulation() {
       const opp = knockoutOpponents[i];
       const oppAtk = teamAtk(opp.players);
       const oppDef = teamDef(opp.players);
+      const { atk: myAtk, def: myDef } = liveMyAtkDef(tacticMult, captainBonus);
       let {myGoals, theirGoals, outcome} = simulateMatch(myAtk, myDef, oppAtk, oppDef);
       let penalties = null;
       if (outcome === "draw") {
@@ -1849,16 +1999,21 @@ function runSimulation() {
       }
       goalsFor += myGoals; goalsAgainst += theirGoals;
       if (outcome==="win") wins++; else losses++;
-      const myScorersKo = applyPenaltyBias(pickScorers(state.squad, myGoals));
-      results.push({
+      const myScorersKo = applyPenaltyBias(pickScorers(state.campSquad, myGoals));
+      const koResult = {
         round: stages[i], opponent: opp, myGoals, theirGoals, outcome, penalties,
         scorers: myScorersKo,
-        assists: pickAssists(state.squad, myScorersKo),
+        assists: pickAssists(state.campSquad, myScorersKo),
         conceded: pickScorers(opp.players, theirGoals),
         myMinutes: distributeMinutes(myGoals),
         theirMinutes: distributeMinutes(theirGoals),
-        flavorEvents: buildFlavorEvents(state.squad, opp.players, state.pkTaker, state.fkTaker),
-      });
+        flavorEvents: buildFlavorEvents(state.campSquad, opp.players, state.pkTaker, state.fkTaker),
+        moraleAtKickoff: state.campMorale,
+        injuredAtKickoff: state.campHadInjury,
+        campaignNews: pendingCampaignNews,
+      };
+      results.push(koResult);
+      pendingCampaignNews = applyPostMatchDynamics(koResult);
       if (outcome === "lose") { eliminated = true; break; }
     }
   }
@@ -1894,6 +2049,12 @@ function runSimulation() {
     // Fase de grupos 100% aproveitada (só vitórias, sem empate nem derrota)
     const perfectGroup = hasGroups && !!myGroupWDL && myGroupWDL.l === 0 && myGroupWDL.d === 0 && myGroupWDL.w > 0;
 
+    // v1.8 — Lesões e Moral: vitórias conquistadas já com um titular lesionado
+    // ou com a moral do elenco baixa (ligado às conquistas novas dessa versão).
+    const hadInjuryComebackWin = results.some(r => r.outcome === "win" && r.injuredAtKickoff);
+    const hadLowMoraleWin = results.some(r => r.outcome === "win" && r.moraleAtKickoff < MORALE_LOW_THRESHOLD);
+    const championWithInjury = champion && !!state.campHadInjury;
+
     // Gols marcados pelo MEU elenco nessa partida, agregados por nome
     const scorersThisMatch = {};
     results.forEach(r => (r.scorers || []).forEach(name => {
@@ -1922,6 +2083,7 @@ function runSimulation() {
       wins, draws, losses, champion, reachedFinal, eliminatedAtGroup, eliminatedAtFinal,
       stageReached: lastResult ? lastResult.round : "—",
       marginWin, biggestWinGoals, marginLoss, biggestLossGoals, perfectGroup, scorersThisMatch, assistsThisMatch,
+      hadInjuryComebackWin, hadLowMoraleWin, championWithInjury,
       games,
       squad: state.squad.map(p => ({
         name: p.name, overall: p.overall, pos: p.pos, rawPos: p.rawPos,
@@ -2065,10 +2227,34 @@ function showMatchSequence(results, idx, eliminated, goalsFor, goalsAgainst, win
     return;
   }
   const r = results[idx];
+  if (r.campaignNews && r.campaignNews.length) showCampaignNewsToasts(r.campaignNews);
   addMatchToList(r, idx);
   runMatchTimelapse(r, () => {
     updateMatchInList(r, idx);
     waitThenContinue(() => showMatchSequence(results, idx+1, eliminated, goalsFor, goalsAgainst, wins, draws, losses, overall, groupTable, myGroupPos), 1000, "PRÓXIMO JOGO →");
+  });
+}
+
+// v1.8 — Lesões e Moral: toast simples pra avisar de lesões e viradas de
+// moral entre uma partida e outra da campanha, reaproveitando o visual do
+// stack de conquistas (achToastStack).
+function showCampaignNewsToasts(list) {
+  const stack = document.getElementById("achToastStack");
+  if (!stack || !list || !list.length) return;
+  list.forEach((n, i) => {
+    setTimeout(() => {
+      const el = document.createElement("div");
+      el.className = "ach-toast camp-news-toast";
+      el.innerHTML = `<span class="ach-toast-icon">${n.icon}</span>
+        <div class="ach-toast-text"><div class="ach-toast-title">NOTÍCIA DA CAMPANHA</div>
+        <div class="ach-toast-name">${n.text}</div></div>`;
+      stack.appendChild(el);
+      requestAnimationFrame(() => el.classList.add("show"));
+      setTimeout(() => {
+        el.classList.remove("show");
+        setTimeout(() => el.remove(), 400);
+      }, 4600);
+    }, i * 700);
   });
 }
 
@@ -2142,6 +2328,7 @@ function runMatchTimelapse(r, onDone) {
   const hasBench = state.bench && state.bench.length > 0;
   box.innerHTML = `
     <div class="tl-match-header">
+      <div class="tl-live-badge"><span class="tl-live-dot"></span>AO VIVO</div>
       <div class="tl-match-vs">
         <span class="tl-my-name">SEU TIME</span>
         <span class="tl-vs">vs</span>
@@ -2177,8 +2364,14 @@ function startMatchTicking() {
     ms.minute++;
     const clockEl = document.getElementById("tlClock");
     const fillEl  = document.getElementById("tlProgressFill");
-    if (clockEl) clockEl.textContent = ms.minute <= 90 ? ms.minute+"'" : "FT";
-    if (fillEl)  fillEl.style.width = (Math.min(ms.minute,90)/90*100)+"%";
+    if (clockEl) {
+      clockEl.textContent = ms.minute <= 90 ? ms.minute+"'" : "FT";
+      clockEl.classList.toggle("tl-clock-final", ms.minute >= 80 && ms.minute < 90);
+    }
+    if (fillEl) {
+      fillEl.style.width = (Math.min(ms.minute,90)/90*100)+"%";
+      fillEl.classList.toggle("tl-progress-final", ms.minute >= 80 && ms.minute < 90);
+    }
 
     while (ms.evtIdx < ms.events.length && ms.events[ms.evtIdx].minute <= ms.minute) {
       const evt = ms.events[ms.evtIdx++];
@@ -2199,6 +2392,8 @@ function startMatchTicking() {
       stopAmbiente();
       playSound("apitoFim", "apito");
       if (subBtn) subBtn.style.display = "none";
+      const liveBadge = document.querySelector(".tl-live-badge");
+      if (liveBadge) { liveBadge.classList.add("tl-live-ended"); liveBadge.innerHTML = "FIM DE JOGO"; }
       setTimeout(ms.onDone, Math.round(700 * speedMul()));
     }
   }, ms.tickMs);
@@ -2316,6 +2511,8 @@ function skipMatch() {
   if (fillEl) fillEl.style.width = "100%";
   const subBtn = document.getElementById("btnSubMatch");
   if (subBtn) subBtn.style.display = "none";
+  const liveBadge = document.querySelector(".tl-live-badge");
+  if (liveBadge) { liveBadge.classList.add("tl-live-ended"); liveBadge.innerHTML = "FIM DE JOGO"; }
   setTimeout(() => { if (ms.onDone) ms.onDone(); }, 400);
 }
 
@@ -2730,13 +2927,22 @@ function renderFinalCard(results, eliminated, goalsFor, goalsAgainst, wins, draw
     : "";
 
   const dpEarned = window._lastSummary?.draftPointsEarned || 0;
+  const stageReached = window._lastSummary?.stageReached;
+  const resultLine = won
+    ? "🏆 CAMPEÃO!"
+    : eliminated
+      ? `ELIMINADO${stageReached && stageReached !== "—" ? ` <small class="fc-result-stage">· ${stageReached}</small>` : ""}`
+      : "FINALISTA";
+  const totalGames = wins + draws + losses;
+  const winRate = totalGames ? Math.round((wins / totalGames) * 100) : 0;
   card.innerHTML = `
     <div class="fc-mode-eyebrow${isLivre ? " is-livre" : ""}">${mm.logo} ${mm.title}${isLivre ? " · não conta pro histórico" : ""}</div>
-    <div class="fc-result">${won ? "🏆 CAMPEÃO!" : eliminated ? "ELIMINADO" : "FINALISTA"}</div>
+    <div class="fc-result">${resultLine}</div>
     <div class="fc-stats">
       <div class="fc-stat"><span class="fc-stat-num">${wins}</span><span class="fc-stat-label">Vitórias</span></div>
       <div class="fc-stat"><span class="fc-stat-num">${draws}</span><span class="fc-stat-label">Empates</span></div>
       <div class="fc-stat"><span class="fc-stat-num">${losses}</span><span class="fc-stat-label">Derrotas</span></div>
+      <div class="fc-stat"><span class="fc-stat-num">${winRate}%</span><span class="fc-stat-label">Aproveitamento</span></div>
       <div class="fc-stat"><span class="fc-stat-num">${saldo>=0?"+":""}${saldo}</span><span class="fc-stat-label">Saldo</span></div>
       <div class="fc-stat"><span class="fc-stat-num">${goalsFor}</span><span class="fc-stat-label">Gols pró</span></div>
       <div class="fc-stat"><span class="fc-stat-num">${goalsAgainst}</span><span class="fc-stat-label">Sofridos</span></div>
@@ -2789,6 +2995,14 @@ function closeChangelog() {
   const ov = document.getElementById("changelogOverlay");
   if (ov) ov.classList.remove("open");
 }
+function openUpcoming() {
+  const ov = document.getElementById("upcomingOverlay");
+  if (ov) ov.classList.add("open");
+}
+function closeUpcoming() {
+  const ov = document.getElementById("upcomingOverlay");
+  if (ov) ov.classList.remove("open");
+}
 
 document.getElementById("headerRight").insertAdjacentHTML("afterbegin",
   `<span style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.5)">MONTE · SIMULE · FUTDRAFT</span>`);
@@ -2821,7 +3035,9 @@ const VITRINE_FILTERS = [
   { key: "copadomundo",  label: "🌍 Copa do Mundo",   teams: () => WORLD_CUP_TEAMS },
   { key: "eurocopa",     label: "🏴 Eurocopa",         teams: () => EUROCOPA_TEAMS },
   { key: "copaamerica",  label: "🥇 Copa América",     teams: () => COPA_AMERICA_TEAMS },
-  { key: "mundial",      label: "🌐 Mundial de Clubes", teams: () => MUNDIAL_TEAMS },
+  { key: "mundial",      label: "🌐 Mundial",          teams: () => MUNDIAL_TEAMS },
+  { key: "europa",       label: "🟠 Europa League",    teams: () => EUROPA_LEAGUE_TEAMS },
+  { key: "conference",   label: "🟢 Conference League", teams: () => CONFERENCE_LEAGUE_TEAMS },
 ];
 
 let vitrineActiveFilter = "champions";

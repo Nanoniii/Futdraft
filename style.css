@@ -899,6 +899,12 @@ body {
   color: var(--gold);
   margin-bottom: 8px;
 }
+.fc-result-stage {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
 .fc-score {
   font-family: var(--font-display);
   font-size: 4rem;
@@ -1573,6 +1579,31 @@ body {
 .tl-match-header {
   margin-bottom: 16px;
 }
+.tl-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #ff5252;
+  margin-bottom: 8px;
+}
+.tl-live-badge.tl-live-ended {
+  color: var(--text-muted);
+}
+.tl-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff5252;
+  animation: tlLivePulse 1.2s infinite;
+}
+.tl-live-badge.tl-live-ended .tl-live-dot { display: none; }
+@keyframes tlLivePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
 .tl-match-vs {
   display: flex;
   align-items: center;
@@ -1632,6 +1663,11 @@ body {
   letter-spacing: 2px;
   min-width: 40px;
   text-align: center;
+  transition: color 0.2s;
+}
+.tl-clock.tl-clock-final {
+  color: #ff5252;
+  animation: tlLivePulse 1s infinite;
 }
 .tl-progress-bar {
   width: 100px;
@@ -1644,7 +1680,10 @@ body {
   height: 100%;
   background: var(--gold);
   border-radius: 2px;
-  transition: width 0.04s linear;
+  transition: width 0.04s linear, background 0.2s;
+}
+.tl-progress-fill.tl-progress-final {
+  background: #ff5252;
 }
 
 /* Events list */
@@ -2239,6 +2278,31 @@ body {
   max-height: 80vh;
   overflow-y: auto;
 }
+.btn-upcoming {
+  display: block;
+  background: transparent;
+  border: 1px solid #4fc3f7;
+  color: #4fc3f7;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 18px;
+}
+.btn-upcoming:hover {
+  background: rgba(79,195,247,0.12);
+}
+.upcoming-disclaimer {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+  font-style: italic;
+}
 .cl-version {
   margin-bottom: 24px;
   border: 1px solid var(--border);
@@ -2318,6 +2382,31 @@ body {
   grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 .ms-card.ms-mundo:hover { border-color: #4fc3f7; }
+.ms-card.ms-cat-nacionais:hover { border-color: #2d7a3a; }
+.ms-card.ms-cat-continentais:hover { border-color: #4361ee; }
+.ms-card.ms-cat-intercontinentais:hover { border-color: #00bcd4; }
+.ms-card.ms-cat-mundial:hover { border-color: #f2a900; }
+
+/* Categorias bloqueadas (Estaduais, Regionais, Intercontinentais) — mesmo
+   visual da categoria normal, só com um cadeadinho no canto e sem o hover
+   de "clicável", já que o clique só mostra um toast de "em breve". */
+.ms-card.ms-cat-locked {
+  position: relative;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.ms-card.ms-cat-locked:hover {
+  border-color: var(--border);
+  transform: none;
+  box-shadow: none;
+}
+.ms-lock-badge {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 1.1rem;
+  filter: grayscale(0.1);
+}
 
 @media (max-width: 1100px) {
   .ms-grid-four { grid-template-columns: 1fr 1fr; }
@@ -2336,6 +2425,9 @@ body {
 .ms-card.ms-eurocopa:hover { border-color: #4361ee; }
 .ms-card.ms-copaamerica:hover { border-color: #f2a900; }
 .ms-card.ms-mundial:hover { border-color: #00bcd4; }
+.ms-card.ms-europa:hover { border-color: #ff6b00; }
+.ms-card.ms-conference:hover { border-color: #1fa855; }
+.ms-card.ms-eurocombo:hover { border-color: #4361ee; }
 .ms-card.ms-livre:hover { border-color: #2d7a3a; }
 @media (max-width: 900px) {
   .ms-grid-six { grid-template-columns: 1fr 1fr; }
@@ -3701,6 +3793,15 @@ body {
 
 /* Toast de pontos ganhos — mesma base do ach-toast, borda dourada já herdada */
 .dp-toast .ach-toast-icon { font-size: 1.5rem; }
+
+/* Toast de notícia da campanha (lesão/moral) — mesma base do ach-toast, com
+   borda neutra pra não parecer uma conquista de verdade */
+.camp-news-toast { border-color: var(--text-muted); }
+.camp-news-toast .ach-toast-title { color: var(--text-muted); }
+.camp-news-toast .ach-toast-icon { font-size: 1.5rem; }
+.locked-cat-toast { border-color: #78909c; }
+.locked-cat-toast .ach-toast-title { color: #78909c; }
+.locked-cat-toast .ach-toast-icon { font-size: 1.5rem; }
 
 @media (max-width: 700px) {
   .dp-badge { margin-right: 4px; padding: 5px 9px; font-size: 0.62rem; }

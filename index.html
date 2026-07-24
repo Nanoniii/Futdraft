@@ -37,6 +37,7 @@
   <div class="credits-modal changelog-modal">
     <button class="credits-close" onclick="closeChangelog()">✕</button>
     <div class="credits-title">CHANGELOG</div>
+    <button class="btn-upcoming" onclick="closeChangelog(); openUpcoming();">🔮 UPCOMING UPDATES</button>
 
     <div class="cl-version">
       <div class="cl-ver-badge">v1.0</div>
@@ -53,7 +54,34 @@
     </div>
 
     <div class="cl-version current">
-      <div class="cl-ver-badge">v1.7 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-badge">v1.8.5 <span class="cl-badge-tag">ATUAL</span></div>
+      <div class="cl-ver-date">Julho 2026</div>
+      <ul class="cl-items">
+        <li>🟠 Modo Europa League — 117 times históricos da UEFA Europa League (ex-Taça UEFA), de 1971-72 a 2025-26</li>
+        <li>🟢 Modo Conference League — campeões, finalistas e semifinalistas da UEFA Conference League, de 2021-22 a 2025-26</li>
+        <li>🇪🇺 Modo Europa + Conference — as duas competições juntas num sorteio só, pra quem quer mais variedade de times europeus</li>
+        <li>🌐 Mundial de Clubes agora é só "Mundial" — nome mais curto no menu e nas telas do jogo</li>
+        <li>🔒 Categoria Intercontinentais temporariamente bloqueada enquanto é reorganizada</li>
+        <li>🔒 Novas categorias Estaduais e Regionais já aparecem no menu (bloqueadas por enquanto — times chegam na v2.6)</li>
+        <li>📋 Pequenas melhorias na tela de resumo pós-partida: aproveitamento (%) da campanha e a fase em que foi eliminado, quando é o caso</li>
+        <li>🎬 Pequenas melhorias na tela da partida ao vivo: indicador "AO VIVO" e destaque visual nos minutos finais do jogo</li>
+      </ul>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-ver-badge">v1.8</div>
+      <div class="cl-ver-date">Julho 2026</div>
+      <ul class="cl-items">
+        <li>🩹 Sistema de lesões durante a campanha: depois de cada partida existe uma chance de um titular se machucar e desfalcar o time — se você tiver escalado um reserva compatível nos Ajustes da Partida, ele assume a vaga pro resto da campanha; sem reserva, o time segue em campo desfalcado</li>
+        <li>📈 Moral do elenco: sequências de vitórias (e goleadas dadas) dão um empurrãozinho no rendimento; goleadas sofridas derrubam a moral e pesam no ataque e na defesa das próximas partidas da campanha</li>
+        <li>📰 Notícias da campanha: um aviso rápido aparece antes da partida seguinte sempre que rola uma lesão ou uma virada grande de moral</li>
+        <li>🎖️ 3 conquistas novas: vença uma partida com o time lesionado (Vira-Volta), vença com a moral baixa (Vira a Chave) e seja campeão apesar de ter sofrido lesão na campanha (Campanha de Guerreiro)</li>
+        <li>🗂️ Novo menu de categorias antes de escolher o modo: Nacionais, Continentais, Intercontinentais e Mundial, organizando as 7 competições por tipo</li>
+      </ul>
+    </div>
+
+    <div class="cl-version">
+      <div class="cl-ver-badge">v1.7</div>
       <div class="cl-ver-date">Julho 2026</div>
       <ul class="cl-items">
         <li>🏆 HISTÓRICO virou uma página de verdade, não mais um pop-up pequeno — com aba nova de HALL DA FAMA mostrando todos os times que você já foi campeão, além do pódio (top 3) de artilheiros e de assistentes da carreira</li>
@@ -131,6 +159,114 @@
         <li>🗺️ Seleções de todos os continentes: América, Europa, África, Ásia e Oceania</li>
         <li>⚔️ Fase de grupos em turno único (3 jogos) + mata-mata desde os 16-avos de final até a final</li>
         <li>📋 Vitrine com todos os times do jogo, mostrando o elenco completo e o overall de cada jogador</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- UPCOMING UPDATES (modal) -->
+<div id="upcomingOverlay" class="credits-overlay">
+  <div class="credits-modal changelog-modal">
+    <button class="credits-close" onclick="closeUpcoming()">✕</button>
+    <div class="credits-title">🔮 UPCOMING UPDATES</div>
+    <p class="upcoming-disclaimer">Planejamento sujeito a mudanças — ordem, conteúdo e nomes podem ser ajustados até o lançamento de cada versão.</p>
+    <button class="btn-upcoming" onclick="closeUpcoming(); openChangelog();">← VER CHANGELOG</button>
+
+    <div class="cl-version upcoming">
+      <div class="cl-ver-badge">v1.9</div>
+      <div class="cl-ver-date">Jogo Rápido</div>
+      <ul class="cl-items">
+        <li>🐛 Correções de bugs e balanceamento da simulação após as lesões/moral</li>
+        <li>🎚️ Ajuste fino de dificuldade por competição (Mundial mais duro que Copa do Brasil, por exemplo)</li>
+        <li>⏭️ "Highlights only": pular direto pros gols na simulação</li>
+        <li>🎓 Tutorial interativo na primeira vez que abre o jogo</li>
+        <li>🏆 Adição da Sulamericana e Copa das Confederações</li>
+        <li>⚡ Modo Jogo Rápido: escolha um time real pra enfrentar outro time real, ou monte no draft clássico pra encarar um time real</li>
+      </ul>
+    </div>
+
+    <div class="cl-version upcoming">
+      <div class="cl-ver-badge">v2.0</div>
+      <div class="cl-ver-date">Futuro de Draft</div>
+      <ul class="cl-items">
+        <li>🏆 Ligas e Copas Nacionais Históricas: Espanha, Inglaterra, Alemanha, França e Itália, fechando de vez a frente de conteúdo/competições</li>
+        <li>⭐ Melhor time de todos os tempos de cada time relevante</li>
+        <li>🎮 Modo Torneio: crie seu próprio torneio com formato personalizado e os times que você quiser, controlando um time real ou no draft clássico</li>
+        <li>🎨 Possível redesign visual do jogo, com opção pra voltar pro menu antigo caso prefira</li>
+      </ul>
+    </div>
+
+    <div class="cl-version upcoming">
+      <div class="cl-ver-badge">v2.1</div>
+      <div class="cl-ver-date">Pós-lançamento do 2.0</div>
+      <ul class="cl-items">
+        <li>⚖️ Possíveis balanceamentos do Modo Liga</li>
+        <li>🏆 Adição da Copa Africana, Copa Asiática e Copa Ouro</li>
+      </ul>
+    </div>
+
+    <div class="cl-version upcoming">
+      <div class="cl-ver-badge">v2.2</div>
+      <div class="cl-ver-date">Identidade Visual</div>
+      <ul class="cl-items">
+        <li>🗂️ Vitrine reformulada com filtros por época, continente e overall</li>
+        <li>👕 Mudar nome do time, fazer camisa e logos personalizadas</li>
+        <li>🎨 Personalização do cartão de compartilhamento de perfil (temas de cor, moldura, fonte)</li>
+        <li>📤 Melhorar o compartilhamento do jogo</li>
+      </ul>
+    </div>
+
+    <div class="cl-version upcoming">
+      <div class="cl-ver-badge">v2.3</div>
+      <div class="cl-ver-date">Estatísticas e Prêmios</div>
+      <ul class="cl-items">
+        <li>📈 Gráficos de evolução na tela de Histórico (overall médio, gols por temporada)</li>
+        <li>🧠 Painel de "recordes pessoais" (maior goleada, sequência mais longa, etc, tudo num lugar só)</li>
+      </ul>
+    </div>
+
+    <div class="cl-version upcoming">
+      <div class="cl-ver-badge">v2.4</div>
+      <div class="cl-ver-date">Expansão de Idiomas</div>
+      <ul class="cl-items">
+        <li>🌐 Tradução do jogo pra Inglês e Espanhol</li>
+      </ul>
+    </div>
+
+    <div class="cl-version upcoming">
+      <div class="cl-ver-badge">v2.5</div>
+      <div class="cl-ver-date">Simulação Avançada e Eventos</div>
+      <ul class="cl-items">
+        <li>🎟️ Eventos limitados (competições especiais por tempo, com times/regras alternativas, tipo "Lendas dos anos 90")</li>
+        <li>🎥 Replay revisitável de campanhas antigas salvas no histórico (reassistir a timelapse de um título já conquistado)</li>
+        <li>🎉 Grandes conquistas de aniversário do jogo (marco de partidas jogadas na comunidade, se aplicável)</li>
+        <li>🔍 Sistema pra ver os outros grupos do torneio: resultados, quem marcou gol e mais</li>
+      </ul>
+    </div>
+
+    <div class="cl-version upcoming">
+      <div class="cl-ver-badge">v2.6</div>
+      <div class="cl-ver-date">Estaduais e Regionais</div>
+      <ul class="cl-items">
+        <li>🏳️ Destrava a categoria Estaduais, com times de campeonatos estaduais do futebol brasileiro</li>
+        <li>🗺️ Destrava a categoria Regionais, com times de torneios regionais do futebol brasileiro</li>
+        <li>🔓 As duas categorias saem do "bloqueadinho" e ganham modos jogáveis de verdade</li>
+      </ul>
+    </div>
+
+    <div class="cl-version upcoming">
+      <div class="cl-ver-badge">v2.7 – v2.9</div>
+      <div class="cl-ver-date">Ainda não definidos</div>
+      <ul class="cl-items">
+        <li>❓ Conteúdo dessas versões ainda não foi planejado</li>
+      </ul>
+    </div>
+
+    <div class="cl-version upcoming">
+      <div class="cl-ver-badge">v3.0</div>
+      <div class="cl-ver-date">Modo Carreira</div>
+      <ul class="cl-items">
+        <li>🎓 Modo Carreira Tradicional (apenas planejamento — talvez nunca aconteça)</li>
       </ul>
     </div>
   </div>
@@ -379,11 +515,73 @@
   </div>
 </div>
 
+<!-- CATEGORIA DA COMPETIÇÃO -->
+<div id="pageCompCategory" class="page">
+  <div class="mode-pick-layout">
+    <div class="fp-title">ESCOLHA A CATEGORIA</div>
+    <p class="fp-desc">Que tipo de competição você quer disputar?</p>
+
+    <div class="ms-grid ms-grid-six">
+      <div class="ms-card ms-cat-card ms-cat-estaduais ms-cat-locked" onclick="selectCompCategory('estaduais')">
+        <div class="ms-lock-badge">🔒</div>
+        <div class="ms-emblem">🏳️</div>
+        <div class="ms-name">ESTADUAIS</div>
+        <p class="ms-desc">Campeonatos estaduais do futebol brasileiro. Chegando em breve.</p>
+        <div class="ms-tags"><span>Em breve</span></div>
+      </div>
+      <div class="ms-card ms-cat-card ms-cat-regionais ms-cat-locked" onclick="selectCompCategory('regionais')">
+        <div class="ms-lock-badge">🔒</div>
+        <div class="ms-emblem">🗺️</div>
+        <div class="ms-name">REGIONAIS</div>
+        <p class="ms-desc">Torneios regionais do futebol brasileiro. Chegando em breve.</p>
+        <div class="ms-tags"><span>Em breve</span></div>
+      </div>
+      <div class="ms-card ms-cat-card ms-cat-nacionais" onclick="selectCompCategory('nacionais')">
+        <div class="ms-emblem">🏟️</div>
+        <div class="ms-name">NACIONAIS</div>
+        <p class="ms-desc">Competições disputadas dentro de um único país.</p>
+        <div class="ms-tags"><span>Copa do Brasil</span></div>
+      </div>
+      <div class="ms-card ms-cat-card ms-cat-continentais" onclick="selectCompCategory('continentais')">
+        <div class="ms-emblem">🌎</div>
+        <div class="ms-name">CONTINENTAIS</div>
+        <p class="ms-desc">Os melhores times e seleções de um mesmo continente, disputando entre si.</p>
+        <div class="ms-tags"><span>Champions</span><span>Libertadores</span><span>Eurocopa</span><span>Copa América</span><span>Europa League</span><span>Conference League</span></div>
+      </div>
+      <div class="ms-card ms-cat-card ms-cat-intercontinentais ms-cat-locked" onclick="selectCompCategory('intercontinentais')">
+        <div class="ms-lock-badge">🔒</div>
+        <div class="ms-emblem">🌐</div>
+        <div class="ms-name">INTERCONTINENTAIS</div>
+        <p class="ms-desc">Campeões de continentes diferentes se enfrentando pelo título global de clubes. Em manutenção.</p>
+        <div class="ms-tags"><span>Em breve</span></div>
+      </div>
+      <div class="ms-card ms-cat-card ms-cat-mundial" onclick="selectCompCategory('mundial')">
+        <div class="ms-emblem">🌍</div>
+        <div class="ms-name">MUNDIAL</div>
+        <p class="ms-desc">Seleções e clubes disputando o título de melhor do planeta.</p>
+        <div class="ms-tags"><span>Copa do Mundo</span><span>Mundial de Clubes</span></div>
+      </div>
+    </div>
+
+    <div class="fp-divider"></div>
+
+    <div class="free-mode-block">
+      <div class="ms-card ms-livre" onclick="openFreeModeSetup()">
+        <div class="ms-emblem">🎮</div>
+        <div class="ms-name">MODO LIVRE</div>
+        <p class="ms-desc">Escolha você mesmo quais times entram no sorteio pra montar seu elenco, sem se prender a nenhuma categoria. Não gera conquistas nem entra pro histórico — é só diversão, sem regras.</p>
+        <div class="ms-tags"><span>Elenco à sua escolha</span><span>Não conta no histórico</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ESCOLHA DE MODO -->
 <div id="pageModeSelect" class="page">
   <div class="mode-pick-layout">
-    <div class="fp-title">ESCOLHA O MODO</div>
-    <p class="fp-desc">Em qual competição você quer montar e simular seu time?</p>
+    <button class="mp-back-link" id="msBackToCategory" onclick="showPage('pageCompCategory')">← VOLTAR ÀS CATEGORIAS</button>
+    <div class="fp-title" id="msTitle">ESCOLHA O MODO</div>
+    <p class="fp-desc" id="msDesc">Em qual competição você quer montar e simular seu time?</p>
 
     <div class="ms-toggles">
       <div class="ms-toggle-card">
@@ -409,47 +607,65 @@
     </div>
 
     <div class="ms-grid ms-grid-six">
-      <div class="ms-card ms-champions" onclick="selectMode('champions')">
+      <div class="ms-card ms-champions" data-cat="continentais" onclick="selectMode('champions')">
         <div class="ms-emblem">🏆</div>
         <div class="ms-name">CHAMPIONS LEAGUE</div>
         <p class="ms-desc">Times históricos do futebol europeu. Fase de grupos (ida e volta) + mata-mata até a final.</p>
         <div class="ms-tags"><span>Fase de grupos</span><span>Times europeus</span></div>
       </div>
-      <div class="ms-card ms-libertadores" onclick="selectMode('libertadores')">
+      <div class="ms-card ms-libertadores" data-cat="continentais" onclick="selectMode('libertadores')">
         <div class="ms-emblem">🌎</div>
         <div class="ms-name">COPA LIBERTADORES</div>
         <p class="ms-desc">Times históricos da América do Sul e México. Fase de grupos (ida e volta) + mata-mata até a final.</p>
         <div class="ms-tags"><span>Fase de grupos</span><span>Times sul-americanos</span></div>
       </div>
-      <div class="ms-card ms-brasil" onclick="selectMode('brasil')">
+      <div class="ms-card ms-brasil" data-cat="nacionais" onclick="selectMode('brasil')">
         <div class="ms-emblem">🇧🇷</div>
         <div class="ms-name">COPA DO BRASIL</div>
         <p class="ms-desc">Clássicos e campeões históricos do futebol brasileiro. Direto pro mata-mata, sem fase de grupos.</p>
         <div class="ms-tags"><span>Mata-mata direto</span><span>Times brasileiros</span></div>
       </div>
-      <div class="ms-card ms-mundo" onclick="selectMode('copadomundo')">
+      <div class="ms-card ms-mundo" data-cat="mundial" onclick="selectMode('copadomundo')">
         <div class="ms-emblem">🌍</div>
         <div class="ms-name">COPA DO MUNDO</div>
         <p class="ms-desc">Seleções históricas de 1930 a 2022. Fase de grupos (turno único, 3 jogos) + mata-mata desde os 16-avos até a final.</p>
         <div class="ms-tags"><span>Fase de grupos</span><span>Seleções</span></div>
       </div>
-      <div class="ms-card ms-eurocopa" onclick="selectMode('eurocopa')">
+      <div class="ms-card ms-eurocopa" data-cat="continentais" onclick="selectMode('eurocopa')">
         <div class="ms-emblem">⭐</div>
         <div class="ms-name">EUROCOPA</div>
         <p class="ms-desc">Seleções históricas da Eurocopa, de 1960 a 2024. Fase de grupos (turno único, 3 jogos) + mata-mata até a final.</p>
         <div class="ms-tags"><span>Fase de grupos</span><span>Seleções</span></div>
       </div>
-      <div class="ms-card ms-copaamerica" onclick="selectMode('copaamerica')">
+      <div class="ms-card ms-copaamerica" data-cat="continentais" onclick="selectMode('copaamerica')">
         <div class="ms-emblem">🥇</div>
         <div class="ms-name">COPA AMÉRICA</div>
         <p class="ms-desc">Seleções históricas da Copa América, de 1916 a 2024. Fase de grupos (turno único, 3 jogos) e direto pras quartas de final — sem oitavas, como no torneio de verdade.</p>
         <div class="ms-tags"><span>Formato real</span><span>Seleções</span></div>
       </div>
-      <div class="ms-card ms-mundial" onclick="selectMode('mundial')">
+      <div class="ms-card ms-mundial" data-cat="mundial" onclick="selectMode('mundial')">
         <div class="ms-emblem">🌐</div>
-        <div class="ms-name">MUNDIAL DE CLUBES</div>
+        <div class="ms-name">MUNDIAL</div>
         <p class="ms-desc">Clubes campeões e finalistas do Intercontinental e do Mundial de Clubes FIFA, de 1960 a 2025. Fase de grupos (turno único, 4 times) + mata-mata desde as oitavas até a final.</p>
         <div class="ms-tags"><span>Fase de grupos</span><span>Clubes</span></div>
+      </div>
+      <div class="ms-card ms-europa" data-cat="continentais" onclick="selectMode('europa')">
+        <div class="ms-emblem">🟠</div>
+        <div class="ms-name">EUROPA LEAGUE</div>
+        <p class="ms-desc">Times históricos da UEFA Europa League (ex-Taça UEFA), de 1971-72 a 2025-26. Fase de grupos (ida e volta) + mata-mata até a final.</p>
+        <div class="ms-tags"><span>Fase de grupos</span><span>Times europeus</span></div>
+      </div>
+      <div class="ms-card ms-conference" data-cat="continentais" onclick="selectMode('conference')">
+        <div class="ms-emblem">🟢</div>
+        <div class="ms-name">CONFERENCE LEAGUE</div>
+        <p class="ms-desc">Campeões, finalistas e semifinalistas da UEFA Conference League, de 2021-22 a 2025-26. Fase de grupos (ida e volta) + mata-mata até a final.</p>
+        <div class="ms-tags"><span>Fase de grupos</span><span>Times europeus</span></div>
+      </div>
+      <div class="ms-card ms-eurocombo" data-cat="continentais" onclick="selectMode('eurocombo')">
+        <div class="ms-emblem">🇪🇺</div>
+        <div class="ms-name">EUROPA + CONFERENCE</div>
+        <p class="ms-desc">As duas competições europeias juntas num sorteio só, misturando Europa League e Conference League. Fase de grupos (ida e volta) + mata-mata até a final.</p>
+        <div class="ms-tags"><span>Fase de grupos</span><span>Times europeus</span></div>
       </div>
     </div>
 
@@ -664,7 +880,7 @@
       </div>
       <div class="ms-card ms-mundial" onclick="mpSelectMode('mundial')">
         <div class="ms-emblem">🌐</div>
-        <div class="ms-name">MUNDIAL DE CLUBES</div>
+        <div class="ms-name">MUNDIAL</div>
         <p class="ms-desc">Clubes campeões do Intercontinental e do Mundial de Clubes FIFA.</p>
         <div class="ms-tags"><span>Clubes</span></div>
       </div>
@@ -797,6 +1013,8 @@
 <script src="eurocopa_teams.js"></script>
 <script src="copa_america_teams.js"></script>
 <script src="mundial_teams.js"></script>
+<script src="europa_league_teams.js"></script>
+<script src="conference_league_teams.js"></script>
 <script src="alt_positions.js"></script>
 <script src="progression.js"></script>
 <script src="game.js"></script>

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// PROGRESSÃO — histórico do jogador + 51 conquistas
+// PROGRESSÃO — histórico do jogador + mais de 160 conquistas
 // Não é chamado no Modo Livre (isProgressionDisabled() em game.js).
 // ═══════════════════════════════════════════════════════════════
 
@@ -11,8 +11,8 @@ const HISTORY_DEFAULTS = () => ({
   goalsFor: 0, goalsAgainst: 0,
   streak: 0, bestStreak: 0,
   titles: 0,
-  titlesByMode: { champions: 0, libertadores: 0, brasil: 0, copadomundo: 0, eurocopa: 0, copaamerica: 0, mundial: 0 },
-  playedByMode: { champions: 0, libertadores: 0, brasil: 0, copadomundo: 0, eurocopa: 0, copaamerica: 0, mundial: 0 },
+  titlesByMode: { champions: 0, libertadores: 0, brasil: 0, copadomundo: 0, eurocopa: 0, copaamerica: 0, mundial: 0, europa: 0, conference: 0 },
+  playedByMode: { champions: 0, libertadores: 0, brasil: 0, copadomundo: 0, eurocopa: 0, copaamerica: 0, mundial: 0, europa: 0, conference: 0 },
   eliminatedAtGroup: 0, eliminatedAtFinal: 0,
   cleanSheetTitles: 0,
   hardcorePlayed: 0, hardcoreTitles: 0, themeTitles: 0,
@@ -36,6 +36,10 @@ const HISTORY_DEFAULTS = () => ({
   bestSquad: null,           // { overall, mode, formation, date, players: [...] }
   legendUsed: false,         // já escalou jogador com overall >= 95
   matches: [],               // últimas partidas (cap 30)
+  // v1.8 — Lesões e Moral
+  comebackWins: 0,           // vitórias com um titular já lesionado
+  lowMoraleWins: 0,          // vitórias com a moral do elenco baixa
+  championsWithInjury: 0,    // títulos conquistados com ao menos 1 lesão na campanha
 });
 
 function loadHistory() {
@@ -58,7 +62,7 @@ function saveAchState(s) {
 }
 
 // ═══════════════════════════════════════════
-// 151 CONQUISTAS
+// 167 CONQUISTAS
 // Cada uma tem: id, name, desc, icon, check(m, h) -> bool
 // m = resumo da partida que acabou de terminar · h = histórico JÁ atualizado
 // ═══════════════════════════════════════════
@@ -93,9 +97,16 @@ const ACHIEVEMENTS = [
   { id:"title_eurocopa",     name:"Campeão Europeu",     desc:"Seja campeão da Eurocopa.",           icon:"🏆", check:(m,h)=>h.titlesByMode.eurocopa>=1 },
   { id:"title_copaamerica",  name:"Campeão Sul-Americano", desc:"Seja campeão da Copa América.",     icon:"🏆", check:(m,h)=>h.titlesByMode.copaamerica>=1 },
   { id:"title_mundial",      name:"Rei do Mundo",        desc:"Seja campeão do Mundial de Clubes.",  icon:"🏆", check:(m,h)=>h.titlesByMode.mundial>=1 },
-  { id:"title_grandslam",    name:"Grand Slam",          desc:"Seja campeão em todas as 7 competições.", icon:"👑",
+  { id:"title_europa",       name:"Rei da Europa League", desc:"Seja campeão da Europa League.",     icon:"🏆", check:(m,h)=>h.titlesByMode.europa>=1 },
+  { id:"title_conference",   name:"Rei da Conference",   desc:"Seja campeão da Conference League.",  icon:"🏆", check:(m,h)=>h.titlesByMode.conference>=1 },
+  { id:"title_grandslam",    name:"Grand Slam",          desc:"Seja campeão em todas as 9 competições.", icon:"👑",
     check:(m,h)=>Object.values(h.titlesByMode).every(v=>v>=1) },
   { id:"title_clean",  name:"Muralha", desc:"Seja campeão sem perder nenhuma partida na campanha.", icon:"🧱", check:(m,h)=>h.cleanSheetTitles>=1 },
+
+  // ── Lesões e Moral (v1.8) ──
+  { id:"comeback_injury_1", name:"Vira-Volta",          desc:"Vença uma partida mesmo com um titular lesionado.",                     icon:"🩹", check:(m,h)=>h.comebackWins>=1 },
+  { id:"low_morale_win_1",  name:"Vira a Chave",        desc:"Vença uma partida com a moral do elenco baixa.",                        icon:"📉", check:(m,h)=>h.lowMoraleWins>=1 },
+  { id:"champion_injury_1", name:"Campanha de Guerreiro", desc:"Seja campeão de uma competição mesmo tendo sofrido lesão na campanha.", icon:"🛡️", check:(m,h)=>h.championsWithInjury>=1 },
 
   // ── Eliminação ──
   { id:"elim_final_1", name:"Quase Lá",             desc:"Perca uma final.",                          icon:"🥈", check:(m,h)=>h.eliminatedAtFinal>=1 },
@@ -203,6 +214,10 @@ const ACHIEVEMENTS = [
   { id:"title_copaamerica_5",  name:"Dono da América do Sul",     desc:"Seja campeão da Copa América 5 vezes.",           icon:"🏆", check:(m,h)=>h.titlesByMode.copaamerica>=5 },
   { id:"title_mundial_3",      name:"Tricampeão do Mundo",        desc:"Seja campeão do Mundial de Clubes 3 vezes.",      icon:"🏆", check:(m,h)=>h.titlesByMode.mundial>=3 },
   { id:"title_mundial_5",      name:"Dono do Planeta",            desc:"Seja campeão do Mundial de Clubes 5 vezes.",      icon:"🏆", check:(m,h)=>h.titlesByMode.mundial>=5 },
+  { id:"title_europa_3",       name:"Tricampeão da Europa League", desc:"Seja campeão da Europa League 3 vezes.",         icon:"🏆", check:(m,h)=>h.titlesByMode.europa>=3 },
+  { id:"title_europa_5",       name:"Dono da Europa League",       desc:"Seja campeão da Europa League 5 vezes.",         icon:"🏆", check:(m,h)=>h.titlesByMode.europa>=5 },
+  { id:"title_conference_3",   name:"Tricampeão da Conference",    desc:"Seja campeão da Conference League 3 vezes.",     icon:"🏆", check:(m,h)=>h.titlesByMode.conference>=3 },
+  { id:"title_conference_5",   name:"Dono da Conference",          desc:"Seja campeão da Conference League 5 vezes.",     icon:"🏆", check:(m,h)=>h.titlesByMode.conference>=5 },
 
   // ── Diversidade de títulos ──
   { id:"title_distinct_3", name:"Poliglota das Taças", desc:"Seja campeão em 3 competições diferentes.", icon:"👑", check:(m,h)=>Object.values(h.titlesByMode).filter(v=>v>=1).length>=3 },
@@ -216,6 +231,8 @@ const ACHIEVEMENTS = [
   { id:"played_eurocopa_10",     name:"Frequentador da Eurocopa",    desc:"Jogue 10 partidas na Eurocopa.",         icon:"🗺️", check:(m,h)=>h.playedByMode.eurocopa>=10 },
   { id:"played_copaamerica_10",  name:"Frequentador da Copa América",desc:"Jogue 10 partidas na Copa América.",     icon:"🗺️", check:(m,h)=>h.playedByMode.copaamerica>=10 },
   { id:"played_mundial_10",      name:"Frequentador do Mundial",     desc:"Jogue 10 partidas no Mundial de Clubes.", icon:"🗺️", check:(m,h)=>h.playedByMode.mundial>=10 },
+  { id:"played_europa_10",       name:"Frequentador da Europa League", desc:"Jogue 10 partidas na Europa League.",   icon:"🗺️", check:(m,h)=>h.playedByMode.europa>=10 },
+  { id:"played_conference_10",   name:"Frequentador da Conference",  desc:"Jogue 10 partidas na Conference League.", icon:"🗺️", check:(m,h)=>h.playedByMode.conference>=10 },
 
   // ── Eliminação (marcos avançados) ──
   { id:"elim_final_5",  name:"Coração Partido",   desc:"Perca 5 finais.",                          icon:"🥈", check:(m,h)=>h.eliminatedAtFinal>=5 },
@@ -246,6 +263,8 @@ const ACHIEVEMENTS = [
   { id:"rout_libertadores", name:"Atropelo na América",      desc:"Vença por 4 gols de diferença ou mais numa campanha da Libertadores.",      icon:"💥", check:(m)=>m && m.mode==="libertadores" && m.marginWin>=4 },
   { id:"rout_copadomundo",  name:"Atropelo Mundial",         desc:"Vença por 4 gols de diferença ou mais numa campanha da Copa do Mundo.",      icon:"💥", check:(m)=>m && m.mode==="copadomundo" && m.marginWin>=4 },
   { id:"rout_mundial",      name:"Atropelo de Clubes",       desc:"Vença por 4 gols de diferença ou mais numa campanha do Mundial de Clubes.",   icon:"💥", check:(m)=>m && m.mode==="mundial" && m.marginWin>=4 },
+  { id:"rout_europa",       name:"Atropelo na Europa League", desc:"Vença por 4 gols de diferença ou mais numa campanha da Europa League.",     icon:"💥", check:(m)=>m && m.mode==="europa" && m.marginWin>=4 },
+  { id:"rout_conference",   name:"Atropelo na Conference",   desc:"Vença por 4 gols de diferença ou mais numa campanha da Conference League.",   icon:"💥", check:(m)=>m && m.mode==="conference" && m.marginWin>=4 },
 
   // ── Overall do elenco (marcos avançados) ──
   { id:"ovr_97", name:"Quase Perfeito",     desc:"Monte um elenco com overall geral 97+.", icon:"📈", check:(m,h)=>(h.bestSquad?.overall||0)>=97 },
@@ -341,6 +360,11 @@ function recordMatchAndCheckAchievements(summary) {
   if (summary.hardcore) h.hardcorePlayed++;
   if (summary.usedAllRerolls) h.fullRerollCount++;
   if (summary.perfectGroup) h.perfectGroupStages++;
+
+  // v1.8 — Lesões e Moral
+  if (summary.hadInjuryComebackWin) h.comebackWins++;
+  if (summary.hadLowMoraleWin) h.lowMoraleWins++;
+  if (summary.championWithInjury) h.championsWithInjury++;
 
   // Artilheiros acumulados
   Object.entries(summary.scorersThisMatch || {}).forEach(([name, goals]) => {
@@ -489,8 +513,8 @@ function setHistoryTab(tab) {
   if (content) content.scrollTop = 0;
 }
 
-const MODE_LABELS_PT = { champions:"Champions", libertadores:"Libertadores", brasil:"Copa do Brasil", copadomundo:"Copa do Mundo", eurocopa:"Eurocopa", copaamerica:"Copa América", mundial:"Mundial de Clubes" };
-const MODE_ICONS_PT = { champions:"🏆", libertadores:"🌎", brasil:"🇧🇷", copadomundo:"🌍", eurocopa:"⭐", copaamerica:"🥇", mundial:"🌐" };
+const MODE_LABELS_PT = { champions:"Champions", libertadores:"Libertadores", brasil:"Copa do Brasil", copadomundo:"Copa do Mundo", eurocopa:"Eurocopa", copaamerica:"Copa América", mundial:"Mundial de Clubes", europa:"Europa League", conference:"Conference League" };
+const MODE_ICONS_PT = { champions:"🏆", libertadores:"🌎", brasil:"🇧🇷", copadomundo:"🌍", eurocopa:"⭐", copaamerica:"🥇", mundial:"🌐", europa:"🟠", conference:"🟢" };
 
 function renderHistoryStats() {
   const h = loadHistory();
